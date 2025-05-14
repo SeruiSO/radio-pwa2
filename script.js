@@ -14,10 +14,8 @@ fetch('stations.json')
   .then(response => response.json())
   .then(data => {
     stationLists = data;
-    // Завантажуємо останню станцію для поточної вкладки
     currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
     switchTab(currentTab);
-    // Автовідтворення останньої станції при запуску
     if (isPlaying) {
       tryPlayAudio(0);
     }
@@ -27,7 +25,7 @@ fetch('stations.json')
 // Теми
 const themes = {
   dark: { bodyBg: "#121212", containerBg: "#1e1e1e", accent: "#00C4FF", text: "#fff" },
-  light: { bodyBg: "#f0f0f0", containerBg: "#fff", accent: "#007BFF", text: "#000" },
+  light: { bodyBg: "#f0f0f0", containerBg: "#fff", accent: "#00C4FF", text: "#000" },
   neon: { bodyBg: "#0a0a1a", containerBg: "#1a1a2e", accent: "#00ffcc", text: "#fff" },
   "black-white": { bodyBg: "#000000", containerBg: "#000000", accent: "#ffffff", text: "#ffffff" }
 };
@@ -38,7 +36,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then((registration) => {
     setInterval(() => {
       registration.update();
-    }, 5 * 60 * 1000); // Перевірка оновлень кожні 5 хвилин
+    }, 5 * 60 * 1000);
 
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
@@ -84,7 +82,9 @@ function applyTheme(theme) {
 
 function toggleTheme() {
   const themesOrder = ["dark", "light", "neon", "black-white"];
-  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 4];
+  const currentIndex = themesOrder.indexOf(currentTheme);
+  const nextIndex = (currentIndex + 1) % themesOrder.length;
+  const nextTheme = themesOrder[nextIndex];
   applyTheme(nextTheme);
 }
 
@@ -92,7 +92,6 @@ function switchTab(tab) {
   if (!["techno", "trance", "ukraine"].includes(tab)) tab = "techno";
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
-  // Завантажуємо останню станцію для нової вкладки
   currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
