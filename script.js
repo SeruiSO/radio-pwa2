@@ -3,7 +3,7 @@ const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
 const currentStationInfo = document.getElementById("currentStationInfo");
 const volumeControl = document.getElementById("volumeControl");
-let currentIndex = parseInt(localStorage.getItem("lastStation")) || 0;
+let currentIndex = 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let currentTab = localStorage.getItem("currentTab") || "techno";
 let isPlaying = localStorage.getItem("isPlaying") === "true";
@@ -15,6 +15,8 @@ fetch('stations.json')
   .then(response => response.json())
   .then(data => {
     stationLists = data;
+    // Завантажуємо останню станцію для поточної вкладки
+    currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
     switchTab(currentTab);
     // Автовідтворення останньої станції при запуску
     if (isPlaying) {
@@ -28,8 +30,7 @@ const themes = {
   dark: { bodyBg: "#121212", containerBg: "#1e1e1e", accent: "#00C4FF", text: "#fff" },
   light: { bodyBg: "#f0f0f0", containerBg: "#fff", accent: "#007BFF", text: "#000" },
   neon: { bodyBg: "#0a0a1a", containerBg: "#1a1a2e", accent: "#00ffcc", text: "#fff" },
-  "black-white": { bodyBg: "#000000", containerBg: "#1e1e1e", accent: "#ffffff", text: "#ffffff" },
-  "black-gray": { bodyBg: "#000000", containerBg: "#1e1e1e", accent: "#808080", text: "#808080" }
+  "black-white": { bodyBg: "#000000", containerBg: "#000000", accent: "#ffffff", text: "#ffffff" }
 };
 let currentTheme = localStorage.getItem("selectedTheme") || "dark";
 
@@ -67,16 +68,25 @@ function applyTheme(theme) {
     el.style.borderColor = themes[theme].text;
     el.style.color = themes[theme].text;
   });
+  document.querySelectorAll(".station-item:hover, .station-item.selected").forEach(el => {
+    el.style.background = themes[theme].accent + " !important";
+    el.style.borderColor = themes[theme].accent + " !important";
+    el.style.color = themes[theme].bodyBg + " !important";
+  });
   document.querySelector(".controls-container").style.background = themes[theme].containerBg;
   document.querySelector(".controls-container").style.borderColor = themes[theme].accent;
   document.querySelector(".volume-slider input").style.background = themes[theme].accent;
+  document.querySelectorAll(".wave-bar").forEach(bar => {
+    bar.style.background = themes[theme].accent;
+  });
+  document.querySelector(".station-list::-webkit-scrollbar-thumb").style.background = themes[theme].accent;
   currentTheme = theme;
   localStorage.setItem("selectedTheme", theme);
 }
 
 function toggleTheme() {
-  const themesOrder = ["dark", "light", "neon", "black-white", "black-gray"];
-  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 5];
+  const themesOrder = ["dark", "light", "neon", "black-white"];
+  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 4];
   applyTheme(nextTheme);
 }
 
@@ -84,7 +94,8 @@ function switchTab(tab) {
   if (!["techno", "trance", "ukraine"].includes(tab)) tab = "techno";
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
-  currentIndex = 0;
+  // Завантажуємо останню станцію для нової вкладки
+  currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add("active");
@@ -145,7 +156,7 @@ function changeStation(index) {
   if (isPlaying) {
     tryPlayAudio(0);
   }
-  localStorage.setItem("lastStation", index);
+  localStorage.setItem(`lastStation_${currentTab}`, index);
 }
 
 function updateCurrentStationInfo(item) {
@@ -228,7 +239,7 @@ navigator.mediaSession.setActionHandler("pause", () => togglePlayPause());
 
 applyTheme(currentTheme);
 window.addEventListener("blur", () => {
-  if (document.hidden) localStorage.setItem("lastStation", currentIndex);
+  if (document.hidden) localStorage.setItem(`lastStation_${currentTab}`, currentIndex);
 });
 window.addEventListener("visibilitychange", () => {
   if (!document.hidden && navigator.bluetooth) handleBluetoothConnection();
