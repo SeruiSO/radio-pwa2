@@ -1,8 +1,7 @@
-﻿const audio = document.getElementById("audioPlayer");
+const audio = document.getElementById("audioPlayer");
 const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
 const currentStationInfo = document.getElementById("currentStationInfo");
-const volumeControl = document.getElementById("volumeControl");
 let currentIndex = 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let currentTab = localStorage.getItem("currentTab") || "techno";
@@ -64,7 +63,7 @@ function applyTheme(theme) {
     el.style.color = themes[theme].text;
   });
   document.querySelectorAll(".station-item").forEach(el => {
-    el.style.background = themes[theme].bodyBg;
+    el.style.background = themes[theme].containerBg;
     el.style.borderColor = themes[theme].text;
     el.style.color = themes[theme].text;
   });
@@ -75,7 +74,6 @@ function applyTheme(theme) {
   });
   document.querySelector(".controls-container").style.background = themes[theme].containerBg;
   document.querySelector(".controls-container").style.borderColor = themes[theme].accent;
-  document.querySelector(".volume-slider input").style.background = themes[theme].accent;
   document.querySelectorAll(".wave-bar").forEach(bar => {
     bar.style.background = themes[theme].accent;
   });
@@ -212,11 +210,6 @@ function togglePlayPause() {
   }
 }
 
-function toggleVolumeSlider() {
-  const slider = document.getElementById("volumeSlider");
-  slider.style.display = slider.style.display === "none" ? "block" : "none";
-}
-
 document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") prevStation();
   if (e.key === "ArrowRight") nextStation();
@@ -259,7 +252,3 @@ audio.addEventListener("pause", () => {
 });
 audio.addEventListener("error", () => console.error("Помилка трансляції"));
 audio.volume = 0.5;
-
-volumeControl.addEventListener("input", () => {
-  audio.volume = volumeControl.value / 100;
-});

@@ -1,10 +1,12 @@
-﻿{
+{
   "name": "RADIO _S_O_",
   "short_name": "Radio SO",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#00C4FF",
+  "description": "Techno, Trance, and Ukrainian Radio Streams",
+  "updated": "2025-05-14T23:51:00Z",
   "icons": [
     {
       "src": "icon-192.png",

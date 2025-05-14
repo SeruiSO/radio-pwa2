@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'radio-pwa-cache-v2';
+const CACHE_NAME = `radio-pwa-cache-${new Date().toISOString().slice(0, 10)}`;
 const urlsToCache = [
   'index.html',
   'styles.css',
@@ -41,12 +41,11 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (!cacheWhitelist.includes(cacheName)) {
+          if (cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
         })

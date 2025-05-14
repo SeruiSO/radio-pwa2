@@ -1,4 +1,4 @@
-﻿/* Updated on May 14, 2025 at 11:50 PM EEST */
+/* Updated on May 14, 2025 to force refresh */
 body {
   font-family: 'Roboto', sans-serif;
   background: #121212;
@@ -37,6 +37,7 @@ h1 {
   color: #00C4FF;
   text-shadow: 0 0 10px rgba(0, 196, 255, 0.5);
   transition: color 0.3s ease;
+  font-weight: 700;
 }
 
 .theme-toggle {
@@ -116,6 +117,7 @@ h1 {
   cursor: pointer;
   margin: 0 5px;
   transition: all 0.3s ease;
+  font-weight: 700;
 }
 
 .tab-btn:hover {
@@ -165,7 +167,7 @@ h1 {
   border: 1px solid #444;
   margin: 5px 0;
   color: #fff;
-  background: #121212;
+  background: #333;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -173,15 +175,18 @@ h1 {
 }
 
 .station-item:hover {
-  background: #00C4FF;
-  border-color: #00C4FF;
+  background: #00ffcc;
+  border: 2px solid #00ffcc;
   color: #121212;
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
 }
 
 .station-item.selected {
-  background: #00C4FF;
-  border-color: #00C4FF;
+  background: #00ffcc;
+  border: 2px solid #00ffcc;
   color: #121212;
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+  font-weight: 700;
 }
 
 .station-item .favorite-btn {
@@ -242,7 +247,7 @@ h1 {
 .controls {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 50px;
 }
 
 .control-btn {
@@ -273,57 +278,6 @@ h1 {
   box-shadow: 0 0 5px rgba(0, 196, 255, 0.3);
 }
 
-.control-btn:focus {
-  outline: none;
-}
-
-.volume-btn {
-  font-size: 28px;
-  position: relative;
-}
-
-.volume-slider {
-  position: absolute;
-  top: -100px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.volume-slider input {
-  width: 80px;
-  height: 30px;
-  transform: rotate(-90deg);
-  background: #00C4FF;
-  cursor: pointer;
-  margin: 0;
-  padding: 0;
-}
-
-.volume-slider input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 15px;
-  height: 15px;
-  background: #fff;
-  border: 2px solid #00C4FF;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.volume-slider input::-moz-range-thumb {
-  width: 15px;
-  height: 15px;
-  background: #fff;
-  border: 2px solid #00C4FF;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
 @media (max-width: 720px) {
   h1 {
     font-size: 2em;
@@ -339,10 +293,6 @@ h1 {
     width: 60px;
     height: 60px;
     font-size: 24px;
-  }
-
-  .volume-btn {
-    font-size: 20px;
   }
 
   .station-list {
@@ -394,17 +344,6 @@ h1 {
   .tab-btn {
     padding: 8px 15px;
     font-size: 14px;
-  }
-
-  .volume-slider {
-    width: 30px;
-    height: 80px;
-    top: -80px;
-  }
-
-  .volume-slider input {
-    width: 60px;
-    height: 20px;
   }
 }
 
