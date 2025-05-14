@@ -28,7 +28,8 @@ const themes = {
   dark: { bodyBg: "#121212", containerBg: "#1e1e1e", accent: "#00C4FF", text: "#fff" },
   light: { bodyBg: "#f0f0f0", containerBg: "#fff", accent: "#007BFF", text: "#000" },
   neon: { bodyBg: "#0a0a1a", containerBg: "#1a1a2e", accent: "#00ffcc", text: "#fff" },
-  black: { bodyBg: "#0a0a0a", containerBg: "#151515", accent: "#ff4d4d", text: "#e0e0e0" }
+  "black-white": { bodyBg: "#000000", containerBg: "#1e1e1e", accent: "#ffffff", text: "#ffffff" },
+  "black-gray": { bodyBg: "#000000", containerBg: "#1e1e1e", accent: "#808080", text: "#808080" }
 };
 let currentTheme = localStorage.getItem("selectedTheme") || "dark";
 
@@ -62,7 +63,7 @@ function applyTheme(theme) {
     el.style.color = themes[theme].text;
   });
   document.querySelectorAll(".station-item").forEach(el => {
-    el.style.background = themes[theme].containerBg;
+    el.style.background = themes[theme].bodyBg;
     el.style.borderColor = themes[theme].text;
     el.style.color = themes[theme].text;
   });
@@ -74,8 +75,8 @@ function applyTheme(theme) {
 }
 
 function toggleTheme() {
-  const themesOrder = ["dark", "light", "neon", "black"];
-  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 4];
+  const themesOrder = ["dark", "light", "neon", "black-white", "black-gray"];
+  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 5];
   applyTheme(nextTheme);
 }
 
