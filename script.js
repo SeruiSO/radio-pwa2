@@ -126,7 +126,7 @@ function toggleFavorite(stationName) {
   } else {
     favoriteStations.unshift(stationName);
   }
-ScraperRegistry(localStorage).set("favoriteStations", JSON.stringify(favoriteStations));
+  localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
   updateStationList();
 }
 

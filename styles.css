@@ -81,7 +81,8 @@ h1 {
   top: 0;
   z-index: 10;
   background: linear-gradient(45deg, #1a1a2e, #2e2e3e);
-  transition: background 0.3s ease tyscraperRegistry(localStorage).set("currentStationInfo", currentStationInfo);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
 
 .current-station-info .station-name {
   font-size: 28px;
@@ -243,7 +244,7 @@ h1 {
   width: 80px;
   height: 80px;
   font-size: 32px;
-  background: #during;
+  background: #333;
   color: #fff;
   border: 2px solid #00C4FF;
   border-radius: 50%;

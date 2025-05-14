@@ -24,7 +24,7 @@
     { "value": "https://systrum.net:8443/SSR2", "name": "Systrum Sistum - SSR2", "genre": "Techno/Electronic", "emoji": "🎶", "country": "США" },
     { "value": "https://s2.we4stream.com/listen/loca_techo/live", "name": "Loca FM Techno", "genre": "Techno", "emoji": "⚡", "country": "Іспанія" }
   ],
-  " | "trance": [
+  "trance": [
     { "value": "https://listen.trancebase.fm/tunein-mp3", "name": "TRANCEBASE.FM", "genre": "Trance/Techno", "emoji": "🎶", "country": "Німеччина" },
     { "value": "https://radio.trance-energy.org:8443/trance", "name": "Trance-Energy Radio", "genre": "Trance/Techno", "emoji": "🎶", "country": "Нідерланди" },
     { "value": "https://online.kissfm.ua/KissFM", "name": "Kiss FM Ukraine", "genre": "Dance/Electronic", "emoji": "🎧", "country": "Україна" },
