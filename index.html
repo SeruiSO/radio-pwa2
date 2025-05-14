@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Techno, Trance, and Ukrainian Radio Streams">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>RADIO _S_O_</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;'sans-serif" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🎧 RADIO MUSIC </h1>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    <div class="current-station-info" id="currentStationInfo">
+      <span class="station-name"></span>
+      <span class="station-genre"></span>
+      <span class="station-country"></span>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('techno')">TECHNO</button>
+      <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
+      <button class="tab-btn" onclick="switchTab('ukraine')">UKRAINE</button>
+    </div>
+    <div class="station-list" id="stationList">
+      <!-- Початковий список заповнюється через JavaScript -->
+    </div>
+    <div class="controls-container">
+      <div class="wave-progress">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+      </div>
+      <div class="controls">
+        <button class="control-btn" onclick="prevStation()">◄</button>
+        <button class="control-btn" onclick="togglePlayPause()">▶</button>
+        <button class="control-btn" onclick="nextStation()">►</button>
+        <button class="control-btn volume-btn" onclick="toggleVolumeSlider()">🔊</button>
+      </div>
+      <div class="volume-slider" id="volumeSlider" style="display: none;">
+        <input type="range" min="0" max="100" value="50" id="volumeControl" orient="vertical">
+      </div>
+    </div>
+  </div>
+
+  <audio id="audioPlayer" preload="none">
+    <source src="https://techno-high.rautemusik.fm" type="audio/mpeg">
+    Ваш браузер не підтримує аудіо.
+  </audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
