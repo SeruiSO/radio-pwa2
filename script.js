@@ -68,6 +68,11 @@ function applyTheme(theme) {
     el.style.borderColor = themes[theme].text;
     el.style.color = themes[theme].text;
   });
+  document.querySelectorAll(".station-item:hover, .station-item.selected").forEach(el => {
+    el.style.background = themes[theme].accent;
+    el.style.borderColor = themes[theme].accent;
+    el.style.color = themes[theme].bodyBg;
+  });
   document.querySelector(".controls-container").style.background = themes[theme].containerBg;
   document.querySelector(".controls-container").style.borderColor = themes[theme].accent;
   document.querySelector(".volume-slider input").style.background = themes[theme].accent;

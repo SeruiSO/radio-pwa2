@@ -1,4 +1,4 @@
-﻿/* Updated on May 14, 2025 at 11:35 PM EEST */
+﻿/* Updated on May 14, 2025 at 11:50 PM EEST */
 body {
   font-family: 'Roboto', sans-serif;
   background: #121212;
@@ -284,9 +284,9 @@ h1 {
 
 .volume-slider {
   position: absolute;
-  bottom: 50%;
-  right: 50%;
-  transform: translate(50%, 50%);
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 40px;
   height: 100px;
   display: flex;
@@ -399,6 +399,7 @@ h1 {
   .volume-slider {
     width: 30px;
     height: 80px;
+    top: -80px;
   }
 
   .volume-slider input {
