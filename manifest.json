@@ -1,7 +1,7 @@
 {
   "name": "RADIO _S_O_",
   "short_name": "Radio SO",
-  "start_U": "/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#00C4FF",

@@ -1,16 +1,15 @@
-/* Updated on May 15, 2025 for new themes and mobile optimization */
+/* Updated on May 15, 2025 for fixes, readability, and Samsung A13 optimization */
 body {
   font-family: 'Roboto', sans-serif;
   background: #1A1A1A;
   color: #FFFFFF;
   margin: 0;
   padding: 0;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   overflow-x: hidden;
-  padding-top: 10px;
   box-sizing: border-box;
   transition: background 0.3s ease, color 0.3s ease;
 }
@@ -20,9 +19,9 @@ body {
   width: 100%;
   background: #2A2A2A;
   padding: 15px;
-  border-radius: 15px;
-  margin: 0 10px;
-  min-height: 90vh;
+  border-radius: 0;
+  margin: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -125,7 +124,8 @@ h1 {
 }
 
 .station-list {
-  max-height: 500px;
+  flex: 1;
+  max-height: 50vh;
   overflow-y: auto;
   background: #2A2A2A;
   border: 1px solid #00B7EB;
@@ -261,6 +261,101 @@ h1 {
   transform: scale(0.95);
 }
 
+/* Адаптація для Samsung A13 та інших вузьких екранів */
+@media (max-width: 720px) and (min-height: 1280px) {
+  body {
+    padding: 0;
+  }
+
+  .container {
+    padding: 5px;
+    margin: 0;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  h1 {
+    font-size: 1.6em;
+    margin: 3px 0;
+  }
+
+  .theme-toggle {
+    top: 5px;
+    left: 5px;
+    height: 28px;
+    width: 28px;
+    padding: 4px;
+  }
+
+  .current-station-info {
+    font-size: 18px;
+    padding: 6px;
+    margin: 5px 0;
+  }
+
+  .current-station-info .station-name {
+    font-size: 18px;
+  }
+
+  .current-station-info .station-genre {
+    font-size: 12px;
+  }
+
+  .current-station-info .station-country {
+    font-size: 12px;
+  }
+
+  .tabs {
+    margin: 5px 0;
+  }
+
+  .tab-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    margin: 0 3px;
+  }
+
+  .station-list {
+    max-height: 40vh;
+    margin: 5px 0;
+    padding: 5px;
+  }
+
+  .station-item {
+    padding: 6px;
+    margin: 3px 0;
+    font-size: 13px;
+  }
+
+  .station-item .favorite-btn {
+    font-size: 16px;
+  }
+
+  .controls-container {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .controls {
+    gap: 20px;
+  }
+
+  .control-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+
+  .wave-progress {
+    width: 30px;
+    height: 20px;
+  }
+
+  .wave-bar {
+    width: 8px;
+  }
+}
+
 @media (max-width: 720px) {
   h1 {
     font-size: 1.8em;
@@ -268,8 +363,8 @@ h1 {
 
   .container {
     padding: 8px;
-    margin: 0 5px;
-    min-height: 90vh;
+    margin: 0;
+    height: 100vh;
   }
 
   .control-btn {
@@ -279,7 +374,7 @@ h1 {
   }
 
   .station-list {
-    max-height: 350px;
+    max-height: 40vh;
     margin: 8px 0;
     padding: 8px;
   }
@@ -332,10 +427,10 @@ h1 {
 
 @media (max-height: 1600px) {
   .container {
-    min-height: 85vh;
+    height: 100vh;
   }
 
   .station-list {
-    max-height: 400px;
+    max-height: 40vh;
   }
 }

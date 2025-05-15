@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-pwa-cache-' + __BUILD_ID__;
+const CACHE_NAME = 'radio-pwa-cache-' + $NETLIFY_BUILD_ID;
 const urlsToCache = [
   'index.html',
   'styles.css',
@@ -18,7 +18,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-self.addEventListener('fetch', (event) k=> {
+self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
       .then((response) => {

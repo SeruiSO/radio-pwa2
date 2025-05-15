@@ -42,15 +42,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎧 RADIO MUSIC</title>
+  <title>Радіо Музика</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png">
-  <link rel="apple-touch-icon" href="icon-512.png">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <button class="theme-toggle">🌙</button>
   <div class="container">
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
     <h1>Радіо Музика</h1>
     <div class="tabs">
       <button class="tab-btn" data-tab="techno" onclick="switchTab('techno')">Techno</button>
@@ -58,9 +57,9 @@
       <button class="tab-btn" data-tab="ukraine" onclick="switchTab('ukraine')">Ukraine</button>
     </div>
     <div class="current-station-info" id="currentStationInfo">
-      <div class="station-name"></div>
-      <div class="station-genre"></div>
-      <div class="station-country"></div>
+      <div class="station-name">Оберіть станцію</div>
+      <div class="station-genre">жанр: -</div>
+      <div class="station-country">країна: -</div>
     </div>
     <div class="station-list" id="stationList"></div>
     <div class="controls-container">
@@ -76,7 +75,7 @@
       </div>
     </div>
   </div>
-  <audio id="audioPlayer" preload="none">
+  <audio id="audioPlayer">
     Ваш браузер не підтримує аудіо.
   </audio>
   <script src="script.js"></script>
