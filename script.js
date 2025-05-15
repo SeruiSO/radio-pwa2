@@ -5,9 +5,21 @@ const currentStationInfo = document.getElementById("currentStationInfo");
 let currentIndex = parseInt(localStorage.getItem("lastStation")) || 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let currentTab = localStorage.getItem("currentTab") || "techno";
-let isPlaying = localStorage.getItem("isPlaying") === "true" || true; // За замовчуванням true
+let isPlaying = localStorage.getItem("isPlaying") === "true" || false; // За замовчуванням false
 let stationLists = {};
 let stationItems;
+let hasUserInteraction = false;
+
+// Дозвіл на відтворення після першого кліку
+document.addEventListener('click', () => {
+  hasUserInteraction = true;
+  if (audio.src && !audio.paused && !isPlaying) {
+    audio.play().catch(error => console.error("Помилка відтворення після взаємодії:", error));
+    isPlaying = true;
+    playPauseBtn.textContent = "⏸";
+    localStorage.setItem("isPlaying", isPlaying);
+  }
+}, { once: true });
 
 // Функція для завантаження станцій із кешем як резервом
 async function loadStations(attempt = 1) {
@@ -25,7 +37,6 @@ async function loadStations(attempt = 1) {
     switchTab(currentTab);
   } catch (error) {
     console.error("Помилка завантаження станцій (спроба " + attempt + "):", error);
-    // Спроба отримати з кешу
     if ('caches' in window) {
       caches.match('stations.json').then(cacheResponse => {
         if (cacheResponse) {
@@ -180,8 +191,6 @@ function updateStationList() {
 
   if (stationItems.length > 0 && currentIndex < stationItems.length) {
     changeStation(currentIndex);
-  } else {
-    console.log("Не вдалося ініціалізувати станцію: stationItems порожній або currentIndex недійсний.");
   }
 }
 
@@ -206,13 +215,13 @@ async function changeStation(index) {
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
   
   const isOnline = await checkStationAvailability(item.dataset.value);
-  if (isOnline) {
+  if (isOnline && hasUserInteraction) {
     audio.play().catch(error => console.error("Помилка відтворення:", error));
     isPlaying = true;
     playPauseBtn.textContent = "⏸";
     currentStationInfo.querySelector(".network-status").textContent = "";
     currentStationInfo.querySelector(".network-status").classList.remove("disconnected");
-  } else {
+  } else if (!isOnline) {
     item.classList.add('offline');
     currentStationInfo.querySelector(".network-status").textContent = "❌";
     currentStationInfo.querySelector(".network-status").classList.add("disconnected");
@@ -253,10 +262,12 @@ function nextStation() {
 
 function togglePlayPause() {
   if (audio.paused) {
-    audio.play().catch(error => console.error("Помилка відтворення:", error));
-    playPauseBtn.textContent = "⏸";
-    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
-    isPlaying = true;
+    if (hasUserInteraction) {
+      audio.play().catch(error => console.error("Помилка відтворення:", error));
+      playPauseBtn.textContent = "⏸";
+      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+      isPlaying = true;
+    }
   } else {
     audio.pause();
     playPauseBtn.textContent = "▶";
@@ -278,7 +289,7 @@ document.addEventListener("keydown", (e) => {
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && isPlaying) {
     setTimeout(() => {
-      audio.play().catch(error => console.error("Помилка автовідтворення:", error));
+      if (hasUserInteraction) audio.play().catch(error => console.error("Помилка автовідтворення:", error));
     }, 500);
   }
 });
@@ -286,7 +297,7 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("online", () => {
   if (isPlaying) {
     setTimeout(() => {
-      audio.play().catch(error => console.error("Помилка автовідтворення:", error));
+      if (hasUserInteraction) audio.play().catch(error => console.error("Помилка автовідтворення:", error));
     }, 1500);
   }
 });
@@ -296,7 +307,7 @@ audio.addEventListener("error", () => {
   if (reconnectAttempts < 3) {
     setTimeout(() => {
       audio.load();
-      audio.play().catch(error => console.error("Помилка перепідключення:", error));
+      if (hasUserInteraction) audio.play().catch(error => console.error("Помилка перепідключення:", error));
       reconnectAttempts++;
     }, 2000);
   } else {
@@ -339,6 +350,6 @@ audio.addEventListener("pause", () => {
 });
 audio.volume = 0.5;
 
-if (isPlaying) {
+if (isPlaying && hasUserInteraction) {
   audio.play().catch(error => console.error("Помилка автовідтворення:", error));
 }
