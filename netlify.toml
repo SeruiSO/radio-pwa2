@@ -1,4 +1,4 @@
-﻿[build]
+[build]
   command = "sed -i 's/__BUILD_ID__/$NETLIFY_BUILD_ID/g' sw.js && echo 'Build completed'"
   publish = "./"
 
