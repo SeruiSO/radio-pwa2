@@ -2,9 +2,9 @@ const audio = document.getElementById("audioPlayer");
 const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
 const currentStationInfo = document.getElementById("currentStationInfo");
-let currentIndex = 0;
+let currentIndex = parseInt(localStorage.getItem("lastStationIndex")) || 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
-let currentTab = localStorage.getItem("currentTab") || "techno";
+let currentTab = localStorage.getItem("lastStationTab") || "techno";
 let isPlaying = localStorage.getItem("isPlaying") === "true";
 let stationLists = {};
 let stationItems;
@@ -14,29 +14,66 @@ fetch('stations.json')
   .then(response => response.json())
   .then(data => {
     stationLists = data;
-    currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
-    switchTab(currentTab);
+    switchTab(currentTab); // Відновлення останньої вкладки
     if (isPlaying) {
-      tryPlayAudio(0);
+      playWithRetry(audio.src, 3, 2000); // Автовідтворення останньої станції
     }
   })
   .catch(error => console.error("Помилка завантаження станцій:", error));
 
+// Функція для відтворення з повторними спробами
+async function playWithRetry(url, retries, delay) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      audio.src = url;
+      await audio.play();
+      isPlaying = true;
+      playPauseBtn.textContent = "⏸";
+      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+      localStorage.setItem("isPlaying", isPlaying);
+      return;
+    } catch (error) {
+      console.error(`Спроба ${i + 1} не вдалася:`, error);
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  console.error("Не вдалося відтворити станцію після всіх спроб");
+}
+
 // Теми
 const themes = {
-  dark: { bodyBg: "#121212", containerBg: "#1e1e1e", accent: "#00C4FF", text: "#fff" },
-  light: { bodyBg: "#f0f0f0", containerBg: "#fff", accent: "#00C4FF", text: "#000" },
-  neon: { bodyBg: "#0a0a1a", containerBg: "#1a1a2e", accent: "#00ffcc", text: "#fff" },
-  "black-white": { bodyBg: "#000000", containerBg: "#000000", accent: "#ffffff", text: "#ffffff" }
+  black: {
+    bodyBg: "#1A1A1A",
+    containerBg: "#2A2A2A",
+    accent: "#00B7EB",
+    text: "#FFFFFF",
+    font: "'Roboto', sans-serif"
+  },
+  light: {
+    bodyBg: "#F5F5F5",
+    containerBg: "#FFFFFF",
+    accent: "#007BFF",
+    text: "#1A1A1A",
+    font: "'Roboto', sans-serif"
+  },
+  neonBlue: {
+    bodyBg: "#0A0A1A",
+    containerBg: "#1A1A2E",
+    accent: "#00FFFF",
+    text: "#E0E0E0",
+    font: "'Roboto', sans-serif"
+  }
 };
-let currentTheme = localStorage.getItem("selectedTheme") || "dark";
+let currentTheme = localStorage.getItem("selectedTheme") || "black";
 
 // Налаштування Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then((registration) => {
     setInterval(() => {
       registration.update();
-    }, 5 * 60 * 1000);
+    }, 5 * 60 * 1000); // Перевірка оновлень кожні 5 хвилин
 
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
@@ -52,47 +89,64 @@ if ('serviceWorker' in navigator) {
 }
 
 function applyTheme(theme) {
-  document.body.style.background = themes[theme].bodyBg;
-  document.querySelector(".container").style.background = themes[theme].containerBg;
-  document.querySelector("h1").style.color = themes[theme].accent;
+  const themeStyles = themes[theme];
+  document.body.style.background = themeStyles.bodyBg;
+  document.body.style.fontFamily = themeStyles.font;
+  document.body.style.color = themeStyles.text;
+
+  const container = document.querySelector(".container");
+  container.style.background = themeStyles.containerBg;
+
+  document.querySelector("h1").style.color = themeStyles.accent;
+
   document.querySelectorAll(".station-list, .control-btn, .theme-toggle, .current-station-info, .tab-btn").forEach(el => {
-    el.style.background = themes[theme].containerBg;
-    el.style.borderColor = themes[theme].accent;
-    el.style.color = themes[theme].text;
+    el.style.background = themeStyles.containerBg;
+    el.style.borderColor = themeStyles.accent;
+    el.style.color = themeStyles.text;
+    el.style.fontFamily = themeStyles.font;
   });
+
   document.querySelectorAll(".station-item").forEach(el => {
-    el.style.background = themes[theme].containerBg;
-    el.style.borderColor = themes[theme].text;
-    el.style.color = themes[theme].text;
+    el.style.background = themeStyles.containerBg;
+    el.style.borderColor = themeStyles.text;
+    el.style.color = themeStyles.text;
+    el.style.fontFamily = themeStyles.font;
   });
-  document.querySelectorAll(".station-item:hover, .station-item.selected").forEach(el => {
-    el.style.background = themes[theme].accent;
-    el.style.borderColor = themes[theme].accent;
-    el.style.color = themes[theme].bodyBg;
+
+  document.querySelectorAll(".station-item.selected").forEach(el => {
+    el.style.background = themeStyles.accent;
+    el.style.color = theme === "light" ? "#1A1A1A" : "#FFFFFF";
+    el.style.borderColor = themeStyles.accent;
   });
-  document.querySelector(".controls-container").style.background = themes[theme].containerBg;
-  document.querySelector(".controls-container").style.borderColor = themes[theme].accent;
-  document.querySelectorAll(".wave-bar").forEach(bar => {
-    bar.style.background = themes[theme].accent;
+
+  document.querySelectorAll(".tab-btn.active").forEach(el => {
+    el.style.background = themeStyles.accent;
+    el.style.color = theme === "light" ? "#1A1A1A" : "#FFFFFF";
+    el.style.borderColor = themeStyles.accent;
   });
-  document.querySelector(".station-list::-webkit-scrollbar-thumb").style.background = themes[theme].accent;
+
+  document.querySelector(".controls-container").style.background = themeStyles.containerBg;
+  document.querySelector(".controls-container").style.borderColor = themeStyles.accent;
+
+  document.querySelector(".station-list").style.scrollbarColor = `${themeStyles.accent} ${themeStyles.containerBg}`;
+  document.querySelector(".station-list::-webkit-scrollbar-thumb").style.background = themeStyles.accent;
+  document.querySelector(".station-list::-webkit-scrollbar-track").style.background = themeStyles.containerBg;
+
   currentTheme = theme;
   localStorage.setItem("selectedTheme", theme);
 }
 
 function toggleTheme() {
-  const themesOrder = ["dark", "light", "neon", "black-white"];
-  const currentIndex = themesOrder.indexOf(currentTheme);
-  const nextIndex = (currentIndex + 1) % themesOrder.length;
-  const nextTheme = themesOrder[nextIndex];
+  const themesOrder = ["black", "light", "neonBlue"];
+  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 3];
   applyTheme(nextTheme);
 }
 
 function switchTab(tab) {
   if (!["techno", "trance", "ukraine"].includes(tab)) tab = "techno";
   currentTab = tab;
-  localStorage.setItem("currentTab", tab);
-  currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
+  localStorage.setItem("lastStationTab", tab);
+  currentIndex = 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add("active");
@@ -127,6 +181,7 @@ function updateStationList() {
   });
 
   stationItems = stationList.querySelectorAll(".station-item");
+  applyTheme(currentTheme); // Повторно застосовуємо тему для оновлення стилів
 }
 
 function toggleFavorite(stationName) {
@@ -143,17 +198,16 @@ function changeStation(index) {
   stationItems.forEach(item => item.classList.remove("selected"));
   stationItems[index].classList.add("selected");
   currentIndex = index;
-  audio.src = stationItems[index].dataset.value;
+  const stationUrl = stationItems[index].dataset.value;
   updateCurrentStationInfo(stationItems[index]);
-  if (audio.paused) {
-    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
-  } else {
-    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
-  }
   if (isPlaying) {
-    tryPlayAudio(0);
+    playWithRetry(stationUrl, 3, 2000);
+  } else {
+    audio.src = stationUrl;
+    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
   }
-  localStorage.setItem(`lastStation_${currentTab}`, index);
+  localStorage.setItem("lastStationIndex", index);
+  localStorage.setItem("lastStationTab", currentTab);
 }
 
 function updateCurrentStationInfo(item) {
@@ -179,27 +233,9 @@ function nextStation() {
   changeStation(currentIndex);
 }
 
-async function tryPlayAudio(attempt) {
-  const maxAttempts = 3;
-  if (attempt >= maxAttempts) {
-    console.error("Не вдалося відтворити після 3 спроб");
-    return;
-  }
-  try {
-    await audio.play();
-    playPauseBtn.textContent = "⏸";
-    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
-    isPlaying = true;
-    localStorage.setItem("isPlaying", isPlaying);
-  } catch (error) {
-    console.error(`Помилка відтворення, спроба ${attempt + 1}:`, error);
-    setTimeout(() => tryPlayAudio(attempt + 1), 2000);
-  }
-}
-
 function togglePlayPause() {
   if (audio.paused) {
-    tryPlayAudio(0);
+    playWithRetry(audio.src, 3, 2000);
   } else {
     audio.pause();
     playPauseBtn.textContent = "▶";
@@ -219,8 +255,8 @@ document.addEventListener("keydown", (e) => {
 });
 
 function handleBluetoothConnection() {
-  if (navigator.bluetooth && !audio.paused) {
-    tryPlayAudio(0);
+  if (navigator.bluetooth && isPlaying) {
+    playWithRetry(audio.src, 3, 2000);
   }
 }
 
@@ -231,7 +267,10 @@ navigator.mediaSession.setActionHandler("pause", () => togglePlayPause());
 
 applyTheme(currentTheme);
 window.addEventListener("blur", () => {
-  if (document.hidden) localStorage.setItem(`lastStation_${currentTab}`, currentIndex);
+  if (document.hidden) {
+    localStorage.setItem("lastStationIndex", currentIndex);
+    localStorage.setItem("lastStationTab", currentTab);
+  }
 });
 window.addEventListener("visibilitychange", () => {
   if (!document.hidden && navigator.bluetooth) handleBluetoothConnection();
