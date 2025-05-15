@@ -11,12 +11,19 @@ let stationItems;
 
 // Завантаження станцій із JSON
 fetch('stations.json')
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) throw new Error('Не вдалося завантажити stations.json');
+    return response.json();
+  })
   .then(data => {
+    console.log("stations.json завантажено:", data); // Дебаг
     stationLists = data;
     switchTab(currentTab); // Ініціалізація вкладки
   })
-  .catch(error => console.error("Помилка завантаження станцій:", error));
+  .catch(error => {
+    console.error("Помилка завантаження станцій:", error);
+    stationList.innerHTML = '<div style="color: red; padding: 10px;">Помилка завантаження станцій. Перевірте stations.json.</div>';
+  });
 
 // Теми
 const themes = {
@@ -83,17 +90,14 @@ function switchTab(tab) {
   currentIndex = 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-  document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add("active");
-  if (stationItems && stationItems.length > 0) {
-    changeStation(currentIndex);
-  }
+  const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
+  if (activeBtn) activeBtn.classList.add("active");
 }
 
-// Перевірка доступності URL
 async function checkStationAvailability(url) {
   try {
     const controller = new AbortController();
-    setTimeout(() => controller.abort(), 5000); // Таймаут 5 секунд
+    setTimeout(() => controller.abort(), 5000);
     const response = await fetch(url, { signal: controller.signal, method: 'HEAD' });
     return response.ok;
   } catch {
@@ -102,8 +106,12 @@ async function checkStationAvailability(url) {
 }
 
 function updateStationList() {
-  const stations = stationLists[currentTab] || [];
   stationList.innerHTML = '';
+  const stations = stationLists[currentTab] || [];
+  if (!stations.length) {
+    stationList.innerHTML = '<div style="color: yellow; padding: 10px;">Немає станцій для цієї вкладки.</div>';
+    return;
+  }
 
   const favoriteList = favoriteStations
     .map(name => stations.find(station => station.name === name))
@@ -123,8 +131,8 @@ function updateStationList() {
   });
 
   stationItems = stationList.querySelectorAll(".station-item");
+  console.log("stationItems:", stationItems.length); // Дебаг
 
-  // Делегування подій
   stationList.onclick = (e) => {
     const item = e.target.closest('.station-item');
     const favoriteBtn = e.target.closest('.favorite-btn');
@@ -138,7 +146,6 @@ function updateStationList() {
     }
   };
 
-  // Відновлення поточної станції після оновлення списку
   if (stationItems.length > 0 && currentIndex < stationItems.length) {
     changeStation(currentIndex);
   }
@@ -157,27 +164,29 @@ function toggleFavorite(stationName) {
 function changeStation(index) {
   if (index < 0 || index >= stationItems.length) return;
   const item = stationItems[index];
+  stationItems.forEach(item => item.classList.remove("selected", "offline"));
+  item.classList.add("selected");
+  currentIndex = index;
+  audio.src = item.dataset.value;
+  updateCurrentStationInfo(item);
+  if (audio.paused) {
+    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
+  } else {
+    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+  }
+  if (isPlaying) {
+    audio.play().catch(error => console.error("Помилка відтворення:", error));
+  }
+  localStorage.setItem("lastStation", index);
   checkStationAvailability(item.dataset.value).then(isOnline => {
     if (!isOnline) {
       item.classList.add('offline');
       currentStationInfo.querySelector(".network-status").textContent = "❌";
       currentStationInfo.querySelector(".network-status").classList.add("disconnected");
-      return;
-    }
-    stationItems.forEach(item => item.classList.remove("selected", "offline"));
-    item.classList.add("selected");
-    currentIndex = index;
-    audio.src = item.dataset.value;
-    updateCurrentStationInfo(item);
-    if (audio.paused) {
-      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
     } else {
-      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+      currentStationInfo.querySelector(".network-status").textContent = "";
+      currentStationInfo.querySelector(".network-status").classList.remove("disconnected");
     }
-    if (isPlaying) {
-      audio.play().catch(error => console.error("Помилка відтворення:", error));
-    }
-    localStorage.setItem("lastStation", index);
   });
 }
 
