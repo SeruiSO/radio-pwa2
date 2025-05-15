@@ -17,15 +17,7 @@ document.addEventListener('click', () => {
     changeStation(currentIndex);
     if (isPlaying) audio.play().catch(error => console.error("Помилка відтворення після взаємодії:", error));
   }
-  autoPlayOnLoad();
 }, { once: true });
-
-// Автовідтворення при завантаженні
-function autoPlayOnLoad() {
-  if (hasUserInteraction && stationItems?.length > currentIndex && isPlaying) {
-    audio.play().catch(error => console.error("Помилка автозапуску:", error));
-  }
-}
 
 // Функція для завантаження станцій із кешем як резервом
 async function loadStations(attempt = 1) {
@@ -41,7 +33,6 @@ async function loadStations(attempt = 1) {
       localStorage.setItem("currentTab", currentTab);
     }
     switchTab(currentTab);
-    autoPlayOnLoad(); // Виклик автозапуску після завантаження станцій
   } catch (error) {
     console.error("Помилка завантаження станцій (спроба " + attempt + "):", error);
     if ('caches' in window) {
@@ -56,7 +47,6 @@ async function loadStations(attempt = 1) {
               localStorage.setItem("currentTab", currentTab);
             }
             switchTab(currentTab);
-            autoPlayOnLoad(); // Виклик автозапуску після завантаження з кешу
           }).catch(cacheError => {
             console.error("Помилка читання кешу:", cacheError);
           });
@@ -205,7 +195,6 @@ function changeStation(index) {
   currentIndex = index;
   audio.src = item.dataset.value;
   updateCurrentStationInfo(item);
-  updateVisualizer();
   if (audio.paused) {
     document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
   } else {
@@ -231,15 +220,6 @@ function updateCurrentStationInfo(item) {
   }
 }
 
-function updateVisualizer() {
-  const visualizerBars = currentStationInfo.querySelectorAll(".wave-bar");
-  if (audio.paused) {
-    visualizerBars.forEach(bar => bar.style.animationPlayState = "paused");
-  } else {
-    visualizerBars.forEach(bar => bar.style.animationPlayState = "running");
-  }
-}
-
 function prevStation() {
   currentIndex = (currentIndex > 0) ? currentIndex - 1 : stationItems.length - 1;
   changeStation(currentIndex);
@@ -257,14 +237,12 @@ function togglePlayPause() {
       playPauseBtn.textContent = "⏸";
       document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
       isPlaying = true;
-      updateVisualizer();
     }
   } else {
     audio.pause();
     playPauseBtn.textContent = "▶";
     document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
     isPlaying = false;
-    updateVisualizer();
   }
   localStorage.setItem("isPlaying", isPlaying);
 }
@@ -300,14 +278,12 @@ audio.addEventListener("playing", () => {
   playPauseBtn.textContent = "⏸";
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
   isPlaying = true;
-  updateVisualizer();
   localStorage.setItem("isPlaying", isPlaying);
 });
 audio.addEventListener("pause", () => {
   playPauseBtn.textContent = "▶";
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
   isPlaying = false;
-  updateVisualizer();
   localStorage.setItem("isPlaying", isPlaying);
 });
 
