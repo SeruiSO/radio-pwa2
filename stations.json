@@ -1,4 +1,4 @@
-{
+﻿{
   "techno": [
     { "value": "https://techno-high.rautemusik.fm", "name": "RauteMusik Techno", "genre": "Techno", "emoji": "⚡", "country": "Німеччина" },
     { "value": "https://listen.hardbase.fm/tunein-mp3", "name": "HARDBASE.FM", "genre": "Hard Techno", "emoji": "⚡", "country": "Німеччина" },
@@ -39,8 +39,8 @@
     { "value": "https://stream.friskyradio.com/friskyprog-mp3-128", "name": "Frisky Radio Progressive", "genre": "Progressive House/Techno", "emoji": "🎧", "country": "США" },
     { "value": "https://radio.edm1.fm/proxy/18_trancmitter?mp=/stream", "name": "edm1.fm - Trancmitter", "genre": "Trance/EDM", "emoji": "🎶", "country": "Німеччина" },
     { "value": "https://icecast.pulsradio.com/pulsHD.mp3", "name": "PulsRadio Dance", "genre": "Trance/Techno", "emoji": "🎧", "country": "Франція" },
-    { "value": "https://stream.sunshine-live.de/trance/mp3-192/radoxo/", perspectiva: 8000
-      "https://sunsl.streamabc.net/sunsl-newhits-mp3-192-1294829", "name": "Sunshine Live - New Music", "genre": "Techno/Trance", "emoji": "🎶", "country": "Німеччина" },
+    { "value": "https://stream.sunshine-live.de/trance/mp3-192/radoxo/", "name": "Sunshine Live - Trance", "genre": "Trance", "emoji": "🎶", "country": "Німеччина" },
+    { "value": "https://sunsl.streamabc.net/sunsl-newhits-mp3-192-1294829", "name": "Sunshine Live - New Music", "genre": "Techno/Trance", "emoji": "🎶", "country": "Німеччина" },
     { "value": "https://streaming.playtrance.com/playtrance-main-low", "name": "Play Trance - Main Channel", "genre": "Trance", "emoji": "🎶", "country": "Іспанія" },
     { "value": "https://secure.live-streams.nl/live", "name": "Intense Radio", "genre": "House/Techno/Trance", "emoji": "🎧", "country": "Нідерланди" },
     { "value": "https://live-ff.playtrance.com/playtrance-classics.mp3", "name": "PlayTrance Radio (Classics Channel)", "genre": "Trance", "emoji": "🎶", "country": "Іспанія" }
