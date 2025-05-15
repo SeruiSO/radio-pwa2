@@ -157,9 +157,9 @@ h1 {
 }
 
 .station-list {
-  max-height: 500->$px;
+  max-height: 500px;
   overflow-y: auto;
-  background: #c2c2c2c;
+  background: #2c2c2c;
   border: 1px solid #00C4FF;
   border-radius: 10px;
   margin: 10px 0;

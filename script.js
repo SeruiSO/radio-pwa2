@@ -14,8 +14,7 @@ fetch('stations.json')
   .then(response => response.json())
   .then(data => {
     stationLists = data;
-    switchTab(currentTab);
-    changeStation(currentIndex); // Відновлення станції
+    switchTab(currentTab); // Ініціалізація вкладки
   })
   .catch(error => console.error("Помилка завантаження станцій:", error));
 
@@ -85,7 +84,9 @@ function switchTab(tab) {
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add("active");
-  changeStation(currentIndex);
+  if (stationItems && stationItems.length > 0) {
+    changeStation(currentIndex);
+  }
 }
 
 // Перевірка доступності URL
@@ -101,7 +102,7 @@ async function checkStationAvailability(url) {
 }
 
 function updateStationList() {
-  const stations = stationLists[currentTab];
+  const stations = stationLists[currentTab] || [];
   stationList.innerHTML = '';
 
   const favoriteList = favoriteStations
@@ -136,6 +137,11 @@ function updateStationList() {
       toggleFavorite(stationName);
     }
   };
+
+  // Відновлення поточної станції після оновлення списку
+  if (stationItems.length > 0 && currentIndex < stationItems.length) {
+    changeStation(currentIndex);
+  }
 }
 
 function toggleFavorite(stationName) {
@@ -148,30 +154,31 @@ function toggleFavorite(stationName) {
   updateStationList();
 }
 
-async function changeStation(index) {
+function changeStation(index) {
   if (index < 0 || index >= stationItems.length) return;
   const item = stationItems[index];
-  const isOnline = await checkStationAvailability(item.dataset.value);
-  if (!isOnline) {
-    item.classList.add('offline');
-    currentStationInfo.querySelector(".network-status").textContent = "❌";
-    currentStationInfo.querySelector(".network-status").classList.add("disconnected");
-    return;
-  }
-  stationItems.forEach(item => item.classList.remove("selected"));
-  item.classList.add("selected");
-  currentIndex = index;
-  audio.src = item.dataset.value;
-  updateCurrentStationInfo(item);
-  if (audio.paused) {
-    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
-  } else {
-    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
-  }
-  if (isPlaying) {
-    audio.play().catch(error => console.error("Помилка відтворення:", error));
-  }
-  localStorage.setItem("lastStation", index);
+  checkStationAvailability(item.dataset.value).then(isOnline => {
+    if (!isOnline) {
+      item.classList.add('offline');
+      currentStationInfo.querySelector(".network-status").textContent = "❌";
+      currentStationInfo.querySelector(".network-status").classList.add("disconnected");
+      return;
+    }
+    stationItems.forEach(item => item.classList.remove("selected", "offline"));
+    item.classList.add("selected");
+    currentIndex = index;
+    audio.src = item.dataset.value;
+    updateCurrentStationInfo(item);
+    if (audio.paused) {
+      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
+    } else {
+      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+    }
+    if (isPlaying) {
+      audio.play().catch(error => console.error("Помилка відтворення:", error));
+    }
+    localStorage.setItem("lastStation", index);
+  });
 }
 
 function updateCurrentStationInfo(item) {
