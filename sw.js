@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-pwa-cache-' + $NETLIFY_BUILD_ID;
+﻿const CACHE_NAME = 'radio-pwa-cache-v5';
 const urlsToCache = [
   'index.html',
   'styles.css',
@@ -51,6 +51,13 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => {
+      // Сповіщення про оновлення
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: 'UPDATE', message: 'Додаток оновлено до нової версії!' });
+        });
+      });
     })
   );
 });
