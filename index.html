@@ -42,49 +42,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎧 RADIO MUSIC</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#121212">
   <link rel="manifest" href="manifest.json">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <title>Radio Music</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
-    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
     <h1>🎧 RADIO MUSIC</h1>
-    
     <div class="tabs">
-      <button class="tab-btn" onclick="switchTab('techno')">TECHNO</button>
+      <button class="tab-btn active" onclick="switchTab('techno')">TECHNO</button>
       <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
       <button class="tab-btn" onclick="switchTab('ukraine')">UKRAINE</button>
     </div>
-    
-    <div class="current-station-info">
-      <div class="station-name">Оберіть станцію <span class="network-status"></span></div>
+    <div class="theme-toggle" onclick="toggleTheme()">🌙</div>
+    <div class="station-list" id="stationList"></div>
+    <div class="current-station-info" id="currentStationInfo">
+      <div class="station-name">Обирать станцію</div>
       <div class="station-genre">жанр: -</div>
       <div class="station-country">країна: -</div>
+      <div class="network-status"></div>
     </div>
-    
-    <div class="station-list" id="stationList"></div>
-    
     <div class="controls-container">
-      <div class="wave-progress">
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-      </div>
-      
       <div class="controls">
-        <button class="control-btn" onclick="prevStation()">◄</button>
+        <button class="control-btn" onclick="prevStation()">⏮</button>
         <button class="control-btn" onclick="togglePlayPause()">▶</button>
-        <button class="control-btn" onclick="nextStation()">►</button>
+        <button class="control-btn" onclick="nextStation()">⏭</button>
+      </div>
+      <div class="wave-visualizer">
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
       </div>
     </div>
   </div>
-
-  <audio id="audioPlayer" preload="auto">Ваш браузер не підтримує аудіо.</audio>
-  
+  <audio id="audioPlayer"></audio>
   <script src="script.js"></script>
 </body>
 </html>
