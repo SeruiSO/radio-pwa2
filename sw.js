@@ -1,4 +1,4 @@
-const CACHE_NAME = `radio-pwa-cache-${new Date().toISOString().slice(0, 10)}`;
+const CACHE_NAME = 'radio-pwa-cache-' + __BUILD_ID__;
 const urlsToCache = [
   'index.html',
   'styles.css',
@@ -18,7 +18,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', (event) k=> {
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -41,11 +41,12 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (!cacheWhitelist.includes(cacheName)) {
             return caches.delete(cacheName);
           }
         })

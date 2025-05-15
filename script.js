@@ -89,6 +89,7 @@ if ('serviceWorker' in navigator) {
 }
 
 function applyTheme(theme) {
+  if (!themes[theme]) theme = "black"; // Запобіжник для некоректних тем
   const themeStyles = themes[theme];
   document.body.style.background = themeStyles.bodyBg;
   document.body.style.fontFamily = themeStyles.font;
@@ -127,10 +128,6 @@ function applyTheme(theme) {
 
   document.querySelector(".controls-container").style.background = themeStyles.containerBg;
   document.querySelector(".controls-container").style.borderColor = themeStyles.accent;
-
-  document.querySelector(".station-list").style.scrollbarColor = `${themeStyles.accent} ${themeStyles.containerBg}`;
-  document.querySelector(".station-list::-webkit-scrollbar-thumb").style.background = themeStyles.accent;
-  document.querySelector(".station-list::-webkit-scrollbar-track").style.background = themeStyles.containerBg;
 
   currentTheme = theme;
   localStorage.setItem("selectedTheme", theme);

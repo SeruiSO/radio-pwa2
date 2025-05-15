@@ -1,0 +1,3 @@
+﻿[build]
+  command = "sed -i \"s/__BUILD_ID__/$(date +%s)/g\" sw.js"
+  publish = "."
