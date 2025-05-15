@@ -15,8 +15,8 @@ fetch('stations.json')
   .then(data => {
     stationLists = data;
     switchTab(currentTab); // Відновлення останньої вкладки
-    if (isPlaying) {
-      playWithRetry(audio.src, 3, 2000); // Автовідтворення останньої станції
+    if (isPlaying && stationItems?.length > 0) {
+      changeStation(currentIndex); // Відновлення відтворення
     }
   })
   .catch(error => console.error("Помилка завантаження станцій:", error));
@@ -81,7 +81,6 @@ if ('serviceWorker' in navigator) {
     setInterval(() => {
       registration.update();
     }, 5 * 60 * 1000); // Перевірка оновлень кожні 5 хвилин
-
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
       newWorker.addEventListener('statechange', () => {
@@ -96,16 +95,22 @@ if ('serviceWorker' in navigator) {
 }
 
 function applyTheme(theme) {
-  if (!themes[theme]) theme = "black"; // Запобіжник для некоректних тем
+  if (!themes[theme]) {
+    console.warn(`Тема ${theme} не знайдена, застосовується black`);
+    theme = "black";
+  }
   const themeStyles = themes[theme];
+  console.log(`Застосовується тема: ${theme}`);
+
   document.body.style.background = themeStyles.bodyBg;
   document.body.style.fontFamily = themeStyles.font;
   document.body.style.color = themeStyles.text;
 
   const container = document.querySelector(".container");
-  container.style.background = themeStyles.containerBg;
+  if (container) container.style.background = themeStyles.containerBg;
 
-  document.querySelector("h1").style.color = themeStyles.accent;
+  const h1 = document.querySelector("h1");
+  if (h1) h1.style.color = themeStyles.accent;
 
   document.querySelectorAll(".station-list, .control-btn, .theme-toggle, .current-station-info, .tab-btn").forEach(el => {
     el.style.background = themeStyles.containerBg;
@@ -133,8 +138,11 @@ function applyTheme(theme) {
     el.style.borderColor = themeStyles.accent;
   });
 
-  document.querySelector(".controls-container").style.background = themeStyles.containerBg;
-  document.querySelector(".controls-container").style.borderColor = themeStyles.accent;
+  const controlsContainer = document.querySelector(".controls-container");
+  if (controlsContainer) {
+    controlsContainer.style.background = themeStyles.containerBg;
+    controlsContainer.style.borderColor = themeStyles.accent;
+  }
 
   currentTheme = theme;
   localStorage.setItem("selectedTheme", theme);
@@ -142,23 +150,37 @@ function applyTheme(theme) {
 
 function toggleTheme() {
   const themesOrder = ["black", "light", "neonBlue", "darkWhite"];
-  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 4];
+  const currentIndex = themesOrder.indexOf(currentTheme);
+  const nextTheme = themesOrder[(currentIndex + 1) % themesOrder.length];
+  console.log(`Перемикання з ${currentTheme} на ${nextTheme}`);
   applyTheme(nextTheme);
 }
 
 function switchTab(tab) {
-  if (!["techno", "trance", "ukraine"].includes(tab)) tab = "techno";
+  if (!["techno", "trance", "ukraine"].includes(tab)) {
+    console.warn(`Вкладка ${tab} не підтримується, використовується techno`);
+    tab = "techno";
+  }
   currentTab = tab;
   localStorage.setItem("lastStationTab", tab);
   currentIndex = 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   const activeTab = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
-  if (activeTab) activeTab.classList.add("active");
+  if (activeTab) {
+    activeTab.classList.add("active");
+    console.log(`Вкладка ${tab} активована`);
+  } else {
+    console.warn(`Кнопка вкладки ${tab} не знайдена`);
+  }
   changeStation(currentIndex);
 }
 
 function updateStationList() {
+  if (!stationLists[currentTab]) {
+    console.warn(`Дані для вкладки ${currentTab} відсутні`);
+    return;
+  }
   const stations = stationLists[currentTab];
   stationList.innerHTML = '';
 
@@ -186,7 +208,11 @@ function updateStationList() {
   });
 
   stationItems = stationList.querySelectorAll(".station-item");
-  applyTheme(currentTheme); // Повторно застосовуємо тему для оновлення стилів
+  if (stationItems.length > 0) {
+    stationItems[currentIndex].classList.add("selected");
+  }
+  applyTheme(currentTheme); // Повторно застосовуємо тему
+  console.log(`Оновлено список станцій для ${currentTab}, вибрано індекс ${currentIndex}`);
 }
 
 function toggleFavorite(stationName) {
@@ -200,7 +226,7 @@ function toggleFavorite(stationName) {
 }
 
 function changeStation(index) {
-  if (stationItems && stationItems.length > index) {
+  if (stationItems && stationItems.length > index && index >= 0) {
     stationItems.forEach(item => item.classList.remove("selected"));
     stationItems[index].classList.add("selected");
     currentIndex = index;
@@ -214,19 +240,24 @@ function changeStation(index) {
     }
     localStorage.setItem("lastStationIndex", index);
     localStorage.setItem("lastStationTab", currentTab);
+    console.log(`Змінено станцію на індекс ${index}, URL: ${stationUrl}`);
+  } else {
+    console.warn(`Неможливо змінити станцію: індекс ${index}, stationItems: ${stationItems?.length}`);
   }
 }
 
 function updateCurrentStationInfo(item) {
-  currentStationInfo.querySelector(".station-name").textContent = item.dataset.name;
-  currentStationInfo.querySelector(".station-genre").textContent = `жанр: ${item.dataset.genre}`;
-  currentStationInfo.querySelector(".station-country").textContent = `країна: ${item.dataset.country}`;
-  if ('mediaSession' in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: item.dataset.name,
-      artist: `${item.dataset.genre} | ${item.dataset.country}`,
-      album: 'Радіо Музика'
-    });
+  if (item) {
+    currentStationInfo.querySelector(".station-name").textContent = item.dataset.name;
+    currentStationInfo.querySelector(".station-genre").textContent = `жанр: ${item.dataset.genre}`;
+    currentStationInfo.querySelector(".station-country").textContent = `країна: ${item.dataset.country}`;
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: item.dataset.name,
+        artist: `${item.dataset.genre} | ${item.dataset.country}`,
+        album: 'Радіо Музика'
+      });
+    }
   }
 }
 
