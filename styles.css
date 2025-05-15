@@ -1,4 +1,4 @@
-/* Updated on May 15, 2025 for new themes and mobile optimization */
+/* Updated on May 15, 2025 for new theme, mobile optimization, and Samsung A13 */
 body {
   font-family: 'Roboto', sans-serif;
   background: #1A1A1A;
@@ -10,7 +10,6 @@ body {
   justify-content: center;
   align-items: flex-start;
   overflow-x: hidden;
-  padding-top: 10px;
   box-sizing: border-box;
   transition: background 0.3s ease, color 0.3s ease;
 }
@@ -19,10 +18,10 @@ body {
   max-width: 100%;
   width: 100%;
   background: #2A2A2A;
-  padding: 15px;
-  border-radius: 15px;
-  margin: 0 10px;
-  min-height: 90vh;
+  padding: 8px;
+  border-radius: 10px;
+  margin: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -30,7 +29,7 @@ body {
 }
 
 h1 {
-  font-size: 2.5em;
+  font-size: 2em;
   margin: 5px 0;
   text-align: center;
   color: #00B7EB;
@@ -39,15 +38,15 @@ h1 {
 
 .theme-toggle {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 5px;
+  left: 5px;
   background: #333333;
   border: 1px solid #00B7EB;
   border-radius: 5px;
-  padding: 6px;
+  padding: 4px;
   cursor: pointer;
-  height: 35px;
-  width: 35px;
+  height: 28px;
+  width: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -61,10 +60,10 @@ h1 {
 
 .current-station-info {
   background: #2A2A2A;
-  padding: 15px;
-  border-radius: 10px;
-  margin: 10px 0;
-  font-size: 28px;
+  padding: 10px;
+  border-radius: 8px;
+  margin: 8px 0;
+  font-size: 24px;
   font-weight: 700;
   color: #FFFFFF;
   border: 2px solid #00B7EB;
@@ -80,18 +79,18 @@ h1 {
 }
 
 .current-station-info .station-name {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
 }
 
 .current-station-info .station-genre {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 400;
   margin-top: 5px;
 }
 
 .current-station-info .station-country {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 400;
   margin-top: 2px;
 }
@@ -99,17 +98,17 @@ h1 {
 .tabs {
   display: flex;
   justify-content: center;
-  margin: 10px 0;
+  margin: 8px 0;
 }
 
 .tab-btn {
-  padding: 10px 20px;
+  padding: 8px 16px;
   background: #333333;
   border: 1px solid #00B7EB;
   border-radius: 5px;
   color: #FFFFFF;
   cursor: pointer;
-  margin: 0 5px;
+  margin: 0 4px;
   transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -125,20 +124,20 @@ h1 {
 }
 
 .station-list {
-  max-height: 500px;
+  max-height: 450px;
   overflow-y: auto;
   background: #2A2A2A;
   border: 1px solid #00B7EB;
-  border-radius: 10px;
-  margin: 10px 0;
-  padding: 10px;
+  border-radius: 8px;
+  margin: 8px 0;
+  padding: 8px;
   scrollbar-width: thin;
   scrollbar-color: #00B7EB #2A2A2A;
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .station-list::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .station-list::-webkit-scrollbar-track {
@@ -151,12 +150,12 @@ h1 {
 }
 
 .station-item {
-  padding: 12px;
+  padding: 10px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 6px;
   font-weight: 500;
   border: 1px solid #FFFFFF;
-  margin: 5px 0;
+  margin: 4px 0;
   color: #FFFFFF;
   background: #333333;
   display: flex;
@@ -181,7 +180,7 @@ h1 {
   background: none;
   border: none;
   color: #FFFFFF;
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
   transition: color 0.3s ease;
 }
@@ -199,11 +198,11 @@ h1 {
   bottom: 0;
   background: #2A2A2A;
   border-top: 2px solid #00B7EB;
-  padding: 15px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 15px;
   margin-top: auto;
   z-index: 10;
   transition: background 0.3s ease, border-color 0.3s ease;
@@ -212,14 +211,14 @@ h1 {
 .wave-progress {
   display: flex;
   gap: 4px;
-  height: 30px;
+  height: 24px;
   width: 36px;
 }
 
 .wave-bar {
-  width: 10px;
+  width: 8px;
   background: #00B7EB;
-  border-radius: 5px;
+  border-radius: 4px;
   animation: waveAnimation 1.2s infinite ease-in-out;
 }
 
@@ -234,13 +233,13 @@ h1 {
 .controls {
   display: flex;
   justify-content: center;
-  gap: 50px;
+  gap: 30px;
 }
 
 .control-btn {
-  width: 80px;
-  height: 80px;
-  font-size: 32px;
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
   background: #333333;
   color: #FFFFFF;
   border: 2px solid #00B7EB;
@@ -261,6 +260,101 @@ h1 {
   transform: scale(0.95);
 }
 
+/* Адаптація для Samsung A13 та інших вузьких екранів */
+@media (max-width: 720px) and (min-height: 1280px) {
+  body {
+    padding: 0;
+  }
+
+  .container {
+    padding: 5px;
+    margin: 0;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  h1 {
+    font-size: 1.6em;
+    margin: 3px 0;
+  }
+
+  .theme-toggle {
+    top: 3px;
+    left: 3px;
+    height: 24px;
+    width: 24px;
+    padding: 3px;
+  }
+
+  .current-station-info {
+    font-size: 18px;
+    padding: 6px;
+    margin: 5px 0;
+  }
+
+  .current-station-info .station-name {
+    font-size: 18px;
+  }
+
+  .current-station-info .station-genre {
+    font-size: 12px;
+  }
+
+  .current-station-info .station-country {
+    font-size: 12px;
+  }
+
+  .tabs {
+    margin: 5px 0;
+  }
+
+  .tab-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    margin: 0 3px;
+  }
+
+  .station-list {
+    max-height: 40vh;
+    margin: 5px 0;
+    padding: 5px;
+  }
+
+  .station-item {
+    padding: 6px;
+    margin: 3px 0;
+    font-size: 13px;
+  }
+
+  .station-item .favorite-btn {
+    font-size: 16px;
+  }
+
+  .controls-container {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .controls {
+    gap: 20px;
+  }
+
+  .control-btn {
+    width: 45px;
+    height: 45px;
+    font-size: 18px;
+  }
+
+  .wave-progress {
+    width: 30px;
+    height: 20px;
+  }
+
+  .wave-bar {
+    width: 7px;
+  }
+}
+
 @media (max-width: 720px) {
   h1 {
     font-size: 1.8em;
@@ -268,8 +362,8 @@ h1 {
 
   .container {
     padding: 8px;
-    margin: 0 5px;
-    min-height: 90vh;
+    margin: 0;
+    min-height: 100vh;
   }
 
   .control-btn {
@@ -332,7 +426,7 @@ h1 {
 
 @media (max-height: 1600px) {
   .container {
-    min-height: 85vh;
+    min-height: 100vh;
   }
 
   .station-list {

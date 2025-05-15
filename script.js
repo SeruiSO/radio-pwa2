@@ -64,6 +64,13 @@ const themes = {
     accent: "#00FFFF",
     text: "#E0E0E0",
     font: "'Roboto', sans-serif"
+  },
+  darkWhite: {
+    bodyBg: "#121212",
+    containerBg: "#1E1E1E",
+    accent: "#FFFFFF",
+    text: "#E0E0E0",
+    font: "'Roboto', sans-serif"
   }
 };
 let currentTheme = localStorage.getItem("selectedTheme") || "black";
@@ -116,13 +123,13 @@ function applyTheme(theme) {
 
   document.querySelectorAll(".station-item.selected").forEach(el => {
     el.style.background = themeStyles.accent;
-    el.style.color = theme === "light" ? "#1A1A1A" : "#FFFFFF";
+    el.style.color = (theme === "neonBlue" || theme === "darkWhite") ? "#1A1A1A" : "#FFFFFF";
     el.style.borderColor = themeStyles.accent;
   });
 
   document.querySelectorAll(".tab-btn.active").forEach(el => {
     el.style.background = themeStyles.accent;
-    el.style.color = theme === "light" ? "#1A1A1A" : "#FFFFFF";
+    el.style.color = (theme === "neonBlue" || theme === "darkWhite") ? "#1A1A1A" : "#FFFFFF";
     el.style.borderColor = themeStyles.accent;
   });
 
@@ -134,8 +141,8 @@ function applyTheme(theme) {
 }
 
 function toggleTheme() {
-  const themesOrder = ["black", "light", "neonBlue"];
-  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 3];
+  const themesOrder = ["black", "light", "neonBlue", "darkWhite"];
+  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 4];
   applyTheme(nextTheme);
 }
 
@@ -146,7 +153,8 @@ function switchTab(tab) {
   currentIndex = 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-  document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add("active");
+  const activeTab = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+  if (activeTab) activeTab.classList.add("active");
   changeStation(currentIndex);
 }
 
@@ -192,19 +200,21 @@ function toggleFavorite(stationName) {
 }
 
 function changeStation(index) {
-  stationItems.forEach(item => item.classList.remove("selected"));
-  stationItems[index].classList.add("selected");
-  currentIndex = index;
-  const stationUrl = stationItems[index].dataset.value;
-  updateCurrentStationInfo(stationItems[index]);
-  if (isPlaying) {
-    playWithRetry(stationUrl, 3, 2000);
-  } else {
-    audio.src = stationUrl;
-    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
+  if (stationItems && stationItems.length > index) {
+    stationItems.forEach(item => item.classList.remove("selected"));
+    stationItems[index].classList.add("selected");
+    currentIndex = index;
+    const stationUrl = stationItems[index].dataset.value;
+    updateCurrentStationInfo(stationItems[index]);
+    if (isPlaying) {
+      playWithRetry(stationUrl, 3, 2000);
+    } else {
+      audio.src = stationUrl;
+      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
+    }
+    localStorage.setItem("lastStationIndex", index);
+    localStorage.setItem("lastStationTab", currentTab);
   }
-  localStorage.setItem("lastStationIndex", index);
-  localStorage.setItem("lastStationTab", currentTab);
 }
 
 function updateCurrentStationInfo(item) {
