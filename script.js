@@ -5,7 +5,7 @@ const currentStationInfo = document.getElementById("currentStationInfo");
 let currentIndex = parseInt(localStorage.getItem("lastStation")) || 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let currentTab = localStorage.getItem("currentTab") || "techno";
-let isPlaying = localStorage.getItem("isPlaying") === "true" || false; // За замовчуванням false
+let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = {};
 let stationItems;
 let hasUserInteraction = false;
@@ -13,11 +13,10 @@ let hasUserInteraction = false;
 // Дозвіл на відтворення після першого кліку
 document.addEventListener('click', () => {
   hasUserInteraction = true;
-  if (audio.src && !audio.paused && !isPlaying) {
-    audio.play().catch(error => console.error("Помилка відтворення після взаємодії:", error));
-    isPlaying = true;
-    playPauseBtn.textContent = "⏸";
-    localStorage.setItem("isPlaying", isPlaying);
+  if (audio.src && !audio.paused && !isPlaying && stationItems?.length > currentIndex) {
+    changeStation(currentIndex).then(() => {
+      if (isPlaying) audio.play().catch(error => console.error("Помилка відтворення після взаємодії:", error));
+    });
   }
 }, { once: true });
 
@@ -130,7 +129,8 @@ function switchTab(tab) {
   if (!["techno", "trance", "ukraine"].includes(tab)) tab = "techno";
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
-  currentIndex = 0;
+  const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
+  currentIndex = savedIndex < (stationLists[tab]?.length || 0) ? savedIndex : 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
@@ -211,33 +211,37 @@ async function changeStation(index) {
   item.classList.add("selected");
   currentIndex = index;
   audio.src = item.dataset.value;
-  updateCurrentStationInfo(item);
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
-  
+
   const isOnline = await checkStationAvailability(item.dataset.value);
+  updateCurrentStationInfo(item, isOnline);
+
   if (isOnline && hasUserInteraction) {
-    audio.play().catch(error => console.error("Помилка відтворення:", error));
-    isPlaying = true;
-    playPauseBtn.textContent = "⏸";
-    currentStationInfo.querySelector(".network-status").textContent = "";
-    currentStationInfo.querySelector(".network-status").classList.remove("disconnected");
+    try {
+      await audio.play();
+      isPlaying = true;
+      playPauseBtn.textContent = "⏸";
+    } catch (error) {
+      console.error("Помилка відтворення:", error);
+    }
   } else if (!isOnline) {
     item.classList.add('offline');
-    currentStationInfo.querySelector(".network-status").textContent = "❌";
-    currentStationInfo.querySelector(".network-status").classList.add("disconnected");
+    if (hasUserInteraction) {
+      setTimeout(() => changeStation(index), 2000);
+    }
   }
   localStorage.setItem("isPlaying", isPlaying);
-  localStorage.setItem("lastStation", index);
+  localStorage.setItem(`lastStation_${currentTab}`, currentIndex);
 }
 
-function updateCurrentStationInfo(item) {
+function updateCurrentStationInfo(item, isOnline) {
   currentStationInfo.querySelector(".station-name").textContent = item.dataset.name || "Немає даних";
   currentStationInfo.querySelector(".station-genre").textContent = `жанр: ${item.dataset.genre || '-'}`;
   currentStationInfo.querySelector(".station-country").textContent = `країна: ${item.dataset.country || '-'}`;
   const networkStatus = currentStationInfo.querySelector(".network-status");
   networkStatus.textContent = "";
   networkStatus.className = "network-status";
-  if (item.classList.contains('offline')) {
+  if (!isOnline) {
     networkStatus.textContent = "❌";
     networkStatus.classList.add("disconnected");
   }
@@ -333,7 +337,7 @@ navigator.mediaSession.setActionHandler("pause", () => togglePlayPause());
 
 applyTheme(currentTheme);
 window.addEventListener("blur", () => {
-  if (document.hidden) localStorage.setItem("lastStation", currentIndex);
+  if (document.hidden) localStorage.setItem(`lastStation_${currentTab}`, currentIndex);
 });
 
 audio.addEventListener("playing", () => {
