@@ -12,17 +12,23 @@ let stationItems;
 // Завантаження станцій із JSON
 fetch('stations.json')
   .then(response => {
-    if (!response.ok) throw new Error('Не вдалося завантажити stations.json');
+    if (!response.ok) throw new Error('Не вдалося завантажити stations.json: ' + response.statusText);
     return response.json();
   })
   .then(data => {
-    console.log("stations.json завантажено:", data); // Дебаг
+    console.log("stations.json завантажено:", data);
     stationLists = data;
+    // Перевірка, чи є поточна вкладка в stationLists, якщо ні — вибираємо першу доступну
+    const availableTabs = Object.keys(stationLists);
+    if (!availableTabs.includes(currentTab)) {
+      currentTab = availableTabs[0] || "techno";
+      localStorage.setItem("currentTab", currentTab);
+    }
     switchTab(currentTab); // Ініціалізація вкладки
   })
   .catch(error => {
     console.error("Помилка завантаження станцій:", error);
-    stationList.innerHTML = '<div style="color: red; padding: 10px;">Помилка завантаження станцій. Перевірте stations.json.</div>';
+    stationList.innerHTML = '<div style="color: red; padding: 10px;">Помилка завантаження станцій. Перевірте, чи файл stations.json доступний у корені проєкту.</div>';
   });
 
 // Теми
@@ -38,7 +44,7 @@ let currentTheme = localStorage.getItem("selectedTheme") || "dark";
 // Налаштування Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then((registration) => {
-    registration.update(); // Перевірка оновлень при запуску
+    registration.update();
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
       newWorker.addEventListener('statechange', () => {
@@ -52,7 +58,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data.type === 'UPDATE') {
-      alert(event.data.message); // Сповіщення про оновлення
+      alert(event.data.message);
     }
   });
 }
@@ -108,8 +114,8 @@ async function checkStationAvailability(url) {
 function updateStationList() {
   stationList.innerHTML = '';
   const stations = stationLists[currentTab] || [];
-  if (!stations.length) {
-    stationList.innerHTML = '<div style="color: yellow; padding: 10px;">Немає станцій для цієї вкладки.</div>';
+  if (!stations || stations.length === 0) {
+    stationList.innerHTML = '<div style="color: yellow; padding: 10px;">Немає станцій для вкладки "' + currentTab + '".</div>';
     return;
   }
 
@@ -131,7 +137,7 @@ function updateStationList() {
   });
 
   stationItems = stationList.querySelectorAll(".station-item");
-  console.log("stationItems:", stationItems.length); // Дебаг
+  console.log("stationItems для вкладки", currentTab, ":", stationItems.length);
 
   stationList.onclick = (e) => {
     const item = e.target.closest('.station-item');
@@ -148,6 +154,8 @@ function updateStationList() {
 
   if (stationItems.length > 0 && currentIndex < stationItems.length) {
     changeStation(currentIndex);
+  } else {
+    console.log("Не вдалося ініціалізувати станцію: stationItems порожній або currentIndex недійсний.");
   }
 }
 
@@ -244,7 +252,6 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// Автовідтворення при зміні видимості
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && isPlaying) {
     setTimeout(() => {
@@ -253,7 +260,6 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-// Автовідтворення після відновлення мережі
 window.addEventListener("online", () => {
   if (isPlaying) {
     setTimeout(() => {
@@ -262,7 +268,6 @@ window.addEventListener("online", () => {
   }
 });
 
-// Перепідключення при помилці
 let reconnectAttempts = 0;
 audio.addEventListener("error", () => {
   if (reconnectAttempts < 3) {
@@ -277,7 +282,6 @@ audio.addEventListener("error", () => {
   }
 });
 
-// Оновлення стану мережі
 audio.addEventListener("waiting", () => {
   currentStationInfo.querySelector(".network-status").textContent = "⏳";
   currentStationInfo.querySelector(".network-status").classList.add("buffering");
