@@ -1,4 +1,4 @@
-/* Updated on May 15, 2025 to force refresh */
+/* Updated on May 16, 2025 to force refresh */
 body {
   font-family: 'Roboto', sans-serif;
   background: #121212;
@@ -84,36 +84,11 @@ h1 {
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 
-.current-station-info::before {
-  content: "📻 ";
-  margin-right: 10px;
-  display: inline-block;
-}
-
 .current-station-info .station-name {
   font-size: 28px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-}
-
-.current-station-info .network-status {
-  margin-left: 10px;
-  font-size: 20px;
-}
-
-.current-station-info .network-status.disconnected {
-  color: #ff4444;
-}
-
-.current-station-info .network-status.buffering {
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
 }
 
 .current-station-info .station-genre {
@@ -197,12 +172,6 @@ h1 {
   justify-content: space-between;
   align-items: center;
   transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-.station-item.offline {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: #555;
 }
 
 .station-item:hover, .station-item.selected {
@@ -345,10 +314,6 @@ h1 {
 
   .current-station-info .station-name {
     font-size: 24px;
-  }
-
-  .current-station-info .network-status {
-    font-size: 16px;
   }
 
   .current-station-info .station-genre {
