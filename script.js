@@ -44,6 +44,11 @@ if ('serviceWorker' in navigator) {
       });
     });
   });
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data.type === 'UPDATE') {
+      alert(event.data.message); // Сповіщення про оновлення
+    }
+  });
 }
 
 function applyTheme(theme) {
@@ -84,7 +89,7 @@ function switchTab(tab) {
 }
 
 // Перевірка доступності URL
-async function checkStationny URL
+async function checkStationAvailability(url) {
   try {
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 5000); // Таймаут 5 секунд
@@ -105,15 +110,14 @@ function updateStationList() {
   const nonFavoriteList = stations.filter(station => !favoriteStations.includes(station.name));
   const sortedStations = [...favoriteList, ...nonFavoriteList];
 
-  sortedStations.forEach(async (station, index) => {
-    const isOnline = await checkStationAvailability(station.value);
+  sortedStations.forEach((station, index) => {
     const item = document.createElement("div");
-    item.className = `station-item ${index === currentIndex ? 'selected' : ''} ${!isOnline ? 'offline' : ''}`;
+    item.className = `station-item ${index === currentIndex ? 'selected' : ''}`;
     item.dataset.value = station.value;
     item.dataset.name = station.name;
     item.dataset.genre = station.genre;
     item.dataset.country = station.country;
-    item.innerHTML = `${station.emoji} ${station.name}${!isOnline ? ' (Офлайн)' : ''}<button class="favorite-btn${favoriteStations.includes(station.name) ? ' favorited' : ''}">★</button>`;
+    item.innerHTML = `${station.emoji} ${station.name}<button class="favorite-btn${favoriteStations.includes(station.name) ? ' favorited' : ''}">★</button>`;
     stationList.appendChild(item);
   });
 
@@ -123,7 +127,7 @@ function updateStationList() {
   stationList.onclick = (e) => {
     const item = e.target.closest('.station-item');
     const favoriteBtn = e.target.closest('.favorite-btn');
-    if (item && !item.classList.contains('offline')) {
+    if (item) {
       const index = Array.from(stationItems).indexOf(item);
       changeStation(index);
     }
@@ -144,13 +148,21 @@ function toggleFavorite(stationName) {
   updateStationList();
 }
 
-function changeStation(index) {
+async function changeStation(index) {
   if (index < 0 || index >= stationItems.length) return;
+  const item = stationItems[index];
+  const isOnline = await checkStationAvailability(item.dataset.value);
+  if (!isOnline) {
+    item.classList.add('offline');
+    currentStationInfo.querySelector(".network-status").textContent = "❌";
+    currentStationInfo.querySelector(".network-status").classList.add("disconnected");
+    return;
+  }
   stationItems.forEach(item => item.classList.remove("selected"));
-  stationItems[index].classList.add("selected");
+  item.classList.add("selected");
   currentIndex = index;
-  audio.src = stationItems[index].dataset.value;
-  updateCurrentStationInfo(stationItems[index]);
+  audio.src = item.dataset.value;
+  updateCurrentStationInfo(item);
   if (audio.paused) {
     document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
   } else {

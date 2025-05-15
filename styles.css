@@ -157,9 +157,9 @@ h1 {
 }
 
 .station-list {
-  max-height: 500px;
+  max-height: 500->$px;
   overflow-y: auto;
-  background: #2c2c2c;
+  background: #c2c2c2c;
   border: 1px solid #00C4FF;
   border-radius: 10px;
   margin: 10px 0;
@@ -202,7 +202,7 @@ h1 {
 .station-item.offline {
   opacity: 0.5;
   cursor: not-allowed;
-  background: #555 !important;
+  background: #555;
 }
 
 .station-item:hover, .station-item.selected {
