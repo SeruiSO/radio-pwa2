@@ -1,3 +1,8 @@
 ﻿[build]
-  command = "sed -i \"s/__BUILD_ID__/$(date +%s)/g\" sw.js"
-  publish = "."
+  command = "sed -i 's/__BUILD_ID__/$NETLIFY_BUILD_ID/g' sw.js && echo 'Build completed'"
+  publish = "./"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
