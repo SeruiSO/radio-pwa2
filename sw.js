@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'radio-pwa-cache-v8'; // Оновлено версію кешу
+const CACHE_NAME = 'radio-pwa-cache-v10';
 const urlsToCache = [
   '/',
   'index.html',
@@ -10,7 +10,6 @@ const urlsToCache = [
   'icon-512.png'
 ];
 
-// Кешування при встановленні
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -24,7 +23,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Обробка запитів
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
@@ -43,14 +41,12 @@ self.addEventListener('fetch', (event) => {
             });
           return response;
         }).catch(() => {
-          // Якщо запит не вдався, спробуємо повернути з кешу
           return caches.match(event.request);
         });
       })
   );
 });
 
-// Очищення старих кешів
 self.addEventListener('activate', (event) => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(

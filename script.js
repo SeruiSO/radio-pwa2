@@ -9,13 +9,13 @@ let isPlaying = localStorage.getItem("isPlaying") === "true" || true; // За з
 let stationLists = {};
 let stationItems;
 
-// Функція для завантаження станцій із повторними спробами
+// Функція для завантаження станцій із кешем як резервом
 async function loadStations(attempt = 1) {
   try {
     const response = await fetch('stations.json');
     if (!response.ok) throw new Error('Не вдалося завантажити stations.json: ' + response.statusText);
     const data = await response.json();
-    console.log("stations.json завантажено:", data);
+    console.log("stations.json завантажено з мережі:", data);
     stationLists = data;
     const availableTabs = Object.keys(stationLists);
     if (!availableTabs.includes(currentTab)) {
@@ -25,7 +25,29 @@ async function loadStations(attempt = 1) {
     switchTab(currentTab);
   } catch (error) {
     console.error("Помилка завантаження станцій (спроба " + attempt + "):", error);
-    if (attempt < 3) {
+    // Спроба отримати з кешу
+    if ('caches' in window) {
+      caches.match('stations.json').then(cacheResponse => {
+        if (cacheResponse) {
+          cacheResponse.json().then(cachedData => {
+            console.log("stations.json завантажено з кешу:", cachedData);
+            stationLists = cachedData;
+            const availableTabs = Object.keys(stationLists);
+            if (!availableTabs.includes(currentTab)) {
+              currentTab = availableTabs[0] || "techno";
+              localStorage.setItem("currentTab", currentTab);
+            }
+            switchTab(currentTab);
+          }).catch(cacheError => {
+            console.error("Помилка читання кешу:", cacheError);
+          });
+        } else if (attempt < 3) {
+          setTimeout(() => loadStations(attempt + 1), 1000);
+        } else {
+          stationList.innerHTML = '<div style="color: red; padding: 10px;">Помилка завантаження станцій після кількох спроб. Перевірте, чи файл stations.json доступний у корені проєкту.</div>';
+        }
+      });
+    } else if (attempt < 3) {
       setTimeout(() => loadStations(attempt + 1), 1000);
     } else {
       stationList.innerHTML = '<div style="color: red; padding: 10px;">Помилка завантаження станцій після кількох спроб. Перевірте, чи файл stations.json доступний у корені проєкту.</div>';
@@ -173,7 +195,7 @@ function toggleFavorite(stationName) {
   updateStationList();
 }
 
-function changeStation(index) {
+async function changeStation(index) {
   if (index < 0 || index >= stationItems.length) return;
   const item = stationItems[index];
   stationItems.forEach(item => item.classList.remove("selected", "offline"));
@@ -182,21 +204,21 @@ function changeStation(index) {
   audio.src = item.dataset.value;
   updateCurrentStationInfo(item);
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
-  audio.play().catch(error => console.error("Помилка відтворення:", error));
-  isPlaying = true;
+  
+  const isOnline = await checkStationAvailability(item.dataset.value);
+  if (isOnline) {
+    audio.play().catch(error => console.error("Помилка відтворення:", error));
+    isPlaying = true;
+    playPauseBtn.textContent = "⏸";
+    currentStationInfo.querySelector(".network-status").textContent = "";
+    currentStationInfo.querySelector(".network-status").classList.remove("disconnected");
+  } else {
+    item.classList.add('offline');
+    currentStationInfo.querySelector(".network-status").textContent = "❌";
+    currentStationInfo.querySelector(".network-status").classList.add("disconnected");
+  }
   localStorage.setItem("isPlaying", isPlaying);
-  playPauseBtn.textContent = "⏸";
   localStorage.setItem("lastStation", index);
-  checkStationAvailability(item.dataset.value).then(isOnline => {
-    if (!isOnline) {
-      item.classList.add('offline');
-      currentStationInfo.querySelector(".network-status").textContent = "❌";
-      currentStationInfo.querySelector(".network-status").classList.add("disconnected");
-    } else {
-      currentStationInfo.querySelector(".network-status").textContent = "";
-      currentStationInfo.querySelector(".network-status").classList.remove("disconnected");
-    }
-  });
 }
 
 function updateCurrentStationInfo(item) {
