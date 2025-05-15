@@ -64,13 +64,6 @@ const themes = {
     accent: "#00FFFF",
     text: "#E0E0E0",
     font: "'Roboto', sans-serif"
-  },
-  darkWhite: {
-    bodyBg: "#121212",
-    containerBg: "#1E1E1E",
-    accent: "#FFFFFF",
-    text: "#E0E0E0",
-    font: "'Roboto', sans-serif"
   }
 };
 let currentTheme = localStorage.getItem("selectedTheme") || "black";
@@ -128,13 +121,13 @@ function applyTheme(theme) {
 
   document.querySelectorAll(".station-item.selected").forEach(el => {
     el.style.background = themeStyles.accent;
-    el.style.color = (theme === "neonBlue" || theme === "darkWhite") ? "#1A1A1A" : "#FFFFFF";
+    el.style.color = theme === "neonBlue" ? "#1A1A1A" : theme === "light" ? "#1A1A1A" : "#FFFFFF";
     el.style.borderColor = themeStyles.accent;
   });
 
   document.querySelectorAll(".tab-btn.active").forEach(el => {
     el.style.background = themeStyles.accent;
-    el.style.color = (theme === "neonBlue" || theme === "darkWhite") ? "#1A1A1A" : "#FFFFFF";
+    el.style.color = theme === "neonBlue" ? "#1A1A1A" : theme === "light" ? "#1A1A1A" : "#FFFFFF";
     el.style.borderColor = themeStyles.accent;
   });
 
@@ -149,7 +142,7 @@ function applyTheme(theme) {
 }
 
 function toggleTheme() {
-  const themesOrder = ["black", "light", "neonBlue", "darkWhite"];
+  const themesOrder = ["black", "light", "neonBlue"];
   const currentIndex = themesOrder.indexOf(currentTheme);
   const nextTheme = themesOrder[(currentIndex + 1) % themesOrder.length];
   console.log(`Перемикання з ${currentTheme} на ${nextTheme}`);
@@ -208,7 +201,7 @@ function updateStationList() {
   });
 
   stationItems = stationList.querySelectorAll(".station-item");
-  if (stationItems.length > 0) {
+  if (stationItems.length > 0 && currentIndex < stationItems.length) {
     stationItems[currentIndex].classList.add("selected");
   }
   applyTheme(currentTheme); // Повторно застосовуємо тему
