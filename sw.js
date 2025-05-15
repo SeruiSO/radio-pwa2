@@ -1,5 +1,6 @@
-﻿const CACHE_NAME = 'radio-pwa-cache-v9';
+﻿const CACHE_NAME = 'radio-pwa-cache-v8'; // Оновлено версію кешу
 const urlsToCache = [
+  '/',
   'index.html',
   'styles.css',
   'script.js',
@@ -9,15 +10,21 @@ const urlsToCache = [
   'icon-512.png'
 ];
 
+// Кешування при встановленні
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(urlsToCache);
+        console.log('Кешування файлів:', urlsToCache);
+        return cache.addAll(urlsToCache).catch(error => {
+          console.error('Помилка кешування:', error);
+        });
       })
+      .then(() => self.skipWaiting())
   );
 });
 
+// Обробка запитів
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
@@ -35,11 +42,15 @@ self.addEventListener('fetch', (event) => {
               cache.put(event.request, responseToCache);
             });
           return response;
+        }).catch(() => {
+          // Якщо запит не вдався, спробуємо повернути з кешу
+          return caches.match(event.request);
         });
       })
   );
 });
 
+// Очищення старих кешів
 self.addEventListener('activate', (event) => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
@@ -52,12 +63,11 @@ self.addEventListener('activate', (event) => {
         })
       );
     }).then(() => {
-      // Сповіщення про оновлення
       self.clients.matchAll().then(clients => {
         clients.forEach(client => {
           client.postMessage({ type: 'UPDATE', message: 'Додаток оновлено до нової версії!' });
         });
       });
-    })
+    }).then(() => self.clients.claim())
   );
 });

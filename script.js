@@ -5,31 +5,35 @@ const currentStationInfo = document.getElementById("currentStationInfo");
 let currentIndex = parseInt(localStorage.getItem("lastStation")) || 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let currentTab = localStorage.getItem("currentTab") || "techno";
-let isPlaying = localStorage.getItem("isPlaying") === "true";
+let isPlaying = localStorage.getItem("isPlaying") === "true" || true; // За замовчуванням true
 let stationLists = {};
 let stationItems;
 
-// Завантаження станцій із JSON
-fetch('stations.json')
-  .then(response => {
+// Функція для завантаження станцій із повторними спробами
+async function loadStations(attempt = 1) {
+  try {
+    const response = await fetch('stations.json');
     if (!response.ok) throw new Error('Не вдалося завантажити stations.json: ' + response.statusText);
-    return response.json();
-  })
-  .then(data => {
+    const data = await response.json();
     console.log("stations.json завантажено:", data);
     stationLists = data;
-    // Перевірка, чи є поточна вкладка в stationLists, якщо ні — вибираємо першу доступну
     const availableTabs = Object.keys(stationLists);
     if (!availableTabs.includes(currentTab)) {
       currentTab = availableTabs[0] || "techno";
       localStorage.setItem("currentTab", currentTab);
     }
-    switchTab(currentTab); // Ініціалізація вкладки
-  })
-  .catch(error => {
-    console.error("Помилка завантаження станцій:", error);
-    stationList.innerHTML = '<div style="color: red; padding: 10px;">Помилка завантаження станцій. Перевірте, чи файл stations.json доступний у корені проєкту.</div>';
-  });
+    switchTab(currentTab);
+  } catch (error) {
+    console.error("Помилка завантаження станцій (спроба " + attempt + "):", error);
+    if (attempt < 3) {
+      setTimeout(() => loadStations(attempt + 1), 1000);
+    } else {
+      stationList.innerHTML = '<div style="color: red; padding: 10px;">Помилка завантаження станцій після кількох спроб. Перевірте, чи файл stations.json доступний у корені проєкту.</div>';
+    }
+  }
+}
+
+loadStations();
 
 // Теми
 const themes = {
@@ -177,14 +181,11 @@ function changeStation(index) {
   currentIndex = index;
   audio.src = item.dataset.value;
   updateCurrentStationInfo(item);
-  if (audio.paused) {
-    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
-  } else {
-    document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
-  }
-  if (isPlaying) {
-    audio.play().catch(error => console.error("Помилка відтворення:", error));
-  }
+  document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+  audio.play().catch(error => console.error("Помилка відтворення:", error));
+  isPlaying = true;
+  localStorage.setItem("isPlaying", isPlaying);
+  playPauseBtn.textContent = "⏸";
   localStorage.setItem("lastStation", index);
   checkStationAvailability(item.dataset.value).then(isOnline => {
     if (!isOnline) {
@@ -199,9 +200,9 @@ function changeStation(index) {
 }
 
 function updateCurrentStationInfo(item) {
-  currentStationInfo.querySelector(".station-name").textContent = item.dataset.name;
-  currentStationInfo.querySelector(".station-genre").textContent = `жанр: ${item.dataset.genre}`;
-  currentStationInfo.querySelector(".station-country").textContent = `країна: ${item.dataset.country}`;
+  currentStationInfo.querySelector(".station-name").textContent = item.dataset.name || "Немає даних";
+  currentStationInfo.querySelector(".station-genre").textContent = `жанр: ${item.dataset.genre || '-'}`;
+  currentStationInfo.querySelector(".station-country").textContent = `країна: ${item.dataset.country || '-'}`;
   const networkStatus = currentStationInfo.querySelector(".network-status");
   networkStatus.textContent = "";
   networkStatus.className = "network-status";
@@ -211,8 +212,8 @@ function updateCurrentStationInfo(item) {
   }
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: item.dataset.name,
-      artist: `${item.dataset.genre} | ${item.dataset.country}`,
+      title: item.dataset.name || "Невідома станція",
+      artist: `${item.dataset.genre || '-'} | ${item.dataset.country || '-'}`,
       album: 'Радіо Музика'
     });
   }
