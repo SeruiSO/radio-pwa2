@@ -33,6 +33,11 @@ async function loadStations(attempt = 1) {
       localStorage.setItem("currentTab", currentTab);
     }
     switchTab(currentTab);
+    // Автовідтворення після завантаження станцій
+    if (stationItems?.length > currentIndex && isPlaying) {
+      changeStation(currentIndex);
+      audio.play().catch(error => console.error("Помилка автовідтворення:", error));
+    }
   } catch (error) {
     console.error("Помилка завантаження станцій (спроба " + attempt + "):", error);
     if ('caches' in window) {
@@ -47,6 +52,11 @@ async function loadStations(attempt = 1) {
               localStorage.setItem("currentTab", currentTab);
             }
             switchTab(currentTab);
+            // Автовідтворення після завантаження з кешу
+            if (stationItems?.length > currentIndex && isPlaying) {
+              changeStation(currentIndex);
+              audio.play().catch(error => console.error("Помилка автовідтворення:", error));
+            }
           }).catch(cacheError => {
             console.error("Помилка читання кешу:", cacheError);
           });
@@ -129,6 +139,11 @@ function switchTab(tab) {
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
   if (activeBtn) activeBtn.classList.add("active");
+  // Автовідтворення при перемиканні вкладки
+  if (stationItems?.length > currentIndex && isPlaying) {
+    changeStation(currentIndex);
+    audio.play().catch(error => console.error("Помилка автовідтворення:", error));
+  }
 }
 
 function updateStationList() {
@@ -299,6 +314,12 @@ window.addEventListener("blur", () => {
 
 audio.volume = 0.5;
 
-if (isPlaying && hasUserInteraction) {
-  audio.play().catch(error => console.error("Помилка автовідтворення:", error));
+// Автовідтворення при завантаженні сторінки
+if (isPlaying) {
+  setTimeout(() => {
+    if (stationItems?.length > currentIndex) {
+      changeStation(currentIndex);
+      audio.play().catch(error => console.error("Помилка автовідтворення:", error));
+    }
+  }, 1000);
 }
