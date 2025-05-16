@@ -2,7 +2,6 @@ const audio = document.getElementById("audioPlayer");
 const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
 const currentStationInfo = document.getElementById("currentStationInfo");
-const searchInput = document.getElementById("stationSearch");
 let currentIndex = parseInt(localStorage.getItem("lastStation")) || 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let currentTab = localStorage.getItem("currentTab") || "techno";
@@ -10,7 +9,6 @@ let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = {};
 let stationItems;
 let hasUserInteraction = false;
-let listenHistory = JSON.parse(localStorage.getItem("listenHistory")) || [];
 
 document.addEventListener('click', () => {
   hasUserInteraction = true;
@@ -22,7 +20,7 @@ document.addEventListener('click', () => {
 
 async function loadStations(attempt = 1) {
   try {
-    const response = await fetch('stations.json');
+    const response = await fetch('stations.json', { priority: 'low' });
     if (!response.ok) throw new Error('Failed to load stations.json: ' + response.statusText);
     stationLists = await response.json();
     const availableTabs = Object.keys(stationLists);
@@ -104,7 +102,6 @@ function applyTheme(theme) {
     el.style.color = themes[theme].text;
   });
   document.querySelector("h1").style.color = themes[theme].accent;
-  document.querySelector("#stationSearch").style.borderColor = themes[theme].accent;
   currentTheme = theme;
   localStorage.setItem("selectedTheme", theme);
 }
@@ -116,7 +113,7 @@ function toggleTheme() {
 }
 
 function switchTab(tab) {
-  if (!["techno", "trance", "ukraine", "favorites", "recommendations"].includes(tab)) tab = "techno";
+  if (!["techno", "trance", "ukraine", "favorites"].includes(tab)) tab = "techno";
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
   const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
@@ -124,7 +121,6 @@ function switchTab(tab) {
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add("active");
-  gsap.to(".tab-btn", { scale: tab === currentTab ? 1.1 : 1, duration: 0.3 });
   if (stationItems?.length > currentIndex && isPlaying) {
     changeStation(currentIndex);
     audio.play().catch(error => console.error("Autoplay error:", error));
@@ -134,31 +130,15 @@ function switchTab(tab) {
 function getStationsForTab(tab) {
   if (tab === "favorites") {
     return Object.values(stationLists).flat().filter(station => favoriteStations.includes(station.name));
-  } else if (tab === "recommendations") {
-    const favoriteGenres = listenHistory.reduce((acc, name) => {
-      const station = Object.values(stationLists).flat().find(s => s.name === name);
-      if (station) acc[station.genre] = (acc[station.genre] || 0) + 1;
-      return acc;
-    }, {});
-    const topGenres = Object.entries(favoriteGenres).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([genre]) => genre);
-    return Object.values(stationLists).flat().filter(station => topGenres.includes(station.genre));
   }
   return stationLists[tab] || [];
 }
 
 function updateStationList() {
   stationList.innerHTML = '';
-  let stations = getStationsForTab(currentTab);
-  const query = searchInput.value.toLowerCase();
-  if (query) {
-    stations = stations.filter(station =>
-      station.name.toLowerCase().includes(query) ||
-      station.genre.toLowerCase().includes(query) ||
-      station.country.toLowerCase().includes(query)
-    );
-  }
+  const stations = getStationsForTab(currentTab);
   if (!stations || stations.length === 0) {
-    stationList.innerHTML = `<div style="color: yellow; padding: 10px;">Немає станцій для ${currentTab === 'favorites' ? 'улюблених' : currentTab}.</div>`;
+    stationList.innerHTML = `<div style="color: yellow; padding: 8px;">Немає станцій для ${currentTab === 'favorites' ? 'улюблених' : currentTab}.</div>`;
     return;
   }
 
@@ -171,7 +151,6 @@ function updateStationList() {
     item.dataset.country = station.country;
     item.innerHTML = `${station.emoji} ${station.name}<button class="favorite-btn${favoriteStations.includes(station.name) ? ' favorited' : ''}">★</button>`;
     stationList.appendChild(item);
-    gsap.from(item, { opacity: 0, y: 20, duration: 0.5, delay: index * 0.1 });
   });
 
   stationItems = stationList.querySelectorAll(".station-item");
@@ -186,7 +165,7 @@ function updateStationList() {
     if (favoriteBtn) {
       const stationName = favoriteBtn.parentElement.dataset.name;
       toggleFavorite(stationName);
-      gsap.to(favoriteBtn, { scale: 1.5, duration: 0.2, yoyo: true, repeat: 1 });
+      gsap.to(favoriteBtn, { scale: 1.5, duration: 0.1, yoyo: true, repeat: 1 });
     }
   };
 
@@ -213,15 +192,12 @@ function changeStation(index) {
   currentIndex = index;
   audio.src = item.dataset.value;
   updateCurrentStationInfo(item);
-  listenHistory.push(item.dataset.name);
-  localStorage.setItem("listenHistory", JSON.stringify(listenHistory.slice(-100)));
   fetchMetadata(item.dataset.value);
   if (isPlaying && hasUserInteraction) {
     audio.play().catch(error => console.error("Playback error:", error));
   }
   localStorage.setItem("isPlaying", isPlaying);
   localStorage.setItem(`lastStation_${currentTab}`, currentIndex);
-  gsap.to(item, { scale: 1.05, duration: 0.2, yoyo: true, repeat: 1 });
 }
 
 function updateCurrentStationInfo(item) {
@@ -290,8 +266,6 @@ function togglePlayPause() {
   }
   localStorage.setItem("isPlaying", isPlaying);
 }
-
-searchInput.addEventListener("input", () => updateStationList());
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") prevStation();
