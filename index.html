@@ -42,25 +42,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VibeWave Radio</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+  <title>RADIO _S_O_</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
-  <script src="https://cdn.jsdelivr.net/npm/icy-metadata-js@1.0.0/dist/icy-metadata.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>🎧 VibeWave Radio</h1>
-      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-      <button class="share-btn" onclick="shareStation()">📤</button>
-    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    <h1>🎧 RADIO _S_O_</h1>
 
     <div class="current-station-info" id="currentStationInfo">
       <div class="station-info-content">
-        <div class="wave-progress"></div>
+        <div class="wave-progress">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
         <div class="station-text">
           <div class="station-name">Обирайте станцію</div>
           <div class="station-genre">жанр: -</div>
@@ -72,10 +73,10 @@
     <div class="station-list" id="stationList"></div>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('techno')">Techno</button>
-      <button class="tab-btn" onclick="switchTab('trance')">Trance</button>
-      <button class="tab-btn" onclick="switchTab('ukraine')">Ukraine</button>
-      <button class="tab-btn" onclick="switchTab('favorites')">Улюблені</button>
+      <button class="tab-btn active" onclick="switchTab('techno')">TECHNO</button>
+      <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
+      <button class="tab-btn" onclick="switchTab('ukraine')">UKRAINE</button>
+      <button class="tab-btn" onclick="switchTab('favorites')">УЛЮБЛЕНІ</button>
     </div>
 
     <div class="controls-container">
@@ -85,7 +86,7 @@
         <button class="control-btn" onclick="togglePlayPause()">▶</button>
         <button class="control-btn" onclick="nextStation()">⏭</button>
         <button class="control-btn volume-btn" onclick="toggleVolumeSlider()">🔊</button>
-        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.5" orient="vertical">
+        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.5">
       </div>
     </div>
   </div>

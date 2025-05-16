@@ -1,10 +1,10 @@
 {
-  "name": "VibeWave Radio",
-  "short_name": "VibeWave",
+  "name": "RADIO _S_O_",
+  "short_name": "Radio SO",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a1a",
-  "theme_color": "#00d4ff",
+  "background_color": "#121212",
+  "theme_color": "#00C4FF",
   "icons": [
     {
       "src": "icon-192.png",

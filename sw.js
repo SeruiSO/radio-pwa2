@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vibewave-radio-cache-v4';
+﻿const CACHE_NAME = 'radio-pwa-cache-v19';
 const urlsToCache = [
   '/',
   'index.html',
@@ -14,9 +14,9 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Caching files:', urlsToCache);
+        console.log('Кешування файлів:', urlsToCache);
         return cache.addAll(urlsToCache).catch(error => {
-          console.error('Cache error:', error);
+          console.error('Помилка кешування:', error);
         });
       })
       .then(() => self.skipWaiting())
@@ -61,7 +61,7 @@ self.addEventListener('activate', (event) => {
     }).then(() => {
       self.clients.matchAll().then(clients => {
         clients.forEach(client => {
-          client.postMessage({ type: 'UPDATE', message: 'App updated to new version!' });
+          client.postMessage({ type: 'UPDATE', message: 'Додаток оновлено до нової версії!' });
         });
       });
     }).then(() => self.clients.claim())
