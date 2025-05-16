@@ -63,7 +63,7 @@ h1 {
 
 .current-station-info {
   background: rgba(255, 255, 255, 0.15);
-  padding: 10px;
+  padding: 8px;
   border-radius: 10px;
   margin: 10px 0;
   border: 1px solid rgba(0, 212, 255, 0.3);
@@ -77,12 +77,14 @@ h1 {
 .station-info-content {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
 }
 
 .station-text {
   display: flex;
   flex-direction: column;
+  text-align: center;
 }
 
 .station-name {
@@ -90,21 +92,16 @@ h1 {
   font-weight: 700;
 }
 
-.station-genre, .station-country, .now-playing {
+.station-genre, .station-country {
   font-size: clamp(12px, 3vw, 14px);
   font-weight: 400;
   margin-top: 3px;
   opacity: 0.8;
 }
 
-.now-playing {
-  font-style: italic;
-  color: #00ffcc;
-}
-
 .station-list {
   flex-grow: 1;
-  max-height: calc(100vh - 300px);
+  height: calc(100vh - 280px);
   overflow-y: auto;
   background: rgba(255, 255, 255, 0.15);
   border-radius: 10px;
@@ -131,8 +128,8 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  margin: 6px 0;
+  padding: 6px;
+  margin: 4px 0;
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(0, 212, 255, 0.3);
   border-radius: 8px;
@@ -166,11 +163,11 @@ h1 {
 
 .tabs {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   overflow-x: auto;
-  margin: 8px 0;
+  margin: 4px 0;
   position: sticky;
-  bottom: 80px;
+  bottom: 90px;
   z-index: 10;
   background: rgba(255, 255, 255, 0.15);
   border-radius: 8px;
@@ -179,14 +176,16 @@ h1 {
 }
 
 .tab-btn {
-  padding: 8px 16px;
+  flex: 1;
+  padding: 8px;
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid #00d4ff;
-  border-radius: 6px;
-  color: #fff;
+  border-radius: 8px;
+  color夫人color: #fff;
   cursor: pointer;
   margin: 0 4px;
   transition: all 0.2s ease;
+  text-align: center;
 }
 
 .tab-btn:hover {
@@ -204,7 +203,8 @@ h1 {
   position: sticky;
   bottom: 0;
   background: rgba(255, 255, 255, 0.15);
-  border-top: 1px solid #00d4ff;
+  border: 1px solid #00d4ff;
+  border-radius: 12px;
   padding: 10px;
   display: flex;
   justify-content: center;
@@ -213,13 +213,14 @@ h1 {
 
 .controls {
   display: flex;
-  gap: 15px;
+  gap: 20px;
+  position: relative;
 }
 
 .control-btn {
-  width: 45px;
-  height: 45px;
-  font-size: 20px;
+  width: 55px;
+  height: 55px;
+  font-size: 24px;
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
   border: 1px solid #00d4ff;
@@ -229,6 +230,7 @@ h1 {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
   will-change: background, transform;
 }
 
@@ -238,13 +240,47 @@ h1 {
   transform: scale(1.05);
 }
 
+.volume-btn.active {
+  background: #00ffcc;
+}
+
+.volume-slider {
+  display: none;
+  position: absolute;
+  right: -10px;
+  bottom: 70px;
+  width: 30px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid #00d4ff;
+  border-radius: 6px;
+  transform: translateX(50%);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+.volume-slider.active {
+  display: block;
+  animation: slideIn 0.3s ease;
+}
+
 .wave-progress {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(0, 212, 255, 0.3), transparent);
   box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
-  transition: box-shadow 0.3s ease;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scaleX(1.5) scaleY(1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 0.5; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(50%) translateY(10px); opacity: 0; }
+  to { transform: translateX(50%) translateY(0); opacity: 1; }
 }
 
 @keyframes fadeIn {
@@ -259,12 +295,14 @@ h1 {
 @media (max-width: 500px) {
   h1 { font-size: 1.6em; }
   .container { padding: 8px; margin: 0 3px; }
-  .control-btn { width: 40px; height: 40px; font-size: 18px; }
-  .station-list { max-height: calc(100vh - 280px); }
-  .station-item { padding: 6px; margin: 4px 0; }
+  .control-btn { width: 50px; height: 50px; font-size: 22px; }
+  .station-list { height: calc(100vh - 260px); }
+  .station-item { padding: 5px; margin: 3px 0; }
   .station-name { font-size: 18px; }
-  .station-genre, .station-country, .now-playing { font-size: 12px; }
+  .station-genre, .station-country { font-size: 12px; }
   .wave-progress { width: 36px; height: 36px; }
-  .tab-btn { padding: 6px 12px; font-size: 13px; }
-  .current-station-info { padding: 8px; }
+  .tab-btn { padding: 6px; font-size: 12px; }
+  .current-station-info { padding: 6px; }
+  .controls { gap: 15px; }
+  .volume-slider { height: 80px; right: -8px; }
 }

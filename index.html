@@ -65,7 +65,6 @@
           <div class="station-name">Обирайте станцію</div>
           <div class="station-genre">жанр: -</div>
           <div class="station-country">країна: -</div>
-          <div class="now-playing">Зараз грає: -</div>
         </div>
       </div>
     </div>
@@ -81,9 +80,12 @@
 
     <div class="controls-container">
       <div class="controls">
+        <button class="control-btn" onclick="randomStation()">🎲</button>
         <button class="control-btn" onclick="prevStation()">⏮</button>
         <button class="control-btn" onclick="togglePlayPause()">▶</button>
         <button class="control-btn" onclick="nextStation()">⏭</button>
+        <button class="control-btn volume-btn" onclick="toggleVolumeSlider()">🔊</button>
+        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.5" orient="vertical">
       </div>
     </div>
   </div>

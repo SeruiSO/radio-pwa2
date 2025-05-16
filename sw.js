@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vibewave-radio-cache-v2';
+const CACHE_NAME = 'vibewave-radio-cache-v4';
 const urlsToCache = [
   '/',
   'index.html',

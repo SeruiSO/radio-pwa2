@@ -1,6 +1,6 @@
 const audio = document.getElementById("audioPlayer");
 const stationList = document.getElementById("stationList");
-const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
+const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(3)");
 const currentStationInfo = document.getElementById("currentStationInfo");
 let currentIndex = parseInt(localStorage.getItem("lastStation")) || 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
@@ -12,9 +12,9 @@ let hasUserInteraction = false;
 
 document.addEventListener('click', () => {
   hasUserInteraction = true;
-  if (audio.src && !audio.paused && !isPlaying && stationItems?.length > currentIndex) {
+  if (audio.src && isPlaying && stationItems?.length > currentIndex) {
     changeStation(currentIndex);
-    if (isPlaying) audio.play().catch(error => console.error("Playback error:", error));
+    audio.play().catch(error => console.error("Playback error:", error));
   }
 }, { once: true });
 
@@ -31,7 +31,7 @@ async function loadStations(attempt = 1) {
     switchTab(currentTab);
     if (stationItems?.length > currentIndex && isPlaying) {
       changeStation(currentIndex);
-      audio.play().catch(error => console.error("Autoplay error:", error));
+      setTimeout(() => audio.play().catch(error => console.error("Autoplay error:", error)), 100);
     }
   } catch (error) {
     console.error("Load stations error (attempt " + attempt + "):", error);
@@ -48,7 +48,7 @@ async function loadStations(attempt = 1) {
             switchTab(currentTab);
             if (stationItems?.length > currentIndex && isPlaying) {
               changeStation(currentIndex);
-              audio.play().catch(error => console.error("Autoplay error:", error));
+              setTimeout(() => audio.play().catch(error => console.error("Autoplay error:", error)), 100);
             }
           });
         } else if (attempt < 3) {
@@ -72,7 +72,8 @@ const themes = {
   light: { bodyBg: "linear-gradient(180deg, #f0f0f0, #e0e0e0)", containerBg: "transparent", accent: "#007bff", text: "#000" },
   neon: { bodyBg: "linear-gradient(180deg, #0a0a1a, #2e1a3e)", containerBg: "transparent", accent: "#ff00cc", text: "#fff" },
   "light-alt": { bodyBg: "linear-gradient(180deg, #f5f5e6, #fff5e1)", containerBg: "transparent", accent: "#1e90ff", text: "#333" },
-  "dark-alt": { bodyBg: "linear-gradient(180deg, #1a1a2a, #3e3e4e)", containerBg: "transparent", accent: "#00ff00", text: "#e0e0e0" }
+  "dark-alt": { bodyBg: "linear-gradient(180deg, #1a1a2a, #3e3e4e)", containerBg: "transparent", accent: "#00ff00", text: "#e0e0e0" },
+  "white-glow": { bodyBg: "#000000", containerBg: "transparent", accent: "#ffffff", text: "#ffffff", shadow: "0 0 10px rgba(255, 255, 255, 0.7)" }
 };
 let currentTheme = localStorage.getItem("selectedTheme") || "dark";
 
@@ -94,9 +95,14 @@ if ('serviceWorker' in navigator) {
 
 function applyTheme(theme) {
   document.body.style.background = themes[theme].bodyBg;
-  document.querySelectorAll(".station-list, .control-btn, .theme-toggle, .current-station-info, .tab-btn, .share-btn").forEach(el => {
+  document.querySelectorAll(".station-list, .control-btn, .theme-toggle, .current-station-info, .tab-btn, .share-btn, .volume-slider").forEach(el => {
     el.style.borderColor = themes[theme].accent;
     el.style.color = themes[theme].text;
+    if (themes[theme].shadow) {
+      el.style.boxShadow = themes[theme].shadow;
+    } else {
+      el.style.boxShadow = "0 0 10px rgba(0, 212, 255, 0.5)";
+    }
   });
   document.querySelectorAll(".station-item").forEach(el => {
     el.style.color = themes[theme].text;
@@ -107,8 +113,8 @@ function applyTheme(theme) {
 }
 
 function toggleTheme() {
-  const themesOrder = ["dark", "light", "neon", "light-alt", "dark-alt"];
-  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 5];
+  const themesOrder = ["dark", "light", "neon", "light-alt", "dark-alt", "white-glow"];
+  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 6];
   applyTheme(nextTheme);
 }
 
@@ -123,7 +129,7 @@ function switchTab(tab) {
   document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add("active");
   if (stationItems?.length > currentIndex && isPlaying) {
     changeStation(currentIndex);
-    audio.play().catch(error => console.error("Autoplay error:", error));
+    setTimeout(() => audio.play().catch(error => console.error("Autoplay error:", error)), 100);
   }
 }
 
@@ -192,7 +198,6 @@ function changeStation(index) {
   currentIndex = index;
   audio.src = item.dataset.value;
   updateCurrentStationInfo(item);
-  fetchMetadata(item.dataset.value);
   if (isPlaying && hasUserInteraction) {
     audio.play().catch(error => console.error("Playback error:", error));
   }
@@ -204,25 +209,12 @@ function updateCurrentStationInfo(item) {
   currentStationInfo.querySelector(".station-name").textContent = item.dataset.name || "Немає даних";
   currentStationInfo.querySelector(".station-genre").textContent = `жанр: ${item.dataset.genre || '-'}`;
   currentStationInfo.querySelector(".station-country").textContent = `країна: ${item.dataset.country || '-'}`;
-  currentStationInfo.querySelector(".now-playing").textContent = `Зараз грає: -`;
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: item.dataset.name || "Невідома станція",
       artist: `${item.dataset.genre || '-'} | ${item.dataset.country || '-'}`,
       album: 'VibeWave Radio'
     });
-  }
-}
-
-function fetchMetadata(url) {
-  try {
-    const icy = new IcyMetadata(url);
-    icy.on('metadata', (metadata) => {
-      const nowPlaying = metadata.StreamTitle || '-';
-      currentStationInfo.querySelector(".now-playing").textContent = `Зараз грає: ${nowPlaying}`;
-    });
-  } catch (error) {
-    console.error("Metadata error:", error);
   }
 }
 
@@ -239,6 +231,13 @@ function shareStation() {
     } else {
       alert(`Поділитися: ${shareData.title}\n${shareData.text}`);
     }
+  }
+}
+
+function randomStation() {
+  if (stationItems.length > 0) {
+    const randomIndex = Math.floor(Math.random() * stationItems.length);
+    changeStation(randomIndex);
   }
 }
 
@@ -267,6 +266,21 @@ function togglePlayPause() {
   localStorage.setItem("isPlaying", isPlaying);
 }
 
+function toggleVolumeSlider() {
+  const slider = document.getElementById("volumeSlider");
+  const btn = document.querySelector(".volume-btn");
+  slider.classList.toggle("active");
+  btn.classList.toggle("active");
+  if (slider.classList.contains("active")) {
+    slider.focus();
+  }
+}
+
+document.getElementById("volumeSlider").addEventListener("input", (e) => {
+  audio.volume = e.target.value;
+  localStorage.setItem("volume", e.target.value);
+});
+
 document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") prevStation();
   if (e.key === "ArrowRight") nextStation();
@@ -294,7 +308,7 @@ navigator.mediaSession.setActionHandler("play", () => togglePlayPause());
 navigator.mediaSession.setActionHandler("pause", () => togglePlayPause());
 
 applyTheme(currentTheme);
-audio.volume = 0.5;
+audio.volume = parseFloat(localStorage.getItem("volume")) || 0.5;
 
 if (isPlaying) {
   setTimeout(() => {
