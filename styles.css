@@ -1,6 +1,6 @@
 body {
   font-family: 'Roboto', sans-serif;
-  background: linear-gradient(180deg, #0a0a1a, #1a1a2e);
+  background: #121212;
   color: #fff;
   margin: 0;
   padding: 0;
@@ -17,8 +17,7 @@ body {
 .container {
   max-width: 100%;
   width: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: #1e1e1e;
   padding: 15px;
   border-radius: 15px;
   box-shadow: 0 0 15px rgba(0, 196, 255, 0.3);
@@ -34,7 +33,7 @@ h1 {
   font-size: 2.5em;
   margin: 5px 0;
   text-align: center;
-  color: #00d4ff;
+  color: #00C4FF;
   text-shadow: 0 0 10px rgba(0, 196, 255, 0.5);
   transition: color 0.3s ease;
 }
@@ -43,9 +42,8 @@ h1 {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid #00d4ff;
+  background: #333;
+  border: 1px solid #00C4FF;
   border-radius: 5px;
   padding: 6px;
   cursor: pointer;
@@ -58,14 +56,13 @@ h1 {
 }
 
 .theme-toggle:hover {
-  background: #00d4ff;
+  background: #00C4FF;
   color: #121212;
   box-shadow: 0 0 15px rgba(0, 196, 255, 0.5);
 }
 
 .current-station-info {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: #252525;
   padding: 15px;
   border-radius: 10px;
   margin: 10px 0;
@@ -79,6 +76,7 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 10;
+  background: linear-gradient(45deg, #1a1a2e, #2e2e3e);
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 
@@ -125,9 +123,8 @@ h1 {
 .tab-btn {
   flex: 1;
   padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid #00d4ff;
+  background: #333;
+  border: 1px solid #00C4FF;
   border-radius: 5px;
   color: #fff;
   cursor: pointer;
@@ -137,12 +134,12 @@ h1 {
 }
 
 .tab-btn:hover {
-  background: #00d4ff;
+  background: #00C4FF;
   color: #121212;
 }
 
 .tab-btn.active {
-  background: linear-gradient(45deg, #00ffcc, #00d4ff);
+  background: #00ffcc;
   border-color: #00ffcc;
   color: #121212;
 }
@@ -150,14 +147,13 @@ h1 {
 .station-list {
   max-height: 500px;
   overflow-y: auto;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid #00d4ff;
+  background: #2c2c2c;
+  border: 1px solid #00C4FF;
   border-radius: 10px;
   margin: 10px 0;
   padding: 10px;
   scrollbar-width: thin;
-  scrollbar-color: #00d4ff rgba(255, 255, 255, 0.1);
+  scrollbar-color: #00C4FF #2c2c2c;
   box-shadow: 0 0 10px rgba(0, 196, 255, 0.2);
   transition: background 0.3s ease, border-color 0.3s ease;
   flex-grow: 1;
@@ -168,11 +164,11 @@ h1 {
 }
 
 .station-list::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: #2c2c2c;
 }
 
 .station-list::-webkit-scrollbar-thumb {
-  background: #00d4ff;
+  background: #00C4FF;
   border-radius: 4px;
 }
 
@@ -185,8 +181,7 @@ h1 {
   border: 1px solid #444;
   margin: 5px 0;
   color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: #333;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -194,7 +189,7 @@ h1 {
 }
 
 .station-item:hover, .station-item.selected {
-  background: linear-gradient(45deg, #00ffcc, #00d4ff) !important;
+  background: #00ffcc !important;
   border: 2px solid #00ffcc !important;
   color: #121212;
   box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
@@ -220,21 +215,20 @@ h1 {
 .controls-container {
   position: sticky;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-top: 2px solid #00d4ff;
+  background: #1a1a2e;
+  border-top: 2px solid #00C4FF;
   padding: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 20px;
   z-index: 10;
 }
 
 .controls {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 20px;
   position: relative;
 }
 
@@ -247,7 +241,7 @@ h1 {
 
 .wave-bar {
   width: 10px;
-  background: #00d4ff;
+  background: #00C4FF;
   border-radius: 5px;
   animation: waveAnimation 1.2s infinite ease-in-out;
 }
@@ -263,13 +257,12 @@ h1 {
 }
 
 .control-btn {
-  width: 60px;
-  height: 60px;
-  font-size: 24px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  width: 80px;
+  height: 80px;
+  font-size: 32px;
+  background: #333;
   color: #fff;
-  border: 2px solid #00d4ff;
+  border: 2px solid #00C4FF;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -280,7 +273,7 @@ h1 {
 }
 
 .control-btn:hover {
-  background: #00d4ff;
+  background: #00C4FF;
   color: #121212;
   transform: scale(1.1);
   box-shadow: 0 0 20px rgba(0, 196, 255, 0.5);
@@ -292,7 +285,7 @@ h1 {
 }
 
 .volume-btn.active {
-  background: linear-gradient(45deg, #00ffcc, #00d4ff);
+  background: #00ffcc;
 }
 
 .volume-slider {
@@ -302,9 +295,8 @@ h1 {
   left: 50%;
   transform: translateX(-50%);
   width: 120px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid #00d4ff;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid #00C4FF;
   border-radius: 6px;
   padding: 5px;
   box-shadow: 0 0 10px rgba(0, 196, 255, 0.5);
@@ -332,9 +324,9 @@ h1 {
   }
 
   .control-btn {
-    width: 50px;
-    height: 50px;
-    font-size: 20px;
+    width: 70px;
+    height: 70px;
+    font-size: 24px;
   }
 
   .station-list {
