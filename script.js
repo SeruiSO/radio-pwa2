@@ -73,12 +73,13 @@ async function loadStations(attempt = 1) {
 loadStations();
 
 const themes = {
-  dark: { bodyBg: "linear-gradient(180deg, #0a0a1a, #1a1a2e)", containerBg: "transparent", accent: "#00d4ff", text: "#fff" },
-  light: { bodyBg: "linear-gradient(180deg, #f0f0f0, #e0e0e0)", containerBg: "transparent", accent: "#007bff", text: "#000" },
-  neon: { bodyBg: "linear-gradient(180deg, #0a0a1a, #2e1a3e)", containerBg: "transparent", accent: "#ff00cc", text: "#fff" },
-  "light-alt": { bodyBg: "linear-gradient(180deg, #f5f5e6, #fff5e1)", containerBg: "transparent", accent: "#1e90ff", text: "#333" },
-  "dark-alt": { bodyBg: "linear-gradient(180deg, #1a1a2a, #3e3e4e)", containerBg: "transparent", accent: "#00ff00", text: "#e0e0e0" },
-  black: { bodyBg: "#000000", containerBg: "transparent", accent: "#cccccc", text: "#ffffff", shadow: "0 0 10px rgba(255, 255, 255, 0.7)" }
+  dark: { bodyBg: "linear-gradient(180deg, #0a0a1a, #1a1a2e)", containerBg: "rgba(255, 255, 255, 0.1)", accent: "#00d4ff", text: "#fff", shadow: "0 0 10px rgba(0, 196, 255, 0.3)" },
+  light: { bodyBg: "linear-gradient(180deg, #f0f0f0, #e0e0e0)", containerBg: "rgba(255, 255, 255, 0.3)", accent: "#007bff", text: "#000", shadow: "0 0 10px rgba(0, 123, 255, 0.3)" },
+  neon: { bodyBg: "linear-gradient(180deg, #0a0a1a, #2e1a3e)", containerBg: "rgba(255, 255, 255, 0.1)", accent: "#ff00cc", text: "#fff", shadow: "0 0 10px rgba(255, 0, 204, 0.3)" },
+  "light-alt": { bodyBg: "linear-gradient(180deg, #f5f5e6, #fff5e1)", containerBg: "rgba(255, 255, 255, 0.3)", accent: "#1e90ff", text: "#333", shadow: "0 0 10px rgba(30, 144, 255, 0.3)" },
+  "dark-alt": { bodyBg: "linear-gradient(180deg, #1a1a2a, #3e3e4e)", containerBg: "rgba(255, 255, 255, 0.1)", accent: "#00ff00", text: "#e0e0e0", shadow: "0 0 10px rgba(0, 255, 0, 0.3)" },
+  "white-glow": { bodyBg: "linear-gradient(180deg, #ffffff, #f0f0f0)", containerBg: "rgba(255, 255, 255, 0.5)", accent: "#ff4500", text: "#333", shadow: "0 0 10px rgba(255, 69, 0, 0.3)" },
+  black: { bodyBg: "#000000", containerBg: "rgba(255, 255, 255, 0.1)", accent: "#cccccc", text: "#ffffff", shadow: "0 0 10px rgba(255, 255, 255, 0.7)" }
 };
 let currentTheme = localStorage.getItem("selectedTheme") || "dark";
 
@@ -106,11 +107,7 @@ function applyTheme(theme) {
     el.style.background = themes[theme].containerBg;
     el.style.borderColor = themes[theme].accent;
     el.style.color = themes[theme].text;
-    if (themes[theme].shadow) {
-      el.style.boxShadow = themes[theme].shadow;
-    } else {
-      el.style.boxShadow = "0 0 10px rgba(0, 196, 255, 0.3)";
-    }
+    el.style.boxShadow = themes[theme].shadow;
   });
   document.querySelectorAll(".station-item").forEach(el => {
     el.style.background = themes[theme].containerBg;
@@ -119,13 +116,17 @@ function applyTheme(theme) {
   });
   document.querySelector(".controls-container").style.background = themes[theme].containerBg;
   document.querySelector(".controls-container").style.borderColor = themes[theme].accent;
+  document.querySelectorAll(".wave-bar").forEach(bar => {
+    bar.style.background = themes[theme].accent;
+  });
+  document.querySelector(".station-list::-webkit-scrollbar-thumb").style.background = themes[theme].accent;
   currentTheme = theme;
   localStorage.setItem("selectedTheme", theme);
 }
 
 function toggleTheme() {
-  const themesOrder = ["dark", "light", "neon", "light-alt", "dark-alt", "black"];
-  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 6];
+  const themesOrder = ["dark", "light", "neon", "light-alt", "dark-alt", "white-glow", "black"];
+  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 7];
   applyTheme(nextTheme);
 }
 
