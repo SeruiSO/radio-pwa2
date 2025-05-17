@@ -1,15 +1,8 @@
-/* Сучасний, адаптивний CSS для Radio Vibe */
-:root {
-  --body-bg: #121212;
-  --container-bg: #1e1e1e;
-  --accent: #00C4FF;
-  --text: #fff;
-}
-
+/* Updated on May 16, 2025 to force refresh */
 body {
-  font-family: 'Inter', -apple-system, sans-serif;
-  background: var(--body-bg);
-  color: var(--text);
+  font-family: 'Roboto', sans-serif;
+  background: #121212;
+  color: #fff;
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -19,173 +12,199 @@ body {
   overflow-x: hidden;
   padding-top: 10px;
   box-sizing: border-box;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 .container {
   max-width: 100%;
   width: 100%;
-  background: var(--container-bg);
+  background: #1e1e1e;
   padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 196, 255, 0.2);
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0, 196, 255, 0.3);
   margin: 0 10px;
   min-height: 90vh;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   transition: background 0.3s ease;
 }
 
 h1 {
-  font-size: 2.2em;
-  margin: 10px 0;
+  font-size: 2.5em;
+  margin: 5px 0;
   text-align: center;
-  color: var(--accent);
-  text-shadow: 0 2px 8px rgba(0, 196, 255, 0.4);
+  color: #00C4FF;
+  text-shadow: 0 0 10px rgba(0, 196, 255, 0.5);
   transition: color 0.3s ease;
 }
 
 .theme-toggle {
-  position: fixed;
+  position: absolute;
   top: 10px;
   left: 10px;
-  background: #2a2a2a;
-  border: 2px solid var(--accent);
-  border-radius: 8px;
-  padding: 8px;
+  background: #333;
+  border: 1px solid #00C4FF;
+  border-radius: 5px;
+  padding: 6px;
   cursor: pointer;
-  width: 40px;
-  height: 40px;
+  height: 35px;
+  width: 35px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  z-index: 100;
 }
 
 .theme-toggle:hover {
-  background: var(--accent);
+  background: #00C4FF;
   color: #121212;
-  box-shadow: 0 0 12px rgba(0, 196, 255, 0.6);
+  box-shadow: 0 0 15px rgba(0, 196, 255, 0.5);
 }
 
 .current-station-info {
-  background: linear-gradient(135deg, #1a1a2e, #2e2e3e);
-  padding: 12px;
+  background: #252525;
+  padding: 15px;
   border-radius: 10px;
   margin: 10px 0;
-  border: 2px solid var(--accent);
-  box-shadow: 0 2px 12px rgba(0, 196, 255, 0.3);
+  color: #fff;
+  border: 2px solid #00ffcc;
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
   text-align: left;
+  height: auto;
+  display: flex;
+  align-items: center;
   position: sticky;
   top: 0;
   z-index: 10;
-  transition: all 0.3s ease;
+  background: linear-gradient(45deg, #1a1a2e, #2e2e3e);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .station-info-content {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 15px;
+  width: 100%;
 }
 
 .station-text {
-  flex: 1;
-}
-
-.station-name {
-  font-size: 1.5em;
-  font-weight: 600;
-}
-
-.station-genre, .station-country {
-  font-size: 0.9em;
-  opacity: 0.8;
-  margin-top: 4px;
-}
-
-.visualizer {
   display: flex;
-  gap: 3px;
-  width: 50px;
-  height: 30px;
+  flex-direction: column;
 }
 
-.vis-bar {
-  width: 8px;
-  background: var(--accent);
-  border-radius: 4px;
-  animation: visAnimation 1s infinite ease-in-out;
-  animation-play-state: paused;
+.current-station-info .station-name {
+  font-size: 28px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
 }
 
-.vis-bar:nth-child(2) { animation-delay: 0.2s; }
-.vis-bar:nth-child(3) { animation-delay: 0.4s; }
-.vis-bar:nth-child(4) { animation-delay: 0.6s; }
-.vis-bar:nth-child(5) { animation-delay: 0.8s; }
-
-@keyframes visAnimation {
-  0%, 100% { transform: scaleY(0.4); }
-  50% { transform: scaleY(1); }
+.current-station-info .station-genre {
+  font-size: 18px;
+  font-weight: 400;
+  margin-top: 5px;
 }
 
-.status-message {
-  font-size: 0.9em;
-  color: #ff4444;
-  margin-top: 8px;
+.current-station-info .station-country {
+  font-size: 18px;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-between;
+  margin: 5px 0;
+  position: sticky;
+  bottom: 110px;
+  z-index: 10;
+  background: #1e1e1e;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px;
+  background: #333;
+  border: 1px solid #00C4FF;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  margin: 0 2px;
+  transition: all 0.3s ease;
   text-align: center;
-  display: none;
+  font-size: 14px;
+}
+
+.tab-btn:hover {
+  background: #00C4FF;
+  color: #121212;
+}
+
+.tab-btn.active {
+  background: #00ffcc;
+  border-color: #00ffcc;
+  color: #121212;
 }
 
 .station-list {
-  flex: 1;
-  max-height: 60vh;
+  max-height: 500px;
   overflow-y: auto;
-  background: #2a2a2a;
-  border: 1px solid var(--accent);
+  background: #2c2c2c;
+  border: 1px solid #00C4FF;
   border-radius: 10px;
   margin: 10px 0 5px;
-  padding: 8px;
+  padding: 10px;
   scrollbar-width: thin;
-  scrollbar-color: var(--accent) #2a2a2a;
+  scrollbar-color: #00C4FF #2c2c2c;
+  box-shadow: 0 0 10px rgba(0, 196, 255, 0.2);
+  transition: background 0.3s ease, border-color 0.3s ease;
+  flex-grow: 1;
 }
 
 .station-list::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .station-list::-webkit-scrollbar-track {
-  background: #2a2a2a;
+  background: #2c2c2c;
 }
 
 .station-list::-webkit-scrollbar-thumb {
-  background: var(--accent);
-  border-radius: 3px;
+  background: #00C4FF;
+  border-radius: 4px;
 }
 
 .station-item {
-  padding: 10px;
+  padding: 12px;
   cursor: pointer;
+  transition: all 0.3s ease;
   border-radius: 8px;
-  margin: 4px 0;
+  font-weight: 500;
+  border: 1px solid #444;
+  margin: 5px 0;
+  color: #fff;
   background: #333;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .station-item:hover, .station-item.selected {
-  background: var(--accent) !important;
+  background: #00ffcc !important;
+  border: 2px solid #00ffcc !important;
   color: #121212;
-  box-shadow: 0 0 10px rgba(0, 196, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
 }
 
 .station-item .favorite-btn {
   background: none;
   border: none;
-  color: var(--text);
-  font-size: 1.2em;
+  color: #fff;
+  font-size: 20px;
   cursor: pointer;
   transition: color 0.3s ease;
 }
@@ -198,140 +217,156 @@ h1 {
   color: #ffd700;
 }
 
-.tabs {
-  display: flex;
-  justify-content: space-between;
-  margin: 5px 0;
-  position: sticky;
-  bottom: 110px;
-  z-index: 10;
-  background: var(--container-bg);
-  padding: 5px;
-  border-radius: 8px;
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 10px;
-  background: #2a2a2a;
-  border: 2px solid var(--accent);
-  border-radius: 8px;
-  color: var(--text);
-  cursor: pointer;
-  font-size: 0.9em;
-  transition: all 0.3s ease;
-  margin: 0 2px;
-  text-align: center;
-}
-
-.tab-btn:hover {
-  background: var(--accent);
-  color: #121212;
-}
-
-.tab-btn.active {
-  background: var(--accent);
-  color: #121212;
-  box-shadow: 0 0 10px rgba(0, 196, 255, 0.5);
-}
-
 .controls-container {
   position: sticky;
   bottom: 0;
-  background: linear-gradient(135deg, #1a1a2e, #2e2e3e);
-  border: 2px solid var(--accent);
-  border-radius: 10px;
-  padding: 12px;
+  background: #1a1a2e;
+  border-top: 2px solid #00C4FF;
+  padding: 15px;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 20px;
   z-index: 10;
-  box-shadow: 0 2px 12px rgba(0, 196, 255, 0.3);
-  margin-top: 5px;
 }
 
 .controls {
   display: flex;
-  gap: 30px;
+  justify-content: center;
+  gap: 50px;
+}
+
+.wave-progress {
+  display: flex;
+  gap: 4px;
+  height: 40px;
+  width: 60px;
+}
+
+.wave-bar {
+  width: 10px;
+  background: #00C4FF;
+  border-radius: 5px;
+  animation: waveAnimation 1.2s infinite ease-in-out;
+  animation-play-state: paused;
+}
+
+.wave-bar:nth-child(2) { animation-delay: 0.2s; }
+.wave-bar:nth-child(3) { animation-delay: 0.4s; }
+.wave-bar:nth-child(4) { animation-delay: 0.6s; }
+.wave-bar:nth-child(5) { animation-delay: 0.8s; }
+
+@keyframes waveAnimation {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
 }
 
 .control-btn {
-  width: 70px;
-  height: 70px;
-  font-size: 1.8em;
-  background: #2a2a2a;
-  color: var(--text);
-  border: 2px solid var(--accent);
+  width: 80px;
+  height: 80px;
+  font-size: 32px;
+  background: #333;
+  color: #fff;
+  border: 2px solid #00C4FF;
   border-radius: 50%;
   cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 196, 255, 0.3);
 }
 
 .control-btn:hover {
-  background: var(--accent);
+  background: #00C4FF;
   color: #121212;
-  transform: scale(1.05);
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(0, 196, 255, 0.5);
 }
 
 .control-btn:active {
   transform: scale(0.95);
+  box-shadow: 0 0 5px rgba(0, 196, 255, 0.3);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 720px) {
   h1 {
-    font-size: 1.8em;
+    font-size: 2em;
   }
 
   .container {
     padding: 10px;
     margin: 0 5px;
+    min-height: 90vh;
   }
 
   .control-btn {
-    width: 60px;
-    height: 60px;
-    font-size: 1.5em;
-  }
-
-  .controls {
-    gap: 20px;
+    width: 70px;
+    height: 70px;
+    font-size: 24px;
   }
 
   .station-list {
-    max-height: 50vh;
+    max-height: 400px;
+    margin: 8px 0;
+    padding: 8px;
   }
 
   .station-item {
-    padding: 8px;
+    padding: 10px;
+    margin: 4px 0;
   }
 
   .theme-toggle {
-    width: 36px;
-    height: 36px;
-    padding: 6px;
+    top: 5px;
+    left: 5px;
+    padding: 4px;
+    height: 30px;
+    width: 30px;
   }
 
-  .station-name {
-    font-size: 1.2em;
+  .current-station-info {
+    height: auto;
+    padding: 10px;
   }
 
-  .station-genre, .station-country {
-    font-size: 0.8em;
+  .current-station-info .station-name {
+    font-size: 24px;
+  }
+
+  .current-station-info .station-genre {
+    font-size: 16px;
+  }
+
+  .current-station-info .station-country {
+    font-size: 16px;
+  }
+
+  .station-info-content {
+    gap: 10px;
+  }
+
+  .wave-progress {
+    width: 50px;
+    height: 30px;
+  }
+
+  .wave-bar {
+    width: 8px;
   }
 
   .tab-btn {
-    padding: 8px;
-    font-size: 0.8em;
+    padding: 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-height: 1600px) {
+  .container {
+    min-height: 85vh;
   }
 
-  .visualizer {
-    width: 40px;
-    height: 25px;
-  }
-
-  .vis-bar {
-    width: 6px;
+  .station-list {
+    max-height: 450px;
   }
 }
