@@ -98,6 +98,7 @@ h1 {
 .station-text {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .current-station-info .station-name {
@@ -247,8 +248,9 @@ h1 {
 .wave-progress {
   display: flex;
   gap: 4px;
-  height: 40px;
-  width: 60px;
+  height: 60px;
+  width: 84px; /* 7 bars * (10px width + 2px gap) */
+  order: -1; /* Place before station-text */
 }
 
 .wave-bar {
@@ -260,9 +262,11 @@ h1 {
 }
 
 .wave-bar:nth-child(2) { animation-delay: 0.2s; }
-.wave-bar:nth-child(3) { animation-delay: 0.4s; }
-.wave-bar:nth-child(4) { animation-delay: 0.6s; }
-.wave-bar:nth-child(5) { animation-delay: 0.8s; }
+.wave-bar:nth-child(3) { animation-delay: 0.3s; }
+.wave-bar:nth-child(4) { animation-delay: 0.4s; }
+.wave-bar:nth-child(5) { animation-delay: 0.5s; }
+.wave-bar:nth-child(6) { animation-delay: 0.6s; }
+.wave-bar:nth-child(7) { animation-delay: 0.7s; }
 
 @keyframes waveAnimation {
   0%, 100% { transform: scaleY(0.3); }
@@ -355,8 +359,8 @@ h1 {
   }
 
   .wave-progress {
-    width: 50px;
-    height: 30px;
+    width: 70px;
+    height: 50px;
   }
 
   .wave-bar {
