@@ -2,7 +2,7 @@ const audio = document.getElementById("audioPlayer");
 const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
 const currentStationInfo = document.getElementById("currentStationInfo");
-let currentIndex = parseInt(localStorage.getItem("lastStation_techno")) || 0;
+let currentIndex = parseInt(localStorage.getItem(`lastStation_${localStorage.getItem("currentTab") || "techno"}`)) || 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let currentTab = localStorage.getItem("currentTab") || "techno";
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
@@ -11,6 +11,7 @@ let stationItems;
 let retryCount = 0;
 const MAX_RETRIES = 3;
 const LOAD_TIMEOUT = 8000;
+let isAutoPlaying = false; // Для дебонсингу tryAutoPlay
 
 // Налаштування аудіо
 audio.preload = "auto";
@@ -94,12 +95,13 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// Автовідтворення
+// Автовідтворення з дебонсингом
 function tryAutoPlay() {
-  if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length) {
+  if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length || isAutoPlaying) {
     document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
     return;
   }
+  isAutoPlaying = true;
   audio.src = stationItems[currentIndex].dataset.value;
   const playPromise = audio.play();
   const timeout = setTimeout(() => {
@@ -110,16 +112,18 @@ function tryAutoPlay() {
     .then(() => {
       clearTimeout(timeout);
       retryCount = 0;
+      isAutoPlaying = false;
       document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
     })
     .catch(error => {
       clearTimeout(timeout);
       console.error("Помилка відтворення:", error);
+      isAutoPlaying = false;
       handlePlaybackError();
     });
 }
 
-// Обробка помилок відтворення (без перемикання станції)
+// Обробка помилок відтворення
 function handlePlaybackError() {
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
   if (retryCount >= MAX_RETRIES) {
@@ -299,7 +303,7 @@ window.addEventListener("online", () => {
 });
 
 window.addEventListener("offline", () => {
-  // Без повідомлень
+  // Без дій
 });
 
 document.addEventListener("visibilitychange", () => {
@@ -308,8 +312,10 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+// Обробка переривань (лише для дзвінків)
 document.addEventListener("resume", () => {
-  if (isPlaying) {
+  // Перевіряємо, чи це завершення дзвінка
+  if (isPlaying && navigator.connection?.type !== "none") {
     audio.src = stationItems[currentIndex].dataset.value;
     tryAutoPlay();
   }
