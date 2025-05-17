@@ -1,6 +1,8 @@
-/* Updated on May 17, 2025 for new themes */
+/* Updated on May 17, 2025 to force refresh */
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Roboto', sans-serif;
+  background: #121212;
+  color: #fff;
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -16,8 +18,10 @@ body {
 .container {
   max-width: 100%;
   width: 100%;
+  background: #1e1e1e;
   padding: 15px;
-  border-radius: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0, 196, 255, 0.3);
   margin: 0 10px;
   min-height: 90vh;
   display: flex;
@@ -30,20 +34,22 @@ h1 {
   font-size: 2.5em;
   margin: 5px 0;
   text-align: center;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  color: #00C4FF;
+  text-shadow: 0 0 10px rgba(0, 196, 255, 0.5);
   transition: color 0.3s ease;
 }
 
 .theme-toggle {
   position: absolute;
-  top: 15px;
-  left: 15px;
-  border: none;
-  border-radius: 10px;
-  padding: 8px;
+  top: 10px;
+  left: 10px;
+  background: #333;
+  border: 1px solid #00C4FF;
+  border-radius: 5px;
+  padding: 6px;
   cursor: pointer;
-  width: 40px;
-  height: 40px;
+  height: 35px;
+  width: 35px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -51,15 +57,19 @@ h1 {
 }
 
 .theme-toggle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  background: #00C4FF;
+  color: #121212;
+  box-shadow: 0 0 15px rgba(0, 196, 255, 0.5);
 }
 
 .current-station-info {
+  background: #252525;
   padding: 15px;
-  border-radius: 15px;
+  border-radius: 10px;
   margin: 10px 0;
-  border: 2px solid;
+  color: #fff;
+  border: 2px solid #00ffcc;
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
   text-align: left;
   height: auto;
   display: flex;
@@ -67,7 +77,8 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 10;
-  transition: all 0.3s ease;
+  background: linear-gradient(45deg, #1a1a2e, #2e2e3e);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .station-info-content {
@@ -80,11 +91,22 @@ h1 {
 .station-text {
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
+}
+
+.station-status {
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 5px;
+  color: #00ffcc;
+  transition: color 0.3s ease;
 }
 
 .current-station-info .station-name {
   font-size: 28px;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
 }
 
 .current-station-info .station-genre {
@@ -99,18 +121,6 @@ h1 {
   margin-top: 2px;
 }
 
-.loading {
-  font-size: 14px;
-  color: inherit;
-  margin-left: 10px;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
 .tabs {
   display: flex;
   justify-content: center;
@@ -118,35 +128,48 @@ h1 {
   position: sticky;
   bottom: 100px;
   z-index: 10;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .tab-btn {
   padding: 12px 20px;
-  border: 2px solid;
-  border-radius: 10px;
+  background: #333;
+  border: 1px solid #00C4FF;
+  border-radius: 5px;
+  color: #fff;
   cursor: pointer;
   margin: 0 5px;
   transition: all 0.3s ease;
+  flex: 1;
+  min-width: 80px;
+  text-align: center;
 }
 
 .tab-btn:hover {
-  transform: translateY(-2px);
+  background: #00C4FF;
+  color: #121212;
 }
 
 .tab-btn.active {
-  transform: translateY(-2px);
+  background: #00ffcc;
+  border-color: #00ffcc;
+  color: #121212;
 }
 
 .station-list {
   max-height: 500px;
   overflow-y: auto;
-  border: 2px solid;
-  border-radius: 15px;
+  background: #2c2c2c;
+  border: 1px solid #00C4FF;
+  border-radius: 10px;
   margin: 10px 0;
   padding: 10px;
   scrollbar-width: thin;
+  scrollbar-color: #00C4FF #2c2c2c;
+  box-shadow: 0 0 10px rgba(0, 196, 255, 0.2);
+  transition: background 0.3s ease, border-color 0.3s ease;
   flex-grow: 1;
-  transition: all 0.3s ease;
 }
 
 .station-list::-webkit-scrollbar {
@@ -154,34 +177,41 @@ h1 {
 }
 
 .station-list::-webkit-scrollbar-track {
-  border-radius: 4px;
+  background: #2c2c2c;
 }
 
 .station-list::-webkit-scrollbar-thumb {
+  background: #00C4FF;
   border-radius: 4px;
 }
 
 .station-item {
   padding: 12px;
   cursor: pointer;
-  border-radius: 10px;
+  transition: all 0.3s ease;
+  border-radius: 8px;
   font-weight: 500;
-  border: 1px solid;
+  border: 1px solid #444;
   margin: 5px 0;
+  color: #fff;
+  background: #333;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .station-item:hover, .station-item.selected {
-  transform: translateX(5px);
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  background: #00ffcc !important;
+  border: 2px solid #00ffcc !important;
+  color: #121212;
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
 }
 
 .station-item .favorite-btn {
   background: none;
   border: none;
+  color: #fff;
   font-size: 20px;
   cursor: pointer;
   transition: color 0.3s ease;
@@ -198,14 +228,14 @@ h1 {
 .controls-container {
   position: sticky;
   bottom: 0;
-  border-top: 2px solid;
+  background: #1a1a2e;
+  border-top: 2px solid #00C4FF;
   padding: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 20px;
   z-index: 10;
-  transition: all 0.3s ease;
 }
 
 .controls {
@@ -223,6 +253,7 @@ h1 {
 
 .wave-bar {
   width: 10px;
+  background: #00C4FF;
   border-radius: 5px;
   animation: waveAnimation 1.2s infinite ease-in-out;
 }
@@ -241,22 +272,28 @@ h1 {
   width: 80px;
   height: 80px;
   font-size: 32px;
-  border: 2px solid;
+  background: #333;
+  color: #fff;
+  border: 2px solid #00C4FF;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 10px rgba(0, 196, 255, 0.3);
 }
 
 .control-btn:hover {
+  background: #00C4FF;
+  color: #121212;
   transform: scale(1.1);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 20px rgba(0, 196, 255, 0.5);
 }
 
 .control-btn:active {
   transform: scale(0.95);
+  box-shadow: 0 0 5px rgba(0, 196, 255, 0.3);
 }
 
 @media (max-width: 720px) {
@@ -288,13 +325,15 @@ h1 {
   }
 
   .theme-toggle {
-    top: 10px;
-    left: 10px;
-    width: 35px;
-    height: 35px;
+    top: 5px;
+    left: 5px;
+    padding: 4px;
+    height: 30px;
+    width: 30px;
   }
 
   .current-station-info {
+    height: auto;
     padding: 10px;
   }
 
@@ -310,6 +349,14 @@ h1 {
     font-size: 16px;
   }
 
+  .current-station-info .station-status {
+    font-size: 12px;
+  }
+
+  .station-info-content {
+    gap: 10px;
+  }
+
   .wave-progress {
     width: 50px;
     height: 30px;
@@ -322,6 +369,7 @@ h1 {
   .tab-btn {
     padding: 10px 15px;
     font-size: 14px;
+    min-width: 70px;
   }
 }
 
