@@ -2,16 +2,16 @@ const audio = document.getElementById("audioPlayer");
 const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
 const currentStationInfo = document.getElementById("currentStationInfo");
-let currentIndex = parseInt(localStorage.getItem(`lastStation_${localStorage.getItem("currentTab") || "techno"}`)) || 0;
-let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let currentTab = localStorage.getItem("currentTab") || "techno";
+let currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
+let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = {};
 let stationItems;
 let retryCount = 0;
 const MAX_RETRIES = 3;
 const LOAD_TIMEOUT = 8000;
-let isAutoPlaying = false; // Для дебонсингу tryAutoPlay
+let isAutoPlaying = false;
 
 // Налаштування аудіо
 audio.preload = "auto";
@@ -27,9 +27,9 @@ async function loadStations(attempt = 1) {
     if (!availableTabs.includes(currentTab)) {
       currentTab = availableTabs[0] || "techno";
       localStorage.setItem("currentTab", currentTab);
+      currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
     }
     switchTab(currentTab);
-    tryAutoPlay();
   } catch (error) {
     console.error("Помилка завантаження станцій (спроба " + attempt + "):", error);
     if ("caches" in window) {
@@ -40,9 +40,9 @@ async function loadStations(attempt = 1) {
         if (!availableTabs.includes(currentTab)) {
           currentTab = availableTabs[0] || "techno";
           localStorage.setItem("currentTab", currentTab);
+          currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
         }
         switchTab(currentTab);
-        tryAutoPlay();
         return;
       }
     }
@@ -140,12 +140,12 @@ function switchTab(tab) {
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
   const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
-  currentIndex = savedIndex < (stationLists[tab]?.length || 0) ? savedIndex : 0;
+  currentIndex = savedIndex < (stationLists[tab]?.length || favoriteStations.length || 0) ? savedIndex : 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
   if (activeBtn) activeBtn.classList.add("active");
-  tryAutoPlay();
+  if (stationItems?.length) tryAutoPlay();
 }
 
 // Оновлення списку станцій
@@ -158,6 +158,7 @@ function updateStationList() {
     : stationLists[currentTab] || [];
 
   if (!stations.length) {
+    currentIndex = 0;
     return;
   }
 
@@ -314,7 +315,6 @@ document.addEventListener("visibilitychange", () => {
 
 // Обробка переривань (лише для дзвінків)
 document.addEventListener("resume", () => {
-  // Перевіряємо, чи це завершення дзвінка
   if (isPlaying && navigator.connection?.type !== "none") {
     audio.src = stationItems[currentIndex].dataset.value;
     tryAutoPlay();
@@ -335,7 +335,9 @@ loadStations();
 
 // Автовідтворення при завантаженні сторінки
 document.addEventListener("DOMContentLoaded", () => {
-  if (isPlaying) {
-    tryAutoPlay();
-  }
+  setTimeout(() => {
+    if (isPlaying && stationItems?.length && currentIndex < stationItems.length) {
+      tryAutoPlay();
+    }
+  }, 0);
 });

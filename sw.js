@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v35";
+﻿const CACHE_NAME = "radio-pwa-cache-v36";
 const urlsToCache = [
   "/",
   "index.html",
