@@ -1,10 +1,10 @@
 {
-  "name": "RadioVibe",
-  "short_name": "RadioVibe",
+  "name": "Radio Vibe",
+  "short_name": "Radio Vibe",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0d0d0d",
-  "theme_color": "#00b4d8",
+  "background_color": "#121212",
+  "theme_color": "#00C4FF",
   "icons": [
     {
       "src": "icon-192.png",

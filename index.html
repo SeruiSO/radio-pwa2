@@ -42,16 +42,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎧 RadioVibe</title>
+  <meta name="theme-color" content="#121212">
+  <title>🎧 RADIO VIBE</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="icon-192.png">
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
   <div class="container">
-    <button class="theme-toggle" aria-label="Перемкнути тему">🌙</button>
-    <h1>🎧 RadioVibe</h1>
-    <div class="current-station-info">
+    <h1>🎧 RADIO VIBE</h1>
+    <div class="current-station-info" id="currentStationInfo">
       <div class="station-info-content">
         <div class="wave-progress">
           <div class="wave-bar"></div>
@@ -64,26 +65,26 @@
           <div class="station-name">Обирайте станцію</div>
           <div class="station-genre">жанр: -</div>
           <div class="station-country">країна: -</div>
-          <div class="station-status"></div>
         </div>
       </div>
+      <div class="status-message" id="statusMessage"></div>
     </div>
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('techno')">Techno</button>
-      <button class="tab-btn" onclick="switchTab('trance')">Trance</button>
-      <button class="tab-btn" onclick="switchTab('ukraine')">Ukraine</button>
-      <button class="tab-btn" onclick="switchTab('best')">Best</button>
+      <button class="tab-btn" onclick="switchTab('techno')">TECHNO</button>
+      <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
+      <button class="tab-btn" onclick="switchTab('ukraine')">UKRAINE</button>
+      <button class="tab-btn" onclick="switchTab('best')">BEST</button>
     </div>
     <div class="station-list" id="stationList"></div>
     <div class="controls-container">
-      <audio id="audioPlayer" preload="auto"></audio>
       <div class="controls">
-        <button class="control-btn" onclick="prevStation()" aria-label="Попередня станція">⏮</button>
-        <button class="control-btn" onclick="togglePlayPause()" aria-label="Відтворити/Пауза">▶</button>
-        <button class="control-btn" onclick="nextStation()" aria-label="Наступна станція">⏭</button>
+        <button class="control-btn" onclick="prevStation()">⏮</button>
+        <button class="control-btn" onclick="togglePlayPause()">▶</button>
+        <button class="control-btn" onclick="nextStation()">⏭</button>
       </div>
     </div>
   </div>
+  <audio id="audioPlayer" preload="auto"></audio>
   <script src="script.js"></script>
 </body>
 </html>
