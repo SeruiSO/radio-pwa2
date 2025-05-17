@@ -3,7 +3,7 @@ const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
 const currentStationInfo = document.getElementById("currentStationInfo");
 let currentTab = localStorage.getItem("currentTab") || "techno";
-let currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
+let currentIndex = 0; // Ініціалізуємо 0, оновимо після завантаження
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = {};
@@ -28,7 +28,7 @@ async function loadStations(attempt = 1) {
       currentTab = availableTabs[0] || "techno";
       localStorage.setItem("currentTab", currentTab);
     }
-    // Оновлюємо currentIndex після завантаження списку станцій
+    // Оновлюємо currentIndex після завантаження
     currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
     switchTab(currentTab);
   } catch (error) {
@@ -141,7 +141,7 @@ function switchTab(tab) {
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
   const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
-  // Перевіряємо довжину списку для вкладки BEST
+  // Встановлюємо maxIndex залежно від вкладки
   const maxIndex = tab === "best" ? favoriteStations.length : stationLists[tab]?.length || 0;
   currentIndex = savedIndex < maxIndex ? savedIndex : 0;
   updateStationList();
@@ -163,6 +163,13 @@ function updateStationList() {
   if (!stations.length) {
     currentIndex = 0;
     stationItems = [];
+    // Додаємо повідомлення для порожнього списку BEST
+    if (currentTab === "best") {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.className = "station-item empty";
+      emptyMessage.textContent = "Немає улюблених станцій";
+      stationList.appendChild(emptyMessage);
+    }
     return;
   }
 
@@ -188,7 +195,7 @@ function updateStationList() {
   stationList.onclick = e => {
     const item = e.target.closest(".station-item");
     const favoriteBtn = e.target.closest(".favorite-btn");
-    if (item) {
+    if (item && !item.classList.contains("empty")) {
       currentIndex = Array.from(stationItems).indexOf(item);
       changeStation(currentIndex);
     }
@@ -216,7 +223,7 @@ function toggleFavorite(stationName) {
 
 // Зміна станції
 function changeStation(index) {
-  if (index < 0 || index >= stationItems.length) return;
+  if (index < 0 || index >= stationItems.length || stationItems[index].classList.contains("empty")) return;
   retryCount = 0;
   const item = stationItems[index];
   stationItems.forEach(i => i.classList.remove("selected"));
@@ -235,7 +242,7 @@ function updateCurrentStationInfo(item) {
   currentStationInfo.querySelector(".station-country").textContent = `країна: ${item.dataset.country || "-"}`;
   if ("mediaSession" in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: item.dataset.name || "  "Невідома станція",
+      title: item.dataset.name || "Невідома станція",
       artist: `${item.dataset.genre || "-"} | ${item.dataset.country || "-"}`,
       album: "Radio Music"
     });
@@ -245,11 +252,13 @@ function updateCurrentStationInfo(item) {
 // Керування відтворенням
 function prevStation() {
   currentIndex = currentIndex > 0 ? currentIndex - 1 : stationItems.length - 1;
+  if (stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
   changeStation(currentIndex);
 }
 
 function nextStation() {
   currentIndex = currentIndex < stationItems.length - 1 ? currentIndex + 1 : 0;
+  if (stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
   changeStation(currentIndex);
 }
 
@@ -340,7 +349,7 @@ loadStations();
 // Автовідтворення при завантаженні сторінки
 document.addEventListener("DOMContentLoaded", () => {
   setTimeout(() => {
-    if (isPlaying && stationItems?.length && currentIndex < stationItems.length) {
+    if (isPlaying && stationItems?.length && currentIndex < stationItems.length && !stationItems[currentIndex].classList.contains("empty")) {
       tryAutoPlay();
     }
   }, 0);
