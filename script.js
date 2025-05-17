@@ -56,7 +56,7 @@ async function loadStations() {
 // Керування темами
 const themes = {
   dark: { bodyBg: "#121212", containerBg: "#1e1e1e", accent: "#00C4FF", text: "#fff" },
-  light: { bodyBg: "#f5f5f5", containerBg: "#ffffff", accent: "#007BFF", text: "#333" },
+  metallic: { bodyBg: "#0a0a0a", containerBg: "#1c1c1c", accent: "#d4d4d4", text: "#e0e0e0" },
   neon: { bodyBg: "#0a0a1a", containerBg: "#1a1a2e", accent: "#ff00ff", text: "#fff" }
 };
 let currentTheme = localStorage.getItem("selectedTheme") || "dark";
@@ -72,7 +72,7 @@ function applyTheme(theme) {
 }
 
 function toggleTheme() {
-  const themeOrder = ["dark", "light", "neon"];
+  const themeOrder = ["dark", "metallic", "neon"];
   const nextTheme = themeOrder[(themeOrder.indexOf(currentTheme) + 1) % 3];
   applyTheme(nextTheme);
 }
@@ -202,7 +202,10 @@ function updateCurrentStationInfo(item) {
 
 // Автовідтворення
 function tryAutoPlay() {
-  if (!isPlaying || !hasUserInteraction || !stationItems.length || currentIndex >= stationItems.length) return;
+  if (!isPlaying || !hasUserInteraction || !stationItems.length || currentIndex >= stationItems.length) {
+    document.querySelectorAll(".vis-bar").forEach(bar => bar.style.animationPlayState = "paused");
+    return;
+  }
   const playPromise = audio.play();
   const timeout = setTimeout(() => {
     if (audio.paused) handlePlaybackError();
@@ -213,6 +216,7 @@ function tryAutoPlay() {
       clearTimeout(timeout);
       statusMessage.style.display = "none";
       retryCount = 0;
+      document.querySelectorAll(".vis-bar").forEach(bar => bar.style.animationPlayState = "running");
     })
     .catch(() => {
       clearTimeout(timeout);
@@ -222,6 +226,7 @@ function tryAutoPlay() {
 
 // Обробка помилок відтворення
 function handlePlaybackError() {
+  document.querySelectorAll(".vis-bar").forEach(bar => bar.style.animationPlayState = "paused");
   if (retryCount >= MAX_RETRIES) {
     statusMessage.textContent = `Станція недоступна. Виберіть іншу.`;
     statusMessage.style.display = "block";
@@ -254,6 +259,7 @@ function togglePlayPause() {
     isPlaying = false;
     playPauseBtn.textContent = "▶";
     statusMessage.style.display = "none";
+    document.querySelectorAll(".vis-bar").forEach(bar => bar.style.animationPlayState = "paused");
   }
   localStorage.setItem("isPlaying", isPlaying);
 }
@@ -271,14 +277,14 @@ document.addEventListener("keydown", e => {
 audio.addEventListener("playing", () => {
   isPlaying = true;
   playPauseBtn.textContent = "⏸";
-  document.querySelectorAll(".wave-bar").forEach(bar => (bar.style.animationPlayState = "running"));
+  document.querySelectorAll(".vis-bar").forEach(bar => bar.style.animationPlayState = "running");
   localStorage.setItem("isPlaying", isPlaying);
 });
 
 audio.addEventListener("pause", () => {
   isPlaying = false;
   playPauseBtn.textContent = "▶";
-  document.querySelectorAll(".wave-bar").forEach(bar => (bar.style.animationPlayState = "paused"));
+  document.querySelectorAll(".vis-bar").forEach(bar => bar.style.animationPlayState = "paused");
   localStorage.setItem("isPlaying", isPlaying);
 });
 
@@ -289,7 +295,7 @@ audio.addEventListener("volumechange", () => {
   localStorage.setItem("volume", audio.volume);
 });
 
-// Моніторинг мережі
+// Моніторинг мережі та переривань
 window.addEventListener("online", () => {
   statusMessage.textContent = "Мережа відновлена. Підключення...";
   statusMessage.style.display = "block";
@@ -303,7 +309,14 @@ window.addEventListener("offline", () => {
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && isPlaying) {
-    setTimeout(tryAutoPlay, 1500);
+    tryAutoPlay();
+  }
+});
+
+// Обробка переривань (наприклад, дзвінків)
+document.addEventListener("resume", () => {
+  if (isPlaying) {
+    tryAutoPlay();
   }
 });
 

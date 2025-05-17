@@ -53,7 +53,7 @@ h1 {
   border: 2px solid var(--accent);
   border-radius: 8px;
   padding: 8px;
-  cursor: pointer;
+  cursor:現在の pointer;
   width: 40px;
   height: 40px;
   display: flex;
@@ -104,47 +104,37 @@ h1 {
   margin-top: 4px;
 }
 
+.visualizer {
+  display: flex;
+  gap: 3px;
+  width: 50px;
+  height: 30px;
+}
+
+.vis-bar {
+  width: 8px;
+  background: var(--accent);
+  border-radius: 4px;
+  animation: visAnimation 1s infinite ease-in-out;
+  animation-play-state: paused;
+}
+
+.vis-bar:nth-child(2) { animation-delay: 0.2s; }
+.vis-bar:nth-child(3) { animation-delay: 0.4s; }
+.vis-bar:nth-child(4) { animation-delay: 0.6s; }
+.vis-bar:nth-child(5) { animation-delay: 0.8s; }
+
+@keyframes visAnimation {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+
 .status-message {
   font-size: 0.9em;
   color: #ff4444;
   margin-top: 8px;
   text-align: center;
   display: none;
-}
-
-.tabs {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin: 10px 0;
-  position: sticky;
-  top: 80px;
-  z-index: 10;
-  background: var(--container-bg);
-  padding: 8px;
-  border-radius: 8px;
-}
-
-.tab-btn {
-  padding: 10px 16px;
-  background: #2a2a2a;
-  border: 2px solid var(--accent);
-  border-radius: 8px;
-  color: var(--text);
-  cursor: pointer;
-  font-size: 0.9em;
-  transition: all 0.3s ease;
-}
-
-.tab-btn:hover {
-  background: var(--accent);
-  color: #121212;
-}
-
-.tab-btn.active {
-  background: var(--accent);
-  color: #121212;
-  box-shadow: 0 0 10px rgba(0, 196, 255, 0.5);
 }
 
 .station-list {
@@ -154,7 +144,7 @@ h1 {
   background: #2a2a2a;
   border: 1px solid var(--accent);
   border-radius: 10px;
-  margin: 10px 0;
+  margin: 10px 0 5px;
   padding: 8px;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) #2a2a2a;
@@ -208,49 +198,66 @@ h1 {
   color: #ffd700;
 }
 
+.tabs {
+  display: flex;
+  justify-content: space-between;
+  margin: 5px 0;
+  position: sticky;
+  bottom: 110px;
+  z-index: 10;
+  background: var(--container-bg);
+  padding: 5px;
+  border-radius: 8px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  background: #2a2a2a;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.3s ease;
+  margin: 0 2px;
+  text-align: center;
+}
+
+.tab-btn:hover {
+  background: var(--accent);
+  color: #121212;
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  color: #121212;
+  box-shadow: 0 0 10px rgba(0, 196, 255, 0.5);
+}
+
 .controls-container {
   position: sticky;
   bottom: 0;
-  background: #1a1a2e;
-  border-top: 2px solid var(--accent);
+  background: linear-gradient(135deg, #1a1a2e, #2e2e3e);
+  border: 2px solid var(--accent);
+  border-radius: 10px;
   padding: 12px;
   display: flex;
   justify-content: center;
   z-index: 10;
+  box-shadow: 0 2px 12px rgba(0, 196, 255, 0.3);
+  margin-top: 5px;
 }
 
 .controls {
   display: flex;
-  gap: 20px;
-}
-
-.wave-progress {
-  display: flex;
-  gap: 3px;
-  width: 50px;
-}
-
-.wave-bar {
-  width: 8px;
-  background: var(--accent);
-  border-radius: 4px;
-  animation: waveAnimation 1s infinite ease-in-out;
-}
-
-.wave-bar:nth-child(2) { animation-delay: 0.2s; }
-.wave-bar:nth-child(3) { animation-delay: 0.4s; }
-.wave-bar:nth-child(4) { animation-delay: 0.6s; }
-.wave-bar:nth-child(5) { animation-delay: 0.8s; }
-
-@keyframes waveAnimation {
-  0%, 100% { transform: scaleY(0.4); }
-  50% { transform: scaleY(1); }
+  gap: 30px;
 }
 
 .control-btn {
-  width: 60px;
-  height: 60px;
-  font-size: 1.5em;
+  width: 70px;
+  height: 70px;
+  font-size: 1.8em;
   background: #2a2a2a;
   color: var(--text);
   border: 2px solid var(--accent);
@@ -283,9 +290,13 @@ h1 {
   }
 
   .control-btn {
-    width: 50px;
-    height: 50px;
-    font-size: 1.2em;
+    width: 60px;
+    height: 60px;
+    font-size: 1.5em;
+  }
+
+  .controls {
+    gap: 20px;
   }
 
   .station-list {
@@ -311,15 +322,16 @@ h1 {
   }
 
   .tab-btn {
-    padding: 8px 12px;
+    padding: 8px;
     font-size: 0.8em;
   }
 
-  .wave-progress {
+  .visualizer {
     width: 40px;
+    height: 25px;
   }
 
-  .wave-bar {
+  .vis-bar {
     width: 6px;
   }
 }
