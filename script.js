@@ -27,8 +27,9 @@ async function loadStations(attempt = 1) {
     if (!availableTabs.includes(currentTab)) {
       currentTab = availableTabs[0] || "techno";
       localStorage.setItem("currentTab", currentTab);
-      currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
     }
+    // Оновлюємо currentIndex після завантаження списку станцій
+    currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
     switchTab(currentTab);
   } catch (error) {
     console.error("Помилка завантаження станцій (спроба " + attempt + "):", error);
@@ -40,8 +41,8 @@ async function loadStations(attempt = 1) {
         if (!availableTabs.includes(currentTab)) {
           currentTab = availableTabs[0] || "techno";
           localStorage.setItem("currentTab", currentTab);
-          currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
         }
+        currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
         switchTab(currentTab);
         return;
       }
@@ -140,12 +141,14 @@ function switchTab(tab) {
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
   const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
-  currentIndex = savedIndex < (stationLists[tab]?.length || favoriteStations.length || 0) ? savedIndex : 0;
+  // Перевіряємо довжину списку для вкладки BEST
+  const maxIndex = tab === "best" ? favoriteStations.length : stationLists[tab]?.length || 0;
+  currentIndex = savedIndex < maxIndex ? savedIndex : 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
   if (activeBtn) activeBtn.classList.add("active");
-  if (stationItems?.length) tryAutoPlay();
+  if (stationItems?.length && currentIndex < stationItems.length) tryAutoPlay();
 }
 
 // Оновлення списку станцій
@@ -159,6 +162,7 @@ function updateStationList() {
 
   if (!stations.length) {
     currentIndex = 0;
+    stationItems = [];
     return;
   }
 
@@ -231,7 +235,7 @@ function updateCurrentStationInfo(item) {
   currentStationInfo.querySelector(".station-country").textContent = `країна: ${item.dataset.country || "-"}`;
   if ("mediaSession" in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: item.dataset.name || "Невідома станція",
+      title: item.dataset.name || "  "Невідома станція",
       artist: `${item.dataset.genre || "-"} | ${item.dataset.country || "-"}`,
       album: "Radio Music"
     });
