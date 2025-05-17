@@ -23,9 +23,10 @@ async function loadStations(attempt = 1) {
     const response = await fetch("stations.json", { cache: "no-cache" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     stationLists = await response.json();
-    const availableTabs = Object.keys(stationLists);
-    if (!availableTabs.includes(currentTab)) {
-      currentTab = availableTabs[0] || "techno";
+    // Визначаємо валідні вкладки, включаючи BEST
+    const validTabs = [...Object.keys(stationLists), "best"];
+    if (!validTabs.includes(currentTab)) {
+      currentTab = validTabs[0] || "techno";
       localStorage.setItem("currentTab", currentTab);
     }
     // Оновлюємо currentIndex після завантаження
@@ -37,9 +38,9 @@ async function loadStations(attempt = 1) {
       const cacheResponse = await caches.match("stations.json");
       if (cacheResponse) {
         stationLists = await cacheResponse.json();
-        const availableTabs = Object.keys(stationLists);
-        if (!availableTabs.includes(currentTab)) {
-          currentTab = availableTabs[0] || "techno";
+        const validTabs = [...Object.keys(stationLists), "best"];
+        if (!validTabs.includes(currentTab)) {
+          currentTab = validTabs[0] || "techno";
           localStorage.setItem("currentTab", currentTab);
         }
         currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
