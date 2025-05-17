@@ -1,8 +1,8 @@
 /* Updated on May 17, 2025 to force refresh */
 body {
   font-family: 'Roboto', sans-serif;
-  background: #121212;
-  color: #fff;
+  background: var(--body-bg, #121212);
+  color: var(--text-color, #fff);
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -18,7 +18,7 @@ body {
 .container {
   max-width: 100%;
   width: 100%;
-  background: #1e1e1e;
+  background: var(--container-bg, #1e1e1e);
   padding: 15px;
   border-radius: 15px;
   box-shadow: 0 0 15px rgba(0, 196, 255, 0.3);
@@ -34,7 +34,7 @@ h1 {
   font-size: 2.5em;
   margin: 5px 0;
   text-align: center;
-  color: #00C4FF;
+  color: var(--accent-color, #00C4FF);
   text-shadow: 0 0 10px rgba(0, 196, 255, 0.5);
   transition: color 0.3s ease;
 }
@@ -43,8 +43,8 @@ h1 {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: #333;
-  border: 1px solid #00C4FF;
+  background: var(--container-bg, #333);
+  border: 1px solid var(--accent-color, #00C4FF);
   border-radius: 5px;
   padding: 6px;
   cursor: pointer;
@@ -53,11 +53,12 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-color, #fff);
   transition: all 0.3s ease;
 }
 
 .theme-toggle:hover {
-  background: #00C4FF;
+  background: var(--accent-color, #00C4FF);
   color: #121212;
   box-shadow: 0 0 15px rgba(0, 196, 255, 0.5);
 }
@@ -67,8 +68,8 @@ h1 {
   padding: 15px;
   border-radius: 10px;
   margin: 10px 0;
-  color: #fff;
-  border: 2px solid #00ffcc;
+  color: var(--text-color, #fff);
+  border: 2px solid var(--accent-color, #00ffcc);
   box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
   text-align: left;
   height: auto;
@@ -134,10 +135,10 @@ h1 {
 
 .tab-btn {
   padding: 12px 20px;
-  background: #333;
-  border: 1px solid #00C4FF;
+  background: var(--container-bg, #333);
+  border: 1px solid var(--accent-color, #00C4FF);
   border-radius: 5px;
-  color: #fff;
+  color: var(--text-color, #fff);
   cursor: pointer;
   margin: 0 5px;
   transition: all 0.3s ease;
@@ -147,26 +148,26 @@ h1 {
 }
 
 .tab-btn:hover {
-  background: #00C4FF;
+  background: var(--accent-color, #00C4FF);
   color: #121212;
 }
 
 .tab-btn.active {
-  background: #00ffcc;
-  border-color: #00ffcc;
+  background: var(--accent-color, #00ffcc);
+  border-color: var(--accent-color, #00ffcc);
   color: #121212;
 }
 
 .station-list {
   max-height: 500px;
   overflow-y: auto;
-  background: #2c2c2c;
-  border: 1px solid #00C4FF;
+  background: var(--container-bg, #2c2c2c);
+  border: 1px solid var(--accent-color, #00C4FF);
   border-radius: 10px;
   margin: 10px 0;
   padding: 10px;
   scrollbar-width: thin;
-  scrollbar-color: #00C4FF #2c2c2c;
+  scrollbar-color: var(--accent-color, #00C4FF) var(--container-bg, #2c2c2c);
   box-shadow: 0 0 10px rgba(0, 196, 255, 0.2);
   transition: background 0.3s ease, border-color 0.3s ease;
   flex-grow: 1;
@@ -177,11 +178,11 @@ h1 {
 }
 
 .station-list::-webkit-scrollbar-track {
-  background: #2c2c2c;
+  background: var(--container-bg, #2c2c2c);
 }
 
 .station-list::-webkit-scrollbar-thumb {
-  background: #00C4FF;
+  background: var(--accent-color, #00C4FF);
   border-radius: 4px;
 }
 
@@ -191,19 +192,18 @@ h1 {
   transition: all 0.3s ease;
   border-radius: 8px;
   font-weight: 500;
-  border: 1px solid #444;
+  border: 1px solid var(--text-color, #444);
   margin: 5px 0;
-  color: #fff;
-  background: #333;
+  color: var(--text-color, #fff);
+  background: var(--container-bg, #333);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .station-item:hover, .station-item.selected {
-  background: #00ffcc !important;
-  border: 2px solid #00ffcc !important;
+  background: var(--accent-color, #00ffcc) !important;
+  border: 2px solid var(--accent-color, #00ffcc) !important;
   color: #121212;
   box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
 }
@@ -211,7 +211,7 @@ h1 {
 .station-item .favorite-btn {
   background: none;
   border: none;
-  color: #fff;
+  color: var(--text-color, #fff);
   font-size: 20px;
   cursor: pointer;
   transition: color 0.3s ease;
@@ -228,8 +228,8 @@ h1 {
 .controls-container {
   position: sticky;
   bottom: 0;
-  background: #1a1a2e;
-  border-top: 2px solid #00C4FF;
+  background: var(--container-bg, #1a1a2e);
+  border-top: 2px solid var(--accent-color, #00C4FF);
   padding: 15px;
   display: flex;
   align-items: center;
@@ -253,7 +253,7 @@ h1 {
 
 .wave-bar {
   width: 10px;
-  background: #00C4FF;
+  background: var(--accent-color, #00C4FF);
   border-radius: 5px;
   animation: waveAnimation 1.2s infinite ease-in-out;
 }
@@ -272,9 +272,9 @@ h1 {
   width: 80px;
   height: 80px;
   font-size: 32px;
-  background: #333;
-  color: #fff;
-  border: 2px solid #00C4FF;
+  background: var(--container-bg, #333);
+  color: var(--text-color, #fff);
+  border: 2px solid var(--accent-color, #00C4FF);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -285,7 +285,7 @@ h1 {
 }
 
 .control-btn:hover {
-  background: #00C4FF;
+  background: var(--accent-color, #00C4FF);
   color: #121212;
   transform: scale(1.1);
   box-shadow: 0 0 20px rgba(0, 196, 255, 0.5);
@@ -349,10 +349,6 @@ h1 {
     font-size: 16px;
   }
 
-  .current-station-info .station-status {
-    font-size: 12px;
-  }
-
   .station-info-content {
     gap: 10px;
   }
@@ -370,6 +366,10 @@ h1 {
     padding: 10px 15px;
     font-size: 14px;
     min-width: 70px;
+  }
+
+  .station-status {
+    font-size: 12px;
   }
 }
 

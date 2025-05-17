@@ -70,7 +70,7 @@
     { "value": "https://online.radiojazz.ua/RadioJazz", "name": "Radio Jazz", "genre": "Джаз", "emoji": "🎷", "country": "Україна" },
     { "value": "https://online.classicradio.ua/ClassicRadio", "name": "Classic Radio", "genre": "Класична музика", "emoji": "🎻", "country": "Україна" },
     { "value": "https://cast.brg.ua/shanson_main_public_mp3_hq", "name": "Шлягер FM", "genre": "Шансон/Естрада", "emoji": "🎙", "country": "Україна" },
-    { "value": "https://cast.brg.ua/powerfm_main_public_mp3_hq", "name": "Power FM", "genre": "Поп/Танцювальна", "emoji": "�principality", "country": "Україна" },
+    { "value": "https://cast.brg.ua/powerfm_main_public_mp3_hq", "name": "Power FM", "genre": "Поп/Танцювальна", "emoji": "🎧", "country": "Україна" },
     { "value": "https://cast.brg.ua/djfm_main_public_mp3_hq", "name": "DJ FM", "genre": "Танцювальна/EDM", "emoji": "💃", "country": "Україна" },
     { "value": "https://cast.brg.ua/business_main_public_mp3_hq", "name": "Magic Radio", "genre": "Легка музика", "emoji": "🌿", "country": "Україна" },
     { "value": "https://cast.mediaonline.net.ua/avtoradio320", "name": "Авторадіо", "genre": "Поп-музика", "emoji": "🚗", "country": "Україна" },
