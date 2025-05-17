@@ -47,13 +47,11 @@ async function loadStations(attempt = 1) {
     }
     if (attempt < 3) {
       setTimeout(() => loadStations(attempt + 1), 1000);
-    } else {
-      stationList.innerHTML = `<div style="color: red; padding: 10px;">Помилка завантаження станцій після кількох спроб.</div>`;
     }
   }
 }
 
-// Теми (залишено без змін)
+// Теми
 const themes = {
   dark: { bodyBg: "#121212", containerBg: "#1e1e1e", accent: "#00C4FF", text: "#fff" },
   light: { bodyBg: "#f0f0f0", containerBg: "#fff", accent: "#007BFF", text: "#000" },
@@ -64,23 +62,19 @@ const themes = {
 let currentTheme = localStorage.getItem("selectedTheme") || "dark";
 
 function applyTheme(theme) {
-  document.body.style.background = themes[theme].bodyBg;
-  document.querySelector(".container").style.background = themes[theme].containerBg;
-  document.querySelector("h1").style.color = themes[theme].accent;
-  document.querySelectorAll(".station-list, .control-btn, .theme-toggle, .current-station-info, .tab-btn").forEach(el => {
-    el.style.background = themes[theme].containerBg;
-    el.style.borderColor = themes[theme].accent;
-    el.style.color = themes[theme].text;
-  });
-  document.querySelectorAll(".station-item").forEach(el => {
-    el.style.background = themes[theme].containerBg;
-    el.style.borderColor = themes[theme].text;
-    el.style.color = themes[theme].text;
-  });
-  document.querySelector(".controls-container").style.background = themes[theme].containerBg;
-  document.querySelector(".controls-container").style.borderColor = themes[theme].accent;
-  currentTheme = theme;
+  const root = document.documentElement;
+  root.style.setProperty("--body-bg", themes[theme].bodyBg);
+  root.style.setProperty("--container-bg", themes[theme].containerBg);
+  root.style.setProperty("--accent", themes[theme].accent);
+  root.style.setProperty("--text", themes[theme].text);
   localStorage.setItem("selectedTheme", theme);
+  currentTheme = theme;
+}
+
+function toggleTheme() {
+  const themesOrder = ["dark", "light", "neon", "light-alt", "dark-alt"];
+  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % 5];
+  applyTheme(nextTheme);
 }
 
 // Налаштування Service Worker
@@ -125,12 +119,11 @@ function tryAutoPlay() {
     });
 }
 
-// Обробка помилок відтворення
+// Обробка помилок відтворення (без перемикання станції)
 function handlePlaybackError() {
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
   if (retryCount >= MAX_RETRIES) {
-    stationList.innerHTML = `<div style="color: red; padding: 10px;">Станція недоступна. Виберіть іншу.</div>`;
-    nextStation();
+    retryCount = 0;
     return;
   }
   retryCount++;
@@ -161,9 +154,6 @@ function updateStationList() {
     : stationLists[currentTab] || [];
 
   if (!stations.length) {
-    stationList.innerHTML = `<div style="color: yellow; padding: 10px;">${
-      currentTab === "best" ? "Додайте улюблені станції!" : "Немає станцій."
-    }</div>`;
     return;
   }
 
@@ -309,7 +299,7 @@ window.addEventListener("online", () => {
 });
 
 window.addEventListener("offline", () => {
-  stationList.innerHTML = `<div style="color: yellow; padding: 10px;">Немає мережі. Використовується кеш.</div>`;
+  // Без повідомлень
 });
 
 document.addEventListener("visibilitychange", () => {

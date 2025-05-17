@@ -1,8 +1,15 @@
-/* Updated on May 16, 2025 to force refresh */
+/* Updated on May 18, 2025 */
+:root {
+  --body-bg: #121212;
+  --container-bg: #1e1e1e;
+  --accent: #00C4FF;
+  --text: #fff;
+}
+
 body {
   font-family: 'Roboto', sans-serif;
-  background: #121212;
-  color: #fff;
+  background: var(--body-bg);
+  color: var(--text);
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -12,13 +19,13 @@ body {
   overflow-x: hidden;
   padding-top: 10px;
   box-sizing: border-box;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .container {
   max-width: 100%;
   width: 100%;
-  background: #1e1e1e;
+  background: var(--container-bg);
   padding: 15px;
   border-radius: 15px;
   box-shadow: 0 0 15px rgba(0, 196, 255, 0.3);
@@ -34,7 +41,7 @@ h1 {
   font-size: 2.5em;
   margin: 5px 0;
   text-align: center;
-  color: #00C4FF;
+  color: var(--accent);
   text-shadow: 0 0 10px rgba(0, 196, 255, 0.5);
   transition: color 0.3s ease;
 }
@@ -43,8 +50,8 @@ h1 {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: #333;
-  border: 1px solid #00C4FF;
+  background: var(--container-bg);
+  border: 1px solid var(--accent);
   border-radius: 5px;
   padding: 6px;
   cursor: pointer;
@@ -57,18 +64,18 @@ h1 {
 }
 
 .theme-toggle:hover {
-  background: #00C4FF;
+  background: var(--accent);
   color: #121212;
   box-shadow: 0 0 15px rgba(0, 196, 255, 0.5);
 }
 
 .current-station-info {
-  background: #252525;
+  background: var(--container-bg);
   padding: 15px;
   border-radius: 10px;
   margin: 10px 0;
-  color: #fff;
-  border: 2px solid #00ffcc;
+  color: var(--text);
+  border: 2px solid var(--accent);
   box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
   text-align: left;
   height: auto;
@@ -78,7 +85,7 @@ h1 {
   top: 0;
   z-index: 10;
   background: linear-gradient(45deg, #1a1a2e, #2e2e3e);
-  transition: background 0.3s ease, border-color 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .station-info-content {
@@ -119,7 +126,7 @@ h1 {
   position: sticky;
   bottom: 110px;
   z-index: 10;
-  background: #1e1e1e;
+  background: var(--container-bg);
   padding: 5px;
   border-radius: 5px;
 }
@@ -127,10 +134,10 @@ h1 {
 .tab-btn {
   flex: 1;
   padding: 12px;
-  background: #333;
-  border: 1px solid #00C4FF;
+  background: var(--container-bg);
+  border: 1px solid var(--accent);
   border-radius: 5px;
-  color: #fff;
+  color: var(--text);
   cursor: pointer;
   margin: 0 2px;
   transition: all 0.3s ease;
@@ -139,26 +146,26 @@ h1 {
 }
 
 .tab-btn:hover {
-  background: #00C4FF;
+  background: var(--accent);
   color: #121212;
 }
 
 .tab-btn.active {
-  background: #00ffcc;
-  border-color: #00ffcc;
+  background: var(--accent);
+  border-color: var(--accent);
   color: #121212;
 }
 
 .station-list {
   max-height: 500px;
   overflow-y: auto;
-  background: #2c2c2c;
-  border: 1px solid #00C4FF;
+  background: var(--container-bg);
+  border: 1px solid var(--accent);
   border-radius: 10px;
   margin: 10px 0 5px;
   padding: 10px;
   scrollbar-width: thin;
-  scrollbar-color: #00C4FF #2c2c2c;
+  scrollbar-color: var(--accent) var(--container-bg);
   box-shadow: 0 0 10px rgba(0, 196, 255, 0.2);
   transition: background 0.3s ease, border-color 0.3s ease;
   flex-grow: 1;
@@ -169,11 +176,11 @@ h1 {
 }
 
 .station-list::-webkit-scrollbar-track {
-  background: #2c2c2c;
+  background: var(--container-bg);
 }
 
 .station-list::-webkit-scrollbar-thumb {
-  background: #00C4FF;
+  background: var(--accent);
   border-radius: 4px;
 }
 
@@ -183,10 +190,10 @@ h1 {
   transition: all 0.3s ease;
   border-radius: 8px;
   font-weight: 500;
-  border: 1px solid #444;
+  border: 1px solid var(--text);
   margin: 5px 0;
-  color: #fff;
-  background: #333;
+  color: var(--text);
+  background: var(--container-bg);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -194,8 +201,8 @@ h1 {
 }
 
 .station-item:hover, .station-item.selected {
-  background: #00ffcc !important;
-  border: 2px solid #00ffcc !important;
+  background: var(--accent) !important;
+  border: 2px solid var(--accent) !important;
   color: #121212;
   box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
 }
@@ -203,7 +210,7 @@ h1 {
 .station-item .favorite-btn {
   background: none;
   border: none;
-  color: #fff;
+  color: var(--text);
   font-size: 20px;
   cursor: pointer;
   transition: color 0.3s ease;
@@ -220,14 +227,15 @@ h1 {
 .controls-container {
   position: sticky;
   bottom: 0;
-  background: #1a1a2e;
-  border-top: 2px solid #00C4FF;
+  background: var(--container-bg);
+  border-top: 2px solid var(--accent);
   padding: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 20px;
   z-index: 10;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .controls {
@@ -245,7 +253,7 @@ h1 {
 
 .wave-bar {
   width: 10px;
-  background: #00C4FF;
+  background: var(--accent);
   border-radius: 5px;
   animation: waveAnimation 1.2s infinite ease-in-out;
   animation-play-state: paused;
@@ -265,9 +273,9 @@ h1 {
   width: 80px;
   height: 80px;
   font-size: 32px;
-  background: #333;
-  color: #fff;
-  border: 2px solid #00C4FF;
+  background: var(--container-bg);
+  color: var(--text);
+  border: 2px solid var(--accent);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -278,7 +286,7 @@ h1 {
 }
 
 .control-btn:hover {
-  background: #00C4FF;
+  background: var(--accent);
   color: #121212;
   transform: scale(1.1);
   box-shadow: 0 0 20px rgba(0, 196, 255, 0.5);
