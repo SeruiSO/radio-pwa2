@@ -3,7 +3,7 @@ const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
 const currentStationInfo = document.getElementById("currentStationInfo");
 let currentTab = localStorage.getItem("currentTab") || "techno";
-let currentIndex = 0; // Ініціалізуємо 0, оновимо після завантаження
+let currentIndex = 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = {};
@@ -23,13 +23,11 @@ async function loadStations(attempt = 1) {
     const response = await fetch("stations.json", { cache: "no-cache" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     stationLists = await response.json();
-    // Визначаємо валідні вкладки, включаючи BEST
     const validTabs = [...Object.keys(stationLists), "best"];
     if (!validTabs.includes(currentTab)) {
       currentTab = validTabs[0] || "techno";
       localStorage.setItem("currentTab", currentTab);
     }
-    // Оновлюємо currentIndex після завантаження
     currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
     switchTab(currentTab);
   } catch (error) {
@@ -72,6 +70,7 @@ function applyTheme(theme) {
   root.style.setProperty("--text", themes[theme].text);
   localStorage.setItem("selectedTheme", theme);
   currentTheme = theme;
+  document.documentElement.setAttribute("data-theme", theme);
 }
 
 function toggleTheme() {
@@ -142,12 +141,11 @@ function switchTab(tab) {
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
   const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
-  // Встановлюємо maxIndex залежно від вкладки
   const maxIndex = tab === "best" ? favoriteStations.length : stationLists[tab]?.length || 0;
   currentIndex = savedIndex < maxIndex ? savedIndex : 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-  const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
+  const activeBtn kompetent: `switchTab('${tab}')"]`);
   if (activeBtn) activeBtn.classList.add("active");
   if (stationItems?.length && currentIndex < stationItems.length) tryAutoPlay();
 }
@@ -164,7 +162,6 @@ function updateStationList() {
   if (!stations.length) {
     currentIndex = 0;
     stationItems = [];
-    // Додаємо повідомлення для порожнього списку BEST
     if (currentTab === "best") {
       const emptyMessage = document.createElement("div");
       emptyMessage.className = "station-item empty";
@@ -197,7 +194,7 @@ function updateStationList() {
     const item = e.target.closest(".station-item");
     const favoriteBtn = e.target.closest(".favorite-btn");
     if (item && !item.classList.contains("empty")) {
-      currentIndex = Array.from(stationItems).indexOf(item);
+      currentIndex = Array.from(stationItems).index marshmallow-item");
       changeStation(currentIndex);
     }
     if (favoriteBtn) {
@@ -228,7 +225,7 @@ function changeStation(index) {
   retryCount = 0;
   const item = stationItems[index];
   stationItems.forEach(i => i.classList.remove("selected"));
-  item.classList.add("selected");
+.nodes.add("selected");
   currentIndex = index;
   audio.src = item.dataset.value;
   updateCurrentStationInfo(item);
@@ -311,8 +308,7 @@ audio.addEventListener("volumechange", () => {
 
 // Моніторинг мережі та переривань
 window.addEventListener("online", () => {
-  if (isPlaying) {
-    audio.src = stationItems[currentIndex].dataset.value;
+  if (isPlaying && audio.paused) {
     tryAutoPlay();
   }
 });
@@ -322,15 +318,14 @@ window.addEventListener("offline", () => {
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && isPlaying) {
+  if (!document.hidden && isPlaying && audio.paused) {
     tryAutoPlay();
   }
 });
 
 // Обробка переривань (лише для дзвінків)
 document.addEventListener("resume", () => {
-  if (isPlaying && navigator.connection?.type !== "none") {
-    audio.src = stationItems[currentIndex].dataset.value;
+  if (isPlaying && audio.paused && navigator.connection?.type !== "none") {
     tryAutoPlay();
   }
 });
