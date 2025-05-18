@@ -88,12 +88,15 @@ h1 {
 }
 
 /* Градієнт для темних тем */
-.current-station-info:not([data-theme="light"], [data-theme="light-alt"]) {
+[data-theme="dark"] .current-station-info,
+[data-theme="neon"] .current-station-info,
+[data-theme="dark-alt"] .current-station-info {
   background: linear-gradient(45deg, #1a1a2e, #2e2e3e);
 }
 
 /* Виправлення для світлих тем */
-.current-station-info[data-theme="light"], .current-station-info[data-theme="light-alt"] {
+[data-theme="light"] .current-station-info,
+[data-theme="light-alt"] .current-station-info {
   background: var(--container-bg);
   color: var(--text);
 }
