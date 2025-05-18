@@ -62,4 +62,25 @@
     { "value": "https://online.nasheradio.ua/NasheRadio", "name": "Наше Радіо", "genre": "Поп/Рок", "logo": "logos/nasheradio_logo.png", "country": "Україна" },
     { "value": "https://icecast.luxnet.ua/maximum_mp3", "name": "Радіо МАКСИМУМ", "genre": "Поп/Рок", "logo": "logos/maximum_logo.png", "country": "Україна" },
     { "value": "https://icecast.luxnet.ua/nostalgie_mp3", "name": "Radio NOSTALGIE", "genre": "Ретро", "logo": "logos/nostalgie_logo.png", "country": "Україна" },
-    { "value": "https://online.radiojazz.ua/RadioJazz", "name": "Radio Jazz", "genre": "Дж
+    { "value": "https://online.radiojazz.ua/RadioJazz", "name": "Radio Jazz", "genre": "Джаз", "logo": "logos/radiojazz_logo.png", "country": "Україна" },
+    { "value": "https://online.classicradio.ua/ClassicRadio", "name": "Classic Radio", "genre": "Класична музика", "logo": "logos/classicradio_logo.png", "country": "Україна" },
+    { "value": "https://cast.brg.ua/shanson_main_public_mp3_hq", "name": "Шлягер FM", "genre": "Шансон/Естрада", "logo": "logos/shlyagerfm_logo.png", "country": "Україна" },
+    { "value": "https://cast.brg.ua/powerfm_main_public_mp3_hq", "name": "Power FM", "genre": "Поп/Танцювальна", "logo": "logos/powerfm_logo.png", "country": "Україна" },
+    { "value": "https://cast.brg.ua/djfm_main_public_mp3_hq", "name": "DJ FM", "genre": "Танцювальна/EDM", "logo": "logos/djfm_logo.png", "country": "Україна" },
+    { "value": "https://cast.brg.ua/business_main_public_mp3_hq", "name": "Magic Radio", "genre": "Легка музика", "logo": "logos/brg_logo.png", "country": "Україна" },
+    { "value": "https://cast.mediaonline.net.ua/avtoradio320", "name": "Авторадіо", "genre": "Поп-музика", "logo": "logos/avtoradio_logo.png", "country": "Україна" },
+    { "value": "https://online.radiobayraktar.ua/RadioBayraktar", "name": "Радіо БАЙРАКТАР", "genre": "Українська музика", "logo": "logos/radiobayraktar_logo.png", "country": "Україна" },
+    { "value": "https://stream320.galychyna.fm/RadioPlayer", "name": "FM Галичина", "genre": "Українська музика", "logo": "logos/galychyna_logo.png", "country": "Україна" },
+    { "value": "https://onair.lviv.fm:8443/lviv.fm", "name": "Львівська Хвиля", "genre": "Поп/Українська музика", "logo": "logos/lvivfm_logo.png", "country": "Україна" },
+    { "value": "https://icecast.luxnet.ua/luxlviv_mp3_320", "name": "Люкс ФМ (Львів)", "genre": "Поп-музика", "logo": "logos/luxfm_logo.png", "country": "Україна" },
+    { "value": "https://ipradio.net:8443/duzheHD", "name": "Дуже Радіо", "genre": "Українська музика", "logo": "logos/duzheradio_logo.png", "country": "Україна" },
+    { "value": "https://live.radio1.com.ua/liveradio320", "name": "Радіо ПЕРШЕ", "genre": "Поп-музика", "logo": "logos/radio1_logo.png", "country": "Україна" },
+    { "value": "https://audio.radiotrek.rv.ua/", "name": "Радіо Трек", "genre": "Поп/Рок", "logo": "logos/radiotrek_logo.png", "country": "Україна" },
+    { "value": "https://cdn-br2.live-tv.cloud/sferarvFM/320k/icecast.audio", "name": "Сфера-ФМ", "genre": "Поп-музика", "logo": "logos/livetv_logo.png", "country": "Україна" },
+    { "value": "https://online.1043.com.ua/1043fm", "name": "Західний Полюс", "genre": "Поп/Рок", "logo": "logos/zahidnypolus_logo.png", "country": "Україна" },
+    { "value": "https://listenannual.myradio24.com/69829", "name": "Радіо Вежа", "genre": "Поп-музика", "logo": "logos/radiovezha_logo.png", "country": "Україна" },
+    { "value": "https://100.cv.ua:8443/play", "name": "Буковинська Хвиля", "genre": "Поп/Народна музика", "logo": "logos/bukohvylya_logo.png", "country": "Україна" },
+    { "value": "https://stream.chv.ua:8443/acc.mp3", "name": "Радіо 10", "genre": "Поп-музика", "logo": "logos/radio10_logo.png", "country": "Україна" },
+    { "value": "https://radio.c4.com.ua:8443/320", "name": "Радіо C4", "genre": "Поп-музика", "logo": "logos/radioc4_logo.png", "country": "Україна" }
+  ]
+}
