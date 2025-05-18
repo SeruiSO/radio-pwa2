@@ -88,23 +88,6 @@ h1 {
   transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
-/* Стилі для світлих тем */
-html[data-theme="light"] .current-station-info,
-html[data-theme="light-alt"] .current-station-info {
-  background: #ffffff;
-  color: #000000;
-  background: none; /* Видаляємо градієнт */
-}
-
-html[data-theme="light"] .current-station-info .station-name,
-html[data-theme="light"] .current-station-info .station-genre,
-html[data-theme="light"] .current-station-info .station-country,
-html[data-theme="light-alt"] .current-station-info .station-name,
-html[data-theme="light-alt"] .current-station-info .station-genre,
-html[data-theme="light-alt"] .current-station-info .station-country {
-  color: #000000;
-}
-
 .station-info-content {
   display: flex;
   align-items: center;

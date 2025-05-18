@@ -72,8 +72,6 @@ function applyTheme(theme) {
   root.style.setProperty("--text", themes[theme].text);
   localStorage.setItem("selectedTheme", theme);
   currentTheme = theme;
-  // Встановлюємо атрибут data-theme для CSS
-  document.documentElement.setAttribute("data-theme", theme);
 }
 
 function toggleTheme() {
@@ -117,7 +115,7 @@ function tryAutoPlay() {
       clearTimeout(timeout);
       retryCount = 0;
       isAutoPlaying = false;
-      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlay государство);
+      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
     })
     .catch(error => {
       clearTimeout(timeout);
@@ -324,13 +322,15 @@ window.addEventListener("offline", () => {
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && isPlaying && audio.paused && !isAutoPlaying) {
-    // Якщо аудіо на паузі, але має відтворюватися, відновлюємо відтворення
-    const playPromise = audio.play();
-    playPromise.catch(error => {
-      console.error("Помилка відновлення відтворення:", error);
-      handlePlaybackError();
-    });
+  if (!document.hidden && isPlaying && !audio.paused && audio.src) {
+    // Якщо документ видимий, відтворення увімкнено, потік активний і джерело встановлено,
+    // нічого не робимо, дозволяючи потоку продовжувати відтворення
+    return;
+  }
+  if (!document.hidden && isPlaying) {
+    // Якщо документ видимий і відтворення увімкнено, але потік не активний,
+    // намагаємося відновити відтворення
+    tryAutoPlay();
   }
 });
 
