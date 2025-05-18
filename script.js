@@ -1,4 +1,3 @@
-﻿// <ARTIFACT filename="script.js">
 const audio = document.getElementById("audioPlayer");
 const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
@@ -73,6 +72,8 @@ function applyTheme(theme) {
   root.style.setProperty("--text", themes[theme].text);
   localStorage.setItem("selectedTheme", theme);
   currentTheme = theme;
+  // Встановлюємо атрибут data-theme для CSS
+  document.documentElement.setAttribute("data-theme", theme);
 }
 
 function toggleTheme() {
@@ -116,7 +117,7 @@ function tryAutoPlay() {
       clearTimeout(timeout);
       retryCount = 0;
       isAutoPlaying = false;
-      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlay государство);
     })
     .catch(error => {
       clearTimeout(timeout);
@@ -147,7 +148,7 @@ function switchTab(tab) {
   const maxIndex = tab === "best" ? favoriteStations.length : stationLists[tab]?.length || 0;
   currentIndex = savedIndex < maxIndex ? savedIndex : 0;
   updateStationList();
-  document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active秦
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
   if (activeBtn) activeBtn.classList.add("active");
   if (stationItems?.length && currentIndex < stationItems.length) tryAutoPlay();
@@ -323,17 +324,18 @@ window.addEventListener("offline", () => {
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && isPlaying && audio.paused) {
-    tryAutoPlay();
+  if (!document.hidden && isPlaying && audio.paused && !isAutoPlaying) {
+    // Якщо аудіо на паузі, але має відтворюватися, відновлюємо відтворення
+    const playPromise = audio.play();
+    playPromise.catch(error => {
+      console.error("Помилка відновлення відтворення:", error);
+      handlePlaybackError();
+    });
   }
 });
 
 // Обробка переривань (лише для дзвінків)
 document.addEventListener("resume", () => {
-  if (isPlaying && !audio.paused && navigator.connection?.type !== "none") {
-    // Якщо аудіо вже відтворюється, нічого не робимо
-    return;
-  }
   if (isPlaying && navigator.connection?.type !== "none") {
     audio.src = stationItems[currentIndex].dataset.value;
     tryAutoPlay();
@@ -360,4 +362,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }, 0);
 });
-// </ARTIFACT>
