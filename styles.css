@@ -88,6 +88,13 @@ h1 {
   transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
+/* Виправлення для світлих тем */
+:root:has([data-theme="light"], [data-theme="light-alt"]) .current-station-info {
+  background: var(--container-bg);
+  color: var(--text);
+  background: none; /* Видаляємо градієнт */
+}
+
 .station-info-content {
   display: flex;
   align-items: center;
