@@ -1,3 +1,4 @@
+﻿// <ARTIFACT filename="styles.css">
 /* Updated on May 18, 2025 */
 :root {
   --body-bg: #121212;
@@ -84,24 +85,13 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: linear-gradient(45deg, #1a1a2e, #2e2e3e);
   transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 /* Стилі для світлих тем */
-[data-theme="light"] .current-station-info,
-[data-theme="light-alt"] .current-station-info {
+:root[data-theme="light"] .current-station-info,
+:root[data-theme="light-alt"] .current-station-info {
   background: #ffffff;
-  color: #000000;
-  background: none; /* Видаляємо градієнт */
-}
-
-[data-theme="light"] .current-station-info .station-name,
-[data-theme="light"] .current-station-info .station-genre,
-[data-theme="light"] .current-station-info .station-country,
-[data-theme="light-alt"] .current-station-info .station-name,
-[data-theme="light-alt"] .current-station-info .station-genre,
-[data-theme="light-alt"] .current-station-info .station-country {
   color: #000000;
 }
 
@@ -266,8 +256,8 @@ h1 {
   display: flex;
   gap: 4px;
   height: 60px;
-  width: 84px;
-  order: -1;
+  width: 84px; /* 7 bars * (10px width + 2px gap) */
+  order: -1; /* Place before station-text */
 }
 
 .wave-bar {
@@ -399,3 +389,4 @@ h1 {
     max-height: 450px;
   }
 }
+// </ARTIFACT>
