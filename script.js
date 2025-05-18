@@ -3,7 +3,7 @@ const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
 const currentStationInfo = document.getElementById("currentStationInfo");
 let currentTab = localStorage.getItem("currentTab") || "techno";
-let currentIndex = 0;
+let currentIndex = 0; // Ініціалізуємо 0, оновимо після завантаження
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = {};
@@ -20,15 +20,16 @@ audio.volume = parseFloat(localStorage.getItem("volume")) || 0.5;
 // Завантаження станцій
 async function loadStations(attempt = 1) {
   try {
-    const response = await fetch("stations.json?v=" + new Date().getTime(), { cache: "no-cache" });
+    const response = await fetch("stations.json", { cache: "no-cache" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     stationLists = await response.json();
-    console.log("Завантажені станції:", stationLists);
+    // Визначаємо валідні вкладки, включаючи BEST
     const validTabs = [...Object.keys(stationLists), "best"];
     if (!validTabs.includes(currentTab)) {
       currentTab = validTabs[0] || "techno";
       localStorage.setItem("currentTab", currentTab);
     }
+    // Оновлюємо currentIndex після завантаження
     currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
     switchTab(currentTab);
   } catch (error) {
@@ -37,7 +38,6 @@ async function loadStations(attempt = 1) {
       const cacheResponse = await caches.match("stations.json");
       if (cacheResponse) {
         stationLists = await cacheResponse.json();
-        console.log("Завантажено з кешу:", stationLists);
         const validTabs = [...Object.keys(stationLists), "best"];
         if (!validTabs.includes(currentTab)) {
           currentTab = validTabs[0] || "techno";
@@ -50,8 +50,6 @@ async function loadStations(attempt = 1) {
     }
     if (attempt < 3) {
       setTimeout(() => loadStations(attempt + 1), 1000);
-    } else {
-      stationList.innerHTML = "<div class='station-item empty'>Помилка завантаження станцій. Перевірте підключення до мережі.</div>";
     }
   }
 }
@@ -144,6 +142,7 @@ function switchTab(tab) {
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
   const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
+  // Встановлюємо maxIndex залежно від вкладки
   const maxIndex = tab === "best" ? favoriteStations.length : stationLists[tab]?.length || 0;
   currentIndex = savedIndex < maxIndex ? savedIndex : 0;
   updateStationList();
@@ -165,16 +164,12 @@ function updateStationList() {
   if (!stations.length) {
     currentIndex = 0;
     stationItems = [];
+    // Додаємо повідомлення для порожнього списку BEST
     if (currentTab === "best") {
       const emptyMessage = document.createElement("div");
       emptyMessage.className = "station-item empty";
       emptyMessage.textContent = "Немає улюблених станцій";
       stationList.appendChild(emptyMessage);
-    } else {
-      const errorMessage = document.createElement("div");
-      errorMessage.className = "station-item empty";
-      errorMessage.textContent = `Немає станцій для вкладки "${currentTab}"`;
-      stationList.appendChild(errorMessage);
     }
     return;
   }
@@ -192,9 +187,7 @@ function updateStationList() {
     item.dataset.name = station.name;
     item.dataset.genre = station.genre;
     item.dataset.country = station.country;
-    // Використовуємо логотип як зображення, якщо воно є, або placeholder
-    const logoSrc = station.logo || "logos/default_logo.png"; // Додайте default_logo.png у папку logos
-    item.innerHTML = `<img src="${logoSrc}" alt="${station.name} logo" class="station-logo" onerror="this.src='logos/default_logo.png'"> ${station.name}<button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>`;
+    item.innerHTML = `${station.emoji} ${station.name}<button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>`;
     stationList.appendChild(item);
   });
 
@@ -330,13 +323,18 @@ window.addEventListener("offline", () => {
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && isPlaying && !audio.paused && audio.src) {
+    // Якщо документ видимий, відтворення увімкнено, потік активний і джерело встановлено,
+    // нічого не робимо, дозволяючи потоку продовжувати відтворення
     return;
   }
   if (!document.hidden && isPlaying) {
+    // Якщо документ видимий і відтворення увімкнено, але потік не активний,
+    // намагаємося відновити відтворення
     tryAutoPlay();
   }
 });
 
+// Обробка переривань (лише для дзвінків)
 document.addEventListener("resume", () => {
   if (isPlaying && navigator.connection?.type !== "none") {
     audio.src = stationItems[currentIndex].dataset.value;
