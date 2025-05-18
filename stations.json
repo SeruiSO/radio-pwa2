@@ -1,9 +1,7 @@
 {
   "techno": [
-    { "value": "https://techno-high.rautemusik.fm", "name": "RauteMusik Techno", "genre": "Techno", "emoji": "⚡", "country": "Німеччина" },
     { "value": "https://listen.hardbase.fm/tunein-mp3", "name": "HARDBASE.FM", "genre": "Hard Techno", "emoji": "⚡", "country": "Німеччина" },
     { "value": "https://stream.sunshine-live.de/techno/mp3-192/radoxo/", "name": "Sunshine Live - Techno", "genre": "Techno", "emoji": "⚡", "country": "Німеччина" },
-    { "value": "https://stream.friskyradio.com/friskytechno-mp3-128", "name": "Frisky Radio - Techno Channel", "genre": "Techno", "emoji": "⚡", "country": "США" },
     { "value": "https://streams.fluxfm.de/technoug/mp3-320/audio/", "name": "FluxFM – Techno Underground", "genre": "Techno", "emoji": "⚡", "country": "Німеччина" },
     { "value": "https://streams.radiomast.io/8846a94e-9874-4692-a1a0-ec7aadbe2771", "name": "Fnoob Techno", "genre": "Techno", "emoji": "⚡", "country": "США" },
     { "value": "https://listen.technobase.fm/tunein-mp3", "name": "TechnoBase.FM", "genre": "Techno/Trance", "emoji": "🎶", "country": "Німеччина" },
@@ -38,12 +36,9 @@
     { "value": "https://cast.brg.ua/djfm_main_public_mp3_hq", "name": "DJFM", "genre": "EDM/Techno", "emoji": "🎧", "country": "Україна" },
     { "value": "https://listen.clubtime.fm/tunein-mp3", "name": "ClubTime.FM", "genre": "Techno/House", "emoji": "🏠", "country": "Німеччина" },
     { "value": "https://listen.housetime.fm/tunein-mp3", "name": "HOUSETIME.FM", "genre": "House/Tech House", "emoji": "🏠", "country": "Німеччина" },
-    { "value": "https://listenssl.ibizaglobalradio.com:8024/ibizaglobalradio.mp3", "name": "Ibiza Global Radio", "genre": "Tech House/Techno", "emoji": "🏠", "country": "Іспанія" },
     { "value": "https://live.onefm.ro/onefm.aacp", "name": "One FM", "genre": "Dance/Techno", "emoji": "🎧", "country": "Румунія" },
     { "value": "https://s2.radio.co/s30844a0f4/listen", "name": "EDM Sessions", "genre": "EDM/Techno", "emoji": "🎧", "country": "Велика Британія" },
     { "value": "https://www.ophanim.net:8444/s/8400/", "name": "NYC House Radio", "genre": "House/Tech House", "emoji": "🏠", "country": "США" },
-    { "value": "https://control.streaming-pro.com:8000/ibizaglobalclassics.mp3", "name": "Ibiza Global Classics", "genre": "Classic House/Techno", "emoji": "🏠", "country": "Іспанія" },
-    { "value": "https://stream.friskyradio.com/friskyprog-mp3-128", "name": "Frisky Radio Progressive", "genre": "Progressive House/Techno", "emoji": "🎧", "country": "США" },
     { "value": "https://icecast.pulsradio.com/pulsHD.mp3", "name": "PulsRadio Dance", "genre": "Trance/Techno", "emoji": "🎧", "country": "Франція" },
     { "value": "https://stream.sunshine-live.de/trance/mp3-192/radoxo/", "name": "Sunshine Live - Trance", "genre": "Trance", "emoji": "🎶", "country": "Німеччина" },
     { "value": "https://sunsl.streamabc.net/sunsl-newhits-mp3-192-1294829", "name": "Sunshine Live - New Music", "genre": "Techno/Trance", "emoji": "🎶", "country": "Німеччина" },
