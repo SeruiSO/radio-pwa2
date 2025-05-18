@@ -84,15 +84,18 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: linear-gradient(45deg, #1a1a2e, #2e2e3e);
   transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
+/* Градієнт для темних тем */
+.current-station-info:not([data-theme="light"], [data-theme="light-alt"]) {
+  background: linear-gradient(45deg, #1a1a2e, #2e2e3e);
+}
+
 /* Виправлення для світлих тем */
-:root:has([data-theme="light"], [data-theme="light-alt"]) .current-station-info {
+.current-station-info[data-theme="light"], .current-station-info[data-theme="light-alt"] {
   background: var(--container-bg);
   color: var(--text);
-  background: none; /* Видаляємо градієнт */
 }
 
 .station-info-content {
