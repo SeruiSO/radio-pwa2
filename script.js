@@ -15,7 +15,7 @@ let isAutoPlaying = false;
 
 // Налаштування аудіо
 audio.preload = "auto";
-audio.volume = parseFloat(localStorage.getItem("volume")) || 0.5;
+audio.volume = parseFloat(localStorage.getItem("volume")) || 1.0;
 
 // Завантаження станцій
 async function loadStations(attempt = 1) {
@@ -94,6 +94,26 @@ if ("serviceWorker" in navigator) {
         }
       });
     });
+  });
+}
+
+// Відстеження зміни аудіовиходу (Bluetooth)
+function monitorAudioOutput() {
+  if (!navigator.mediaDevices?.addEventListener) return;
+  navigator.mediaDevices.addEventListener("devicechange", async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioOutputs = devices.filter(device => device.kind === "audiooutput");
+      console.log("Зміна аудіовиходу:", audioOutputs);
+      
+      // Якщо відтворення увімкнено, але аудіо на паузі, пробуємо відновити
+      if (isPlaying && audio.paused && audio.src && stationItems?.length && currentIndex < stationItems.length) {
+        console.log("Спроба відновити відтворення після зміни аудіовиходу");
+        tryAutoPlay();
+      }
+    } catch (error) {
+      console.error("Помилка при перевірці аудіовиходу:", error);
+    }
   });
 }
 
@@ -353,6 +373,7 @@ if ("mediaSession" in navigator) {
 // Ініціалізація
 applyTheme(currentTheme);
 loadStations();
+monitorAudioOutput();
 
 // Автовідтворення при завантаженні сторінки
 document.addEventListener("DOMContentLoaded", () => {
