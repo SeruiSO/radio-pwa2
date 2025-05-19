@@ -106,11 +106,13 @@ function monitorAudioOutput() {
       const audioOutputs = devices.filter(device => device.kind === "audiooutput");
       console.log("Зміна аудіовиходу:", audioOutputs);
       
-      // Якщо відтворення увімкнено, але аудіо на паузі, пробуємо відновити
-      if (isPlaying && audio.paused && audio.src && stationItems?.length && currentIndex < stationItems.length) {
-        console.log("Спроба відновити відтворення після зміни аудіовиходу");
-        tryAutoPlay();
-      }
+      // Додаємо затримку для стабільності підключення
+      setTimeout(() => {
+        if (isPlaying && audio.paused && audio.src && stationItems?.length && currentIndex < stationItems.length) {
+          console.log("Спроба відновити відтворення після зміни аудіовиходу");
+          tryAutoPlay();
+        }
+      }, 500);
     } catch (error) {
       console.error("Помилка при перевірці аудіовиходу:", error);
     }
@@ -342,14 +344,16 @@ window.addEventListener("offline", () => {
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && isPlaying && !audio.paused && audio.src) {
-    // Якщо документ видимий, відтворення увімкнено, потік активний і джерело встановлено,
-    // нічого не робимо, дозволяючи потоку продовжувати відтворення
-    return;
+  if (!document.hidden && isPlaying && audio.paused && audio.src && stationItems?.length && currentIndex < stationItems.length) {
+    console.log("Спроба відновити відтворення після повернення до видимості");
+    tryAutoPlay();
   }
-  if (!document.hidden && isPlaying) {
-    // Якщо документ видимий і відтворення увімкнено, але потік не активний,
-    // намагаємося відновити відтворення
+});
+
+// Додатковий обробник для фокусу вікна
+window.addEventListener("focus", () => {
+  if (isPlaying && audio.paused && audio.src && stationItems?.length && currentIndex < stationItems.length) {
+    console.log("Спроба відновити відтворення після фокусу");
     tryAutoPlay();
   }
 });
