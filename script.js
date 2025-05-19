@@ -12,10 +12,26 @@ let retryCount = 0;
 const MAX_RETRIES = 3;
 const LOAD_TIMEOUT = 8000;
 let isAutoPlaying = false;
+let wakeLock = null;
 
 // Налаштування аудіо
 audio.preload = "auto";
 audio.volume = parseFloat(localStorage.getItem("volume")) || 1.0;
+
+// Спроба увімкнення Wake Lock для підтримки активності
+async function requestWakeLock() {
+  if ("wakeLock" in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      console.log("Wake Lock увімкнено");
+      wakeLock.addEventListener("release", () => {
+        console.log("Wake Lock відключено");
+      });
+    } catch (error) {
+      console.error("Помилка Wake Lock:", error);
+    }
+  }
+}
 
 // Завантаження станцій
 async function loadStations(attempt = 1) {
@@ -100,19 +116,47 @@ if ("serviceWorker" in navigator) {
 // Відстеження зміни аудіовиходу (Bluetooth)
 function monitorAudioOutput() {
   if (!navigator.mediaDevices?.addEventListener) return;
+  
+  let deviceChangeRetryCount = 0;
+  const MAX_DEVICE_CHANGE_RETRIES = 7; // Збільшено до 7 для тривалих відключень
+
   navigator.mediaDevices.addEventListener("devicechange", async () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const audioOutputs = devices.filter(device => device.kind === "audiooutput");
       console.log("Зміна аудіовиходу:", audioOutputs);
-      
-      // Додаємо затримку для стабільності підключення
-      setTimeout(() => {
-        if (isPlaying && audio.paused && audio.src && stationItems?.length && currentIndex < stationItems.length) {
-          console.log("Спроба відновити відтворення після зміни аудіовиходу");
-          tryAutoPlay();
+
+      // Синхронізуємо isPlaying із localStorage
+      isPlaying = localStorage.getItem("isPlaying") === "true" || false;
+
+      // Функція для спроби відтворення з повторними спробами
+      async function attemptPlayback() {
+        if (deviceChangeRetryCount >= MAX_DEVICE_CHANGE_RETRIES) {
+          console.log("Досягнуто максимальної кількості спроб відтворення після devicechange");
+          deviceChangeRetryCount = 0;
+          return;
         }
-      }, 500);
+
+        // Перевіряємо, чи станції завантажені
+        if (!stationItems?.length) {
+          console.log("Список станцій порожній, повторне завантаження...");
+          await loadStations();
+        }
+
+        if (isPlaying && audio.paused && stationItems?.length && currentIndex < stationItems.length && !stationItems[currentIndex].classList.contains("empty") && navigator.onLine) {
+          console.log(`Спроба відновити відтворення після зміни аудіовиходу (спроба ${deviceChangeRetryCount + 1})`);
+          // Оновлюємо метадані перед відтворенням
+          updateCurrentStationInfo(stationItems[currentIndex]);
+          tryAutoPlay();
+        } else {
+          // Повторюємо спробу через 3 с
+          deviceChangeRetryCount++;
+          setTimeout(attemptPlayback, 3000);
+        }
+      }
+
+      // Починаємо спроби відтворення з затримкою 500 мс
+      setTimeout(attemptPlayback, 500);
     } catch (error) {
       console.error("Помилка при перевірці аудіовиходу:", error);
     }
@@ -120,13 +164,23 @@ function monitorAudioOutput() {
 }
 
 // Автовідтворення з дебонсингом
-function tryAutoPlay() {
-  if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length || isAutoPlaying) {
+async function tryAutoPlay() {
+  if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length || isAutoPlaying || stationItems[currentIndex].classList.contains("empty") || !navigator.onLine) {
     document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
     return;
   }
   isAutoPlaying = true;
-  audio.src = stationItems[currentIndex].dataset.value;
+  // Перевіряємо, чи станції завантажені
+  if (!stationItems?.length) {
+    console.log("Список станцій порожній у tryAutoPlay, повторне завантаження...");
+    await loadStations();
+  }
+  // Повторно встановлюємо audio.src для надійності
+  if (stationItems[currentIndex]) {
+    audio.src = stationItems[currentIndex].dataset.value;
+    // Оновлюємо метадані перед відтворенням
+    updateCurrentStationInfo(stationItems[currentIndex]);
+  }
   const playPromise = audio.play();
   const timeout = setTimeout(() => {
     if (audio.paused) handlePlaybackError();
@@ -138,6 +192,7 @@ function tryAutoPlay() {
       retryCount = 0;
       isAutoPlaying = false;
       document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+      requestWakeLock(); // Увімкнення Wake Lock при успішному відтворенні
     })
     .catch(error => {
       clearTimeout(timeout);
@@ -315,6 +370,7 @@ audio.addEventListener("playing", () => {
   playPauseBtn.textContent = "⏸";
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
   localStorage.setItem("isPlaying", isPlaying);
+  requestWakeLock();
 });
 
 audio.addEventListener("pause", () => {
@@ -332,10 +388,15 @@ audio.addEventListener("volumechange", () => {
 });
 
 // Моніторинг мережі та переривань
-window.addEventListener("online", () => {
+window.addEventListener("online", async () => {
+  isPlaying = localStorage.getItem("isPlaying") === "true" || false;
   if (isPlaying) {
-    audio.src = stationItems[currentIndex].dataset.value;
-    tryAutoPlay();
+    if (!stationItems?.length) await loadStations();
+    if (stationItems?.length && currentIndex < stationItems.length) {
+      audio.src = stationItems[currentIndex].dataset.value;
+      updateCurrentStationInfo(stationItems[currentIndex]);
+      tryAutoPlay();
+    }
   }
 });
 
@@ -343,25 +404,34 @@ window.addEventListener("offline", () => {
   // Без дій
 });
 
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && isPlaying && audio.paused && audio.src && stationItems?.length && currentIndex < stationItems.length) {
+document.addEventListener("visibilitychange", async () => {
+  isPlaying = localStorage.getItem("isPlaying") === "true" || false;
+  if (!document.hidden && isPlaying && audio.paused && stationItems?.length && currentIndex < stationItems.length && !stationItems[currentIndex].classList.contains("empty") && navigator.onLine) {
     console.log("Спроба відновити відтворення після повернення до видимості");
+    if (!stationItems?.length) await loadStations();
+    updateCurrentStationInfo(stationItems[currentIndex]);
     tryAutoPlay();
   }
 });
 
 // Додатковий обробник для фокусу вікна
-window.addEventListener("focus", () => {
-  if (isPlaying && audio.paused && audio.src && stationItems?.length && currentIndex < stationItems.length) {
+window.addEventListener("focus", async () => {
+  isPlaying = localStorage.getItem("isPlaying") === "true" || false;
+  if (isPlaying && audio.paused && stationItems?.length && currentIndex < stationItems.length && !stationItems[currentIndex].classList.contains("empty") && navigator.onLine) {
     console.log("Спроба відновити відтворення після фокусу");
+    if (!stationItems?.length) await loadStations();
+    updateCurrentStationInfo(stationItems[currentIndex]);
     tryAutoPlay();
   }
 });
 
 // Обробка переривань (лише для дзвінків)
-document.addEventListener("resume", () => {
-  if (isPlaying && navigator.connection?.type !== "none") {
+document.addEventListener("resume", async () => {
+  isPlaying = localStorage.getItem("isPlaying") === "true" || false;
+  if (isPlaying && navigator.connection?.type !== "none" && stationItems?.length && currentIndex < stationItems.length) {
+    if (!stationItems?.length) await loadStations();
     audio.src = stationItems[currentIndex].dataset.value;
+    updateCurrentStationInfo(stationItems[currentIndex]);
     tryAutoPlay();
   }
 });
@@ -378,11 +448,16 @@ if ("mediaSession" in navigator) {
 applyTheme(currentTheme);
 loadStations();
 monitorAudioOutput();
+requestWakeLock();
 
 // Автовідтворення при завантаженні сторінки
-document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(() => {
-    if (isPlaying && stationItems?.length && currentIndex < stationItems.length && !stationItems[currentIndex].classList.contains("empty")) {
+document.addEventListener("DOMContentLoaded", async () => {
+  // Синхронізуємо isPlaying із localStorage
+  isPlaying = localStorage.getItem("isPlaying") === "true" || false;
+  setTimeout(async () => {
+    if (isPlaying && stationItems?.length && currentIndex < stationItems.length && !stationItems[currentIndex].classList.contains("empty") && navigator.onLine) {
+      if (!stationItems?.length) await loadStations();
+      updateCurrentStationInfo(stationItems[currentIndex]);
       tryAutoPlay();
     }
   }, 0);
