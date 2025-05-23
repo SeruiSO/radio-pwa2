@@ -4,10 +4,10 @@
   --container-bg: rgba(30, 30, 30, 0.9);
   --accent: #00e676;
   --text: #e0e0e0;
-  --glow: 0 0 5px rgba(0, 230, 118, 0.5);
+  --glow: 0 0 3px rgba(0, 230, 118, 0.3);
   --accent-rgb: 0, 230, 118;
   --container-bg-rgb: 30, 30, 30;
-  transition: all 0.5s ease;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, text-shadow 0.3s ease;
 }
 
 body {
@@ -23,7 +23,6 @@ body {
   overflow-x: hidden;
   padding-top: 10px;
   box-sizing: border-box;
-  transition: background 0.5s ease, color 0.5s ease;
 }
 
 .container {
@@ -38,8 +37,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  transition: background 0.5s ease, border-color 0.5s ease;
-  backdrop-filter: blur(5px);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 h1 {
@@ -48,11 +46,11 @@ h1 {
   text-align: center;
   color: var(--accent);
   text-shadow: var(--glow);
-  transition: color 0.5s ease, text-shadow 0.5s ease;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .theme-toggle {
-  position: absolute;
+  position: fixed;
   top: 10px;
   left: 10px;
   background: rgba(var(--container-bg-rgb), 0.85);
@@ -65,7 +63,9 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.5s ease;
+  z-index: 100;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .theme-toggle:hover {
@@ -88,8 +88,7 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 10;
-  transition: background 0.5s ease, border-color 0.5s ease, color 0.5s ease;
-  backdrop-filter: blur(5px);
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 /* Градієнт для темних тем */
@@ -97,7 +96,7 @@ h1 {
 [data-theme="neon"] .current-station-info,
 [data-theme="vibrant"] .current-station-info,
 [data-theme="cosmic"] .current-station-info {
-  background: linear-gradient(45deg, rgba(var(--container-bg-rgb), 0.9), rgba(var(--container-bg-rgb), 0.95));
+  background: var(--container-bg);
 }
 
 /* Виправлення для світлих тем */
@@ -125,7 +124,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   text-shadow: var(--glow);
-  transition: text-shadow 0.5s ease;
+  transition: text-shadow 0.3s ease;
 }
 
 .current-station-info .station-genre {
@@ -150,8 +149,7 @@ h1 {
   background: var(--container-bg);
   padding: 5px;
   border-radius: 5px;
-  transition: background 0.5s ease;
-  backdrop-filter: blur(5px);
+  transition: background 0.3s ease;
 }
 
 .tab-btn {
@@ -163,7 +161,7 @@ h1 {
   color: var(--text);
   cursor: pointer;
   margin: 0 2px;
-  transition: all 0.5s ease;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   text-align: center;
   font-size: 14px;
 }
@@ -179,7 +177,7 @@ h1 {
   border-color: var(--accent);
   color: #121212;
   text-shadow: var(--glow);
-  animation: subtleGlow 2s ease-in-out infinite;
+  animation: subtleGlow 3s ease-in-out infinite;
 }
 
 .station-list {
@@ -192,9 +190,8 @@ h1 {
   padding: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) var(--container-bg);
-  transition: background 0.5s ease, border-color 0.5s ease;
+  transition: background 0.3s ease, border-color 0.3s ease;
   flex-grow: 1;
-  backdrop-filter: blur(5px);
 }
 
 .station-list::-webkit-scrollbar {
@@ -213,7 +210,6 @@ h1 {
 .station-item {
   padding: 12px;
   cursor: pointer;
-  transition: all 0.5s ease;
   border-radius: 8px;
   font-weight: 500;
   border: 1px solid var(--text);
@@ -223,6 +219,7 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .station-item:hover, .station-item.selected {
@@ -233,7 +230,7 @@ h1 {
 }
 
 .station-item.selected {
-  animation: subtleGlow 2s ease-in-out infinite;
+  animation: subtleGlow 3s ease-in-out infinite;
 }
 
 .station-item .favorite-btn {
@@ -242,7 +239,7 @@ h1 {
   color: var(--text);
   font-size: 20px;
   cursor: pointer;
-  transition: color 0.5s ease;
+  transition: color 0.3s ease;
 }
 
 .station-item .favorite-btn.favorited {
@@ -264,8 +261,7 @@ h1 {
   justify-content: center;
   gap: 20px;
   z-index: 10;
-  transition: background 0.5s ease, border-color 0.5s ease;
-  backdrop-filter: blur(5px);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .controls {
@@ -304,26 +300,28 @@ h1 {
 
 @keyframes subtleGlow {
   0%, 100% { text-shadow: var(--glow); }
-  50% { text-shadow: 0 0 10px var(--accent); }
+  50% { text-shadow: 0 0 5px var(--accent); }
 }
 
 .control-btn {
   width: 80px;
   height: 80px;
-  font-size: 32px;
   background: rgba(var(--container-bg-rgb), 0.85);
   color: var(--text);
   border: 2px solid var(--accent);
   border-radius: 50%;
   cursor: pointer;
-  transition: all 0.5s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .control-btn svg {
-  transition: fill 0.5s ease;
+  width: 20px;
+  height: 20px;
+  fill: var(--text);
+  transition: fill 0.3s ease;
 }
 
 .control-btn:hover {
@@ -358,7 +356,11 @@ h1 {
   .control-btn {
     width: 70px;
     height: 70px;
-    font-size: 24px;
+  }
+
+  .control-btn svg {
+    width: 18px;
+    height: 18px;
   }
 
   .station-list {

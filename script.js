@@ -78,35 +78,35 @@ const themes = {
     containerBg: "rgba(30, 30, 30, 0.9)",
     accent: "#00e676",
     text: "#e0e0e0",
-    glow: "0 0 5px rgba(0, 230, 118, 0.5)"
+    glow: "0 0 3px rgba(0, 230, 118, 0.3)"
   },
   light: {
     bodyBg: "#f5f5f5",
     containerBg: "rgba(255, 255, 255, 0.95)",
     accent: "#ff4081",
     text: "#212121",
-    glow: "0 0 5px rgba(255, 64, 129, 0.5)"
+    glow: "0 0 3px rgba(255, 64, 129, 0.3)"
   },
   neon: {
     bodyBg: "#1a0033",
     containerBg: "rgba(50, 0, 100, 0.9)",
     accent: "#ffeb3b",
     text: "#ffffff",
-    glow: "0 0 8px rgba(255, 235, 59, 0.7)"
+    glow: "0 0 4px rgba(255, 235, 59, 0.5)"
   },
   vibrant: {
     bodyBg: "#004d40",
     containerBg: "rgba(0, 77, 64, 0.9)",
     accent: "#ff5722",
     text: "#ffffff",
-    glow: "0 0 5px rgba(255, 87, 34, 0.5)"
+    glow: "0 0 3px rgba(255, 87, 34, 0.3)"
   },
   cosmic: {
     bodyBg: "#0d1b2a",
     containerBg: "rgba(20, 33, 61, 0.9)",
     accent: "#00b7eb",
     text: "#e0e0e0",
-    glow: "0 0 6px rgba(0, 183, 235, 0.6)"
+    glow: "0 0 3px rgba(0, 183, 235, 0.4)"
   }
 };
 let currentTheme = localStorage.getItem("selectedTheme") || "dark";
@@ -155,8 +155,6 @@ if ("serviceWorker" in navigator) {
       console.log("Отримано повідомлення від Service Worker: мережа відновлена");
       retryCount = 0;
       retryStartTime = null;
-      audio.pause();
-      audio.src = stationItems[currentIndex].dataset.value;
       tryAutoPlay();
     }
   });
@@ -173,12 +171,17 @@ function clearRetryTimer() {
 // Запуск періодичних перевірок
 function startRetryTimer() {
   clearRetryTimer();
+  let slowRetryCount = 0;
+  const maxSlowRetries = 5;
   retryTimer = setInterval(() => {
     if (navigator.onLine && isPlaying && stationItems?.length && currentIndex < stationItems.length && !isAutoPlaying && audio.paused) {
       console.log("Періодична спроба відновлення відтворення");
-      audio.pause();
-      audio.src = stationItems[currentIndex].dataset.value;
       tryAutoPlay();
+      slowRetryCount++;
+      if (slowRetryCount >= maxSlowRetries) {
+        clearRetryTimer();
+        console.log("Досягнуто максимум повільних спроб, зупиняємо таймер");
+      }
     }
   }, SLOW_RETRY_INTERVAL);
 }
@@ -220,16 +223,17 @@ function handlePlaybackError() {
   if (!retryStartTime) retryStartTime = Date.now();
   const elapsedTime = Date.now() - retryStartTime;
 
-  const notification = document.createElement("div");
-  notification.textContent = "Втрачено з'єднання, намагаємося відновити...";
-  notification.style.cssText = "position: fixed; top: 10px; right: 10px; padding: 10px; background: #ff4444; color: #fff; border-radius: 5px; z-index: 1000;";
-  document.body.appendChild(notification);
-  setTimeout(() => notification.remove(), 3000);
+  if (retryCount === 0) {
+    const notification = document.createElement("div");
+    notification.textContent = "Втрачено з'єднання, намагаємося відновити...";
+    notification.style.cssText = "position: fixed; top: 10px; right: 10px; padding: 10px; background: #ff4444; color: #fff; border-radius: 5px; z-index: 1000;";
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  }
 
-  if (elapsedTime < FAST_RETRY_DURATION) {
+  if (elapsedTime < FAST_RETRY_DURATION && retryCount < MAX_RETRIES) {
     retryCount++;
     setTimeout(() => {
-      audio.pause();
       tryAutoPlay();
     }, FAST_RETRY_INTERVAL);
   } else {
@@ -445,11 +449,8 @@ window.addEventListener("online", () => {
   if (isPlaying && stationItems?.length && currentIndex < stationItems.length) {
     retryCount = 0;
     retryStartTime = null;
-    audio.pause();
-    audio.src = stationItems[currentIndex].dataset.value;
     tryAutoPlay();
   }
-  startRetryTimer();
 });
 
 window.addEventListener("offline", () => {
@@ -472,8 +473,6 @@ document.addEventListener("visibilitychange", () => {
     }
     retryCount = 0;
     retryStartTime = null;
-    audio.pause();
-    audio.src = stationItems[currentIndex].dataset.value;
     tryAutoPlay();
   }
 });
@@ -487,8 +486,6 @@ document.addEventListener("resume", () => {
     }
     retryCount = 0;
     retryStartTime = null;
-    audio.pause();
-    audio.src = stationItems[currentIndex].dataset.value;
     tryAutoPlay();
   }
 });
@@ -501,8 +498,6 @@ navigator.mediaDevices.addEventListener("devicechange", async () => {
   if (isPlaying && audio.paused && navigator.onLine) {
     retryCount = 0;
     retryStartTime = null;
-    audio.pause();
-    audio.src = stationItems[currentIndex].dataset.value;
     tryAutoPlay();
   }
 });
