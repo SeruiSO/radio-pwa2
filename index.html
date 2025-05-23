@@ -38,57 +38,62 @@
         return gk_fileData[filename] || "";
         }
         </script><!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Radio S O</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="icon-192.png">
 </head>
 <body>
-  <div class="background-effect"></div>
+  <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
   <div class="container">
-    <div class="sidebar">
-      <div class="theme-toggle">🎨</div>
-      <h1>Radio S O</h1>
-      <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('techno')">TECHNO</button>
-        <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
-        <button class="tab-btn" onclick="switchTab('ukraine')">UKRAINE</button>
-        <button class="tab-btn" onclick="switchTab('best')">FAVORITES</button>
+    <h1>🎧 RADIO MUSIC</h1>
+    <div class="current-station-info" id="currentStationInfo">
+      <div class="station-info-content">
+        <div class="wave-progress">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+        <div class="station-text">
+          <span class="station-name">Обирайте станцію</span>
+          <span class="station-genre">жанр: -</span>
+          <span class="station-country">країна: -</span>
+        </div>
       </div>
     </div>
-    <div class="main-content">
-      <div class="search-bar">
-        <input type="text" id="stationSearch" placeholder="Search stations...">
-      </div>
-      <div class="current-station-info">
-        <div class="station-info-content">
-          <div class="equalizer">
-            <div class="eq-bar"></div>
-            <div class="eq-bar"></div>
-            <div class="eq-bar"></div>
-            <div class="eq-bar"></div>
-            <div class="eq-bar"></div>
-          </div>
-          <div class="station-text">
-            <span class="station-name">Select a station</span>
-            <span class="station-genre">Genre: -</span>
-            <span class="station-country">Country: -</span>
-          </div>
-        </div>
-      </div>
-      <div class="station-list" id="stationList"></div>
-      <div class="controls-container">
-        <audio id="audioPlayer" preload="auto"></audio>
-        <div class="controls">
-          <button class="control-btn" onclick="prevStation()">⏮</button>
-          <button class="control-btn" onclick="togglePlayPause()">▶</button>
-          <button class="control-btn" onclick="nextStation()">⏭</button>
-        </div>
-        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.9">
+    <audio id="audioPlayer" playsinline></audio>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('best')">BEST</button>
+      <button class="tab-btn" onclick="switchTab('techno')">TECHNO</button>
+      <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
+      <button class="tab-btn" onclick="switchTab('ukraine')">UKRAINE</button>
+    </div>
+    <div class="station-list" id="stationList"></div>
+    <div class="controls-container">
+      <div class="controls">
+        <button class="control-btn" onclick="prevStation()">
+          <svg class="control-icon" viewBox="0 0 24 24">
+            <path d="M6 18V6l11 6zM18 6v12"/>
+          </svg>
+        </button>
+        <button class="control-btn" onclick="togglePlayPause()">
+          <svg class="control-icon" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </button>
+        <button class="control-btn" onclick="nextStation()">
+          <svg class="control-icon" viewBox="0 0 24 24">
+            <path d="M6 6v12l11-6zM18 6v12"/>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
