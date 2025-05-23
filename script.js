@@ -88,11 +88,11 @@ const themes = {
     glow: "0 0 3px rgba(255, 64, 129, 0.3)"
   },
   neon: {
-    bodyBg: "#1a0033",
-    containerBg: "rgba(50, 0, 100, 0.9)",
-    accent: "#ffeb3b",
-    text: "#ffffff",
-    glow: "0 0 4px rgba(255, 235, 59, 0.5)"
+    bodyBg: "#1C2526",
+    containerBg: "rgba(28, 37, 38, 0.9)",
+    accent: "#FF0080",
+    text: "#E0E0E0",
+    glow: "0 0 5px rgba(255, 0, 128, 0.5)"
   },
   vibrant: {
     bodyBg: "#004d40",
@@ -109,7 +109,7 @@ const themes = {
     glow: "0 0 3px rgba(0, 183, 235, 0.4)"
   }
 };
-let currentTheme = localStorage.getItem("selectedTheme") || "dark";
+let currentTheme = localStorage.getItem("selectedTheme") || "neon";
 
 function applyTheme(theme) {
   const root = document.documentElement;
