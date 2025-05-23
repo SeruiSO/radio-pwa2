@@ -1,9 +1,13 @@
 /* Updated on May 23, 2025 */
 :root {
-  --body-bg: #1a1a1a;
-  --container-bg: #252525;
-  --accent: #4682b4;
-  --text: #f5f5f5;
+  --body-bg: #121212;
+  --container-bg: rgba(30, 30, 30, 0.9);
+  --accent: #00e676;
+  --text: #e0e0e0;
+  --glow: 0 0 5px rgba(0, 230, 118, 0.5);
+  --accent-rgb: 0, 230, 118;
+  --container-bg-rgb: 30, 30, 30;
+  transition: all 0.5s ease;
 }
 
 body {
@@ -19,7 +23,7 @@ body {
   overflow-x: hidden;
   padding-top: 10px;
   box-sizing: border-box;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.5s ease, color 0.5s ease;
 }
 
 .container {
@@ -34,7 +38,8 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  transition: background 0.3s ease, border-color 0.3s ease;
+  transition: background 0.5s ease, border-color 0.5s ease;
+  backdrop-filter: blur(5px);
 }
 
 h1 {
@@ -42,14 +47,15 @@ h1 {
   margin: 5px 0;
   text-align: center;
   color: var(--accent);
-  transition: color 0.3s ease;
+  text-shadow: var(--glow);
+  transition: color 0.5s ease, text-shadow 0.5s ease;
 }
 
 .theme-toggle {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: var(--container-bg);
+  background: rgba(var(--container-bg-rgb), 0.85);
   border: 1px solid var(--accent);
   border-radius: 5px;
   padding: 6px;
@@ -59,12 +65,13 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.5s ease;
 }
 
 .theme-toggle:hover {
-  background: var(--accent);
+  background: rgba(var(--accent-rgb), 0.8);
   color: #121212;
+  text-shadow: var(--glow);
 }
 
 .current-station-info {
@@ -81,19 +88,20 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 10;
-  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  transition: background 0.5s ease, border-color 0.5s ease, color 0.5s ease;
+  backdrop-filter: blur(5px);
 }
 
 /* Градієнт для темних тем */
 [data-theme="dark"] .current-station-info,
 [data-theme="neon"] .current-station-info,
-[data-theme="dark-alt"] .current-station-info {
-  background: linear-gradient(45deg, #252525, #353535);
+[data-theme="vibrant"] .current-station-info,
+[data-theme="cosmic"] .current-station-info {
+  background: linear-gradient(45deg, rgba(var(--container-bg-rgb), 0.9), rgba(var(--container-bg-rgb), 0.95));
 }
 
 /* Виправлення для світлих тем */
-[data-theme="light"] .current-station-info,
-[data-theme="light-alt"] .current-station-info {
+[data-theme="light"] .current-station-info {
   background: var(--container-bg);
   color: var(--text);
 }
@@ -116,6 +124,8 @@ h1 {
   font-weight: 700;
   display: inline-flex;
   align-items: center;
+  text-shadow: var(--glow);
+  transition: text-shadow 0.5s ease;
 }
 
 .current-station-info .station-genre {
@@ -140,31 +150,36 @@ h1 {
   background: var(--container-bg);
   padding: 5px;
   border-radius: 5px;
+  transition: background 0.5s ease;
+  backdrop-filter: blur(5px);
 }
 
 .tab-btn {
   flex: 1;
   padding: 12px;
-  background: var(--container-bg);
+  background: rgba(var(--container-bg-rgb), 0.85);
   border: 1px solid var(--accent);
   border-radius: 5px;
   color: var(--text);
   cursor: pointer;
   margin: 0 2px;
-  transition: all 0.3s ease;
+  transition: all 0.5s ease;
   text-align: center;
   font-size: 14px;
 }
 
 .tab-btn:hover {
-  background: var(--accent);
+  background: rgba(var(--accent-rgb), 0.8);
   color: #121212;
+  text-shadow: var(--glow);
 }
 
 .tab-btn.active {
-  background: var(--accent);
+  background: rgba(var(--accent-rgb), 0.8);
   border-color: var(--accent);
   color: #121212;
+  text-shadow: var(--glow);
+  animation: subtleGlow 2s ease-in-out infinite;
 }
 
 .station-list {
@@ -177,8 +192,9 @@ h1 {
   padding: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) var(--container-bg);
-  transition: background 0.3s ease, border-color 0.3s ease;
+  transition: background 0.5s ease, border-color 0.5s ease;
   flex-grow: 1;
+  backdrop-filter: blur(5px);
 }
 
 .station-list::-webkit-scrollbar {
@@ -197,23 +213,27 @@ h1 {
 .station-item {
   padding: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.5s ease;
   border-radius: 8px;
   font-weight: 500;
   border: 1px solid var(--text);
   margin: 5px 0;
   color: var(--text);
-  background: var(--container-bg);
+  background: rgba(var(--container-bg-rgb), 0.85);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .station-item:hover, .station-item.selected {
-  background: var(--accent) !important;
+  background: rgba(var(--accent-rgb), 0.8) !important;
   border: 2px solid var(--accent) !important;
   color: #121212;
+  text-shadow: var(--glow);
+}
+
+.station-item.selected {
+  animation: subtleGlow 2s ease-in-out infinite;
 }
 
 .station-item .favorite-btn {
@@ -222,7 +242,7 @@ h1 {
   color: var(--text);
   font-size: 20px;
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: color 0.5s ease;
 }
 
 .station-item .favorite-btn.favorited {
@@ -244,7 +264,8 @@ h1 {
   justify-content: center;
   gap: 20px;
   z-index: 10;
-  transition: background 0.3s ease, border-color 0.3s ease;
+  transition: background 0.5s ease, border-color 0.5s ease;
+  backdrop-filter: blur(5px);
 }
 
 .controls {
@@ -257,8 +278,8 @@ h1 {
   display: flex;
   gap: 4px;
   height: 60px;
-  width: 84px; /* 7 bars * (10px width + 2px gap) */
-  order: -1; /* Place before station-text */
+  width: 84px;
+  order: -1;
 }
 
 .wave-bar {
@@ -281,39 +302,46 @@ h1 {
   50% { transform: scaleY(1); }
 }
 
+@keyframes subtleGlow {
+  0%, 100% { text-shadow: var(--glow); }
+  50% { text-shadow: 0 0 10px var(--accent); }
+}
+
 .control-btn {
   width: 80px;
   height: 80px;
   font-size: 32px;
-  background: var(--container-bg);
+  background: rgba(var(--container-bg-rgb), 0.85);
   color: var(--text);
   border: 2px solid var(--accent);
   border-radius: 50%;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.5s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.control-btn svg {
+  transition: fill 0.5s ease;
+}
+
 .control-btn:hover {
-  background: var(--accent);
+  background: rgba(var(--accent-rgb), 0.8);
   color: #121212;
-  transform: scale(1.1);
+  text-shadow: var(--glow);
+}
+
+.control-btn:hover svg {
+  fill: #121212;
+}
+
+.control-btn:not(:hover) {
+  opacity: 0.8;
 }
 
 .control-btn:active {
   transform: scale(0.95);
-}
-
-.control-icon {
-  width: 40px;
-  height: 40px;
-  fill: var(--text);
-}
-
-.control-btn:hover .control-icon {
-  fill: #121212;
 }
 
 @media (max-width: 720px) {
@@ -331,11 +359,6 @@ h1 {
     width: 70px;
     height: 70px;
     font-size: 24px;
-  }
-
-  .control-icon {
-    width: 32px;
-    height: 32px;
   }
 
   .station-list {

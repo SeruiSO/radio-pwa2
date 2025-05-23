@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v116";
+﻿const CACHE_NAME = "radio-pwa-cache-v121";
 const urlsToCache = [
   "/",
   "index.html",
@@ -9,15 +9,6 @@ const urlsToCache = [
   "icon-192.png",
   "icon-512.png"
 ];
-
-// Резервний JSON для stations.json
-const fallbackStations = {
-  "techno": [
-    { "value": "https://listen.technobase.fm/tunein-mp3", "name": "TechnoBase.FM", "genre": "Techno/Trance", "emoji": "🎶", "country": "Німеччина" }
-  ],
-  "trance": [],
-  "ukraine": []
-};
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -33,70 +24,27 @@ self.addEventListener("install", event => {
 });
 
 self.addEventListener("fetch", event => {
-  const requestUrl = new URL(event.request.url);
-  
-  if (requestUrl.pathname.endsWith("stations.json")) {
-    event.respondWith(
-      caches.match(event.request)
-        .then(cachedResponse => {
-          if (cachedResponse) {
-            console.log("Повертаємо stations.json із кешу");
-            return cachedResponse;
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request).then(response => {
+          if (!response || response.status !== 200 || response.type !== "basic") {
+            return response;
           }
-          return fetch(event.request, { cache: "no-cache" })
-            .then(response => {
-              if (response && response.status === 200) {
-                console.log("Отримана відповідь для stations.json, кешуємо");
-                const responseToCache = response.clone();
-                caches.open(CACHE_NAME).then(cache => {
-                  const headers = new Headers(responseToCache.headers);
-                  headers.set("Cache-Control", "max-age=86400");
-                  cache.put(event.request, new Response(responseToCache.body, {
-                    status: responseToCache.status,
-                    statusText: responseToCache.statusText,
-                    headers: headers
-                  }));
-                });
-                return response;
-              }
-              console.warn("Помилка fetch для stations.json, повертаємо резервний JSON");
-              return new Response(JSON.stringify(fallbackStations), {
-                status: 200,
-                headers: { "Content-Type": "application/json" }
-              });
-            })
-            .catch(error => {
-              console.error("Помилка fetch для stations.json:", error);
-              return new Response(JSON.stringify(fallbackStations), {
-                status: 200,
-                headers: { "Content-Type": "application/json" }
-              });
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => {
+              cache.put(event.request, responseToCache);
             });
-        })
-    );
-  } else {
-    event.respondWith(
-      caches.match(event.request)
-        .then(response => {
-          if (response) {
-            return response;
-          }
-          return fetch(event.request).then(response => {
-            if (!response || response.status !== 200 || response.type !== "basic") {
-              return response;
-            }
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-            return response;
-          }).catch(() => {
-            return caches.match(event.request);
-          });
-        })
-    );
-  }
+          return response;
+        }).catch(() => {
+          return caches.match(event.request);
+        });
+      })
+  );
 });
 
 self.addEventListener("activate", event => {
@@ -120,9 +68,10 @@ self.addEventListener("activate", event => {
   );
 });
 
+// Моніторинг стану мережі та keep-alive
 let wasOnline = navigator.onLine;
 
-const checkNetworkStatus = () => {
+setInterval(() => {
   fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
     .then(() => {
       if (!wasOnline) {
@@ -144,40 +93,10 @@ const checkNetworkStatus = () => {
         });
       }
     });
-};
 
-self.addEventListener("online", () => {
-  wasOnline = true;
   self.clients.matchAll().then(clients => {
     clients.forEach(client => {
-      client.postMessage({ type: "NETWORK_STATUS", online: true });
+      client.postMessage({ type: "KEEP_ALIVE" });
     });
   });
-});
-
-self.addEventListener("offline", () => {
-  wasOnline = false;
-  self.clients.matchAll().then(clients => {
-    clients.forEach(client => {
-      client.postMessage({ type: "NETWORK_STATUS", online: false });
-    });
-  });
-});
-
-setInterval(checkNetworkStatus, 5000);
-
-self.addEventListener("sync", event => {
-  if (event.tag === "restore-stream") {
-    event.waitUntil(
-      checkNetworkStatus().then(() => {
-        if (wasOnline) {
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-              client.postMessage({ type: "NETWORK_STATUS", online: true });
-            });
-          });
-        }
-      })
-    );
-  }
-});
+}, 30000);
