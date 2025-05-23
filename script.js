@@ -10,10 +10,10 @@ let stationLists = {};
 let stationItems;
 let retryCount = 0;
 const MAX_RETRIES = 3;
-const FAST_RETRY_INTERVAL = 1000; // Спроби кожну секунду
-const SLOW_RETRY_INTERVAL = 5000; // Спроби кожні 5 секунд
-const FAST_RETRY_DURATION = 30000; // 30 секунд для частих спроб
-const MAX_FAST_RETRIES = 10; // Максимум 10 швидких спроб
+const FAST_RETRY_INTERVAL = 1000;
+const SLOW_RETRY_INTERVAL = 5000;
+const FAST_RETRY_DURATION = 30000;
+const MAX_FAST_RETRIES = 10;
 let isAutoPlaying = false;
 let retryTimer = null;
 let retryStartTime = null;
@@ -53,6 +53,22 @@ async function loadStations(attempt = 1) {
     }
     if (attempt < 3) {
       setTimeout(() => loadStations(attempt + 1), 1000);
+    } else {
+      // Показати повідомлення про помилку в UI
+      const errorMessage = document.createElement("div");
+      errorMessage.className = "error-message";
+      errorMessage.textContent = "Не вдалося завантажити станції. Спробуйте пізніше.";
+      errorMessage.style.cssText = `
+        color: #ff4d4d;
+        text-align: center;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ff4d4d;
+        border-radius: 5px;
+        background: rgba(255, 77, 77, 0.1);
+      `;
+      stationList.innerHTML = "";
+      stationList.appendChild(errorMessage);
     }
   }
 }
@@ -213,7 +229,7 @@ function handlePlaybackError() {
 // Перемикання вкладок
 function switchTab(tab) {
   if (!["techno", "trance", "ukraine", "best"].includes(tab)) tab = "techno";
-  if (currentTab === tab) return; // Запобігаємо подвійному виклику для тієї ж вкладки
+  if (currentTab === tab) return;
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
   const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
@@ -403,7 +419,6 @@ window.addEventListener("online", () => {
 window.addEventListener("offline", () => {
   console.log("Втрачено з'єднання з мережею");
   clearRetryTimer();
-  // Відтворення з кешу (якщо доступно) автоматично обробляється через tryAutoPlay та Service Worker
 });
 
 // Обробка зміни видимості

@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v115";
+﻿const CACHE_NAME = "radio-pwa-cache-v116";
 const urlsToCache = [
   "/",
   "index.html",
@@ -37,37 +37,41 @@ self.addEventListener("fetch", event => {
   
   if (requestUrl.pathname.endsWith("stations.json")) {
     event.respondWith(
-      fetch(event.request, { cache: "no-cache" })
-        .then(response => {
-          if (response && response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              const headers = new Headers(responseToCache.headers);
-              headers.set("Cache-Control", "max-age=86400");
-              cache.put(event.request, new Response(responseToCache.body, {
-                status: responseToCache.status,
-                statusText: responseToCache.statusText,
-                headers: headers
-              }));
-            });
-            return response;
+      caches.match(event.request)
+        .then(cachedResponse => {
+          if (cachedResponse) {
+            console.log("Повертаємо stations.json із кешу");
+            return cachedResponse;
           }
-          return caches.match(event.request).then(cachedResponse => {
-            if (cachedResponse) return cachedResponse;
-            return new Response(JSON.stringify(fallbackStations), {
-              status: 200,
-              headers: { "Content-Type": "application/json" }
+          return fetch(event.request, { cache: "no-cache" })
+            .then(response => {
+              if (response && response.status === 200) {
+                console.log("Отримана відповідь для stations.json, кешуємо");
+                const responseToCache = response.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                  const headers = new Headers(responseToCache.headers);
+                  headers.set("Cache-Control", "max-age=86400");
+                  cache.put(event.request, new Response(responseToCache.body, {
+                    status: responseToCache.status,
+                    statusText: responseToCache.statusText,
+                    headers: headers
+                  }));
+                });
+                return response;
+              }
+              console.warn("Помилка fetch для stations.json, повертаємо резервний JSON");
+              return new Response(JSON.stringify(fallbackStations), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+              });
+            })
+            .catch(error => {
+              console.error("Помилка fetch для stations.json:", error);
+              return new Response(JSON.stringify(fallbackStations), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+              });
             });
-          });
-        })
-        .catch(() => {
-          return caches.match(event.request).then(cachedResponse => {
-            if (cachedResponse) return cachedResponse;
-            return new Response(JSON.stringify(fallbackStations), {
-              status: 200,
-              headers: { "Content-Type": "application/json" }
-            });
-          });
         })
     );
   } else {
