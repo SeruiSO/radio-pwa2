@@ -35,7 +35,6 @@ self.addEventListener("install", event => {
 self.addEventListener("fetch", event => {
   const requestUrl = new URL(event.request.url);
   
-  // Кешування stations.json із довшим терміном дії
   if (requestUrl.pathname.endsWith("stations.json")) {
     event.respondWith(
       fetch(event.request, { cache: "no-cache" })
@@ -44,7 +43,7 @@ self.addEventListener("fetch", event => {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then(cache => {
               const headers = new Headers(responseToCache.headers);
-              headers.set("Cache-Control", "max-age=86400"); // Кеш на 24 години
+              headers.set("Cache-Control", "max-age=86400");
               cache.put(event.request, new Response(responseToCache.body, {
                 status: responseToCache.status,
                 statusText: responseToCache.statusText,
@@ -117,7 +116,6 @@ self.addEventListener("activate", event => {
   );
 });
 
-// Моніторинг стану мережі (перевірка кожні 5 секунд)
 let wasOnline = navigator.onLine;
 
 const checkNetworkStatus = () => {
@@ -144,7 +142,6 @@ const checkNetworkStatus = () => {
     });
 };
 
-// Використання navigator.onLine та періодична перевірка
 self.addEventListener("online", () => {
   wasOnline = true;
   self.clients.matchAll().then(clients => {
@@ -163,9 +160,8 @@ self.addEventListener("offline", () => {
   });
 });
 
-setInterval(checkNetworkStatus, 5000); // Перевірка кожні 5 секунд
+setInterval(checkNetworkStatus, 5000);
 
-// Фонова синхронізація для відновлення потоку
 self.addEventListener("sync", event => {
   if (event.tag === "restore-stream") {
     event.waitUntil(
