@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v127";
+﻿const CACHE_NAME = "radio-pwa-cache-v142";
 const urlsToCache = [
   "/",
   "index.html",
@@ -68,7 +68,7 @@ self.addEventListener("activate", event => {
   );
 });
 
-// Моніторинг стану мережі та keep-alive
+// Моніторинг стану мережі
 let wasOnline = navigator.onLine;
 
 setInterval(() => {
@@ -93,10 +93,4 @@ setInterval(() => {
         });
       }
     });
-
-  self.clients.matchAll().then(clients => {
-    clients.forEach(client => {
-      client.postMessage({ type: "KEEP_ALIVE" });
-    });
-  });
-}, 30000);
+}, 1000);

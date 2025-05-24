@@ -42,20 +42,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Radio S O</title>
+  <title>Radio Vibe</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="icon-192.png">
 </head>
 <body>
-  <div class="theme-toggle">🌙</div>
-  
+  <div class="theme-toggle" onclick="toggleTheme()">🌙</div>
   <div class="container">
     <h1>🎧 RADIO MUSIC</h1>
-    <div id="loader">Loading...</div>
-    
     <div class="current-station-info" id="currentStationInfo">
       <div class="station-info-content">
+        <div class="wave-progress">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
         <div class="station-text">
           <div class="station-name">Обирайте станцію</div>
           <div class="station-genre">жанр: -</div>
@@ -63,42 +69,22 @@
         </div>
       </div>
     </div>
-
+    <div class="station-list" id="stationList"></div>
     <div class="tabs">
       <button class="tab-btn" onclick="switchTab('best')">BEST</button>
       <button class="tab-btn" onclick="switchTab('techno')">TECHNO</button>
       <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
       <button class="tab-btn" onclick="switchTab('ukraine')">UKRAINE</button>
     </div>
-
-    <div class="station-list" id="stationList"></div>
-
     <div class="controls-container">
-      <audio id="audioPlayer"></audio>
-      <div class="wave-progress">
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-      </div>
       <div class="controls">
-        <button class="control-btn" onclick="prevStation()">
-          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6v12zM9 18V6H7v12h2z"/></svg>
-        </button>
-        <button class="control-btn" onclick="togglePlayPause()">
-          <svg class="play-icon" style="display: block" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          <svg class="pause-icon" style="display: none" viewBox="0 0 24 24"><path d="M6 19h4V5H6zm8-14v14h4V5z"/></svg>
-        </button>
-        <button class="control-btn" onclick="nextStation()">
-          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6V6zm6 0h2v12h-2z"/></svg>
-        </button>
+        <button class="control-btn" onclick="prevStation()">⏮</button>
+        <button class="control-btn" onclick="togglePlayPause()">▶</button>
+        <button class="control-btn" onclick="nextStation()">⏭</button>
       </div>
     </div>
   </div>
-
+  <audio id="audioPlayer"></audio>
   <script src="script.js"></script>
 </body>
 </html>

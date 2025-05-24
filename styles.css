@@ -1,13 +1,9 @@
-/* Updated on May 23, 2025 */
+/* Updated on May 21, 2025 */
 :root {
-  --body-bg: #1C2526;
-  --container-bg: rgba(28, 37, 38, 0.9);
-  --accent: #FF0080;
-  --text: #E0E0E0;
-  --glow: 0 0 5px rgba(255, 0, 128, 0.5);
-  --accent-rgb: 255, 0, 128;
-  --container-bg-rgb: 28, 37, 38;
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, text-shadow 0.3s ease;
+  --body-bg: #1a1a1a;
+  --container-bg: #252525;
+  --accent: #4682b4;
+  --text: #f5f5f5;
 }
 
 body {
@@ -23,6 +19,7 @@ body {
   overflow-x: hidden;
   padding-top: 10px;
   box-sizing: border-box;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -45,33 +42,29 @@ h1 {
   margin: 5px 0;
   text-align: center;
   color: var(--accent);
-  text-shadow: var(--glow);
-  transition: color 0.3s ease, text-shadow 0.3s ease;
+  transition: color 0.3s ease;
 }
 
 .theme-toggle {
-  position: fixed;
+  position: absolute;
   top: 10px;
   left: 10px;
-  background: rgba(var(--container-bg-rgb), 0.85);
+  background: var(--container-bg);
   border: 1px solid var(--accent);
-  border-radius: 50%;
+  border-radius: 5px;
   padding: 6px;
   cursor: pointer;
-  height: 40px;
-  width: 40px;
+  height: 35px;
+  width: 35px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
-  box-shadow: var(--glow);
-  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .theme-toggle:hover {
   background: var(--accent);
   color: #121212;
-  text-shadow: var(--glow);
 }
 
 .current-station-info {
@@ -89,17 +82,18 @@ h1 {
   top: 0;
   z-index: 10;
   transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-  box-shadow: var(--glow);
 }
 
+/* Градієнт для темних тем */
 [data-theme="dark"] .current-station-info,
 [data-theme="neon"] .current-station-info,
-[data-theme="vibrant"] .current-station-info,
-[data-theme="cosmic"] .current-station-info {
-  background: var(--container-bg);
+[data-theme="dark-alt"] .current-station-info {
+  background: linear-gradient(45deg, #252525, #353535);
 }
 
-[data-theme="light"] .current-station-info {
+/* Виправлення для світлих тем */
+[data-theme="light"] .current-station-info,
+[data-theme="light-alt"] .current-station-info {
   background: var(--container-bg);
   color: var(--text);
 }
@@ -122,17 +116,18 @@ h1 {
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  color: var(--accent);
-  text-shadow: var(--glow);
-  transition: text-shadow 0.3s ease;
 }
 
-.current-station-info .station-genre,
-.current-station-info .station-country {
-  font-size: 16px;
+.current-station-info .station-genre {
+  font-size: 18px;
   font-weight: 400;
   margin-top: 5px;
-  color: #B0B0B0;
+}
+
+.current-station-info .station-country {
+  font-size: 18px;
+  font-weight: 400;
+  margin-top: 2px;
 }
 
 .tabs {
@@ -144,38 +139,32 @@ h1 {
   z-index: 10;
   background: var(--container-bg);
   padding: 5px;
-  border-radius: 10px;
-  transition: background 0.3s ease;
-  box-shadow: var(--glow);
+  border-radius: 5px;
 }
 
 .tab-btn {
   flex: 1;
   padding: 12px;
-  background: rgba(var(--container-bg-rgb), 0.85);
+  background: var(--container-bg);
   border: 1px solid var(--accent);
-  border-radius: 8px;
+  border-radius: 5px;
   color: var(--text);
   cursor: pointer;
   margin: 0 2px;
-  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  transition: all 0.3s ease;
   text-align: center;
   font-size: 14px;
-  text-transform: uppercase;
 }
 
 .tab-btn:hover {
   background: var(--accent);
   color: #121212;
-  text-shadow: var(--glow);
 }
 
 .tab-btn.active {
-  background: linear-gradient(45deg, var(--accent), #A100FF);
+  background: var(--accent);
   border-color: var(--accent);
   color: #121212;
-  text-shadow: var(--glow);
-  animation: subtleGlow 3s ease-in-out infinite;
 }
 
 .station-list {
@@ -190,7 +179,6 @@ h1 {
   scrollbar-color: var(--accent) var(--container-bg);
   transition: background 0.3s ease, border-color 0.3s ease;
   flex-grow: 1;
-  box-shadow: var(--glow);
 }
 
 .station-list::-webkit-scrollbar {
@@ -209,27 +197,23 @@ h1 {
 .station-item {
   padding: 12px;
   cursor: pointer;
+  transition: all 0.3s ease;
   border-radius: 8px;
   font-weight: 500;
-  border: 1px solid transparent;
+  border: 1px solid var(--text);
   margin: 5px 0;
   color: var(--text);
-  background: rgba(var(--container-bg-rgb), 0.85);
+  background: var(--container-bg);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .station-item:hover, .station-item.selected {
-  background: linear-gradient(45deg, var(--accent), #A100FF) !important;
-  border: 1px solid var(--accent) !important;
+  background: var(--accent) !important;
+  border: 2px solid var(--accent) !important;
   color: #121212;
-  text-shadow: var(--glow);
-}
-
-.station-item.selected {
-  animation: subtleGlow 3s ease-in-out infinite;
 }
 
 .station-item .favorite-btn {
@@ -242,11 +226,11 @@ h1 {
 }
 
 .station-item .favorite-btn.favorited {
-  color: #FFD700;
+  color: #ffd700;
 }
 
 .station-item .favorite-btn:hover {
-  color: #FFD700;
+  color: #ffd700;
 }
 
 .controls-container {
@@ -261,26 +245,25 @@ h1 {
   gap: 20px;
   z-index: 10;
   transition: background 0.3s ease, border-color 0.3s ease;
-  box-shadow: var(--glow);
 }
 
 .controls {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 50px;
 }
 
 .wave-progress {
   display: flex;
   gap: 4px;
-  height: 40px;
-  width: 60px;
-  order: -1;
+  height: 60px;
+  width: 84px; /* 7 bars * (10px width + 2px gap) */
+  order: -1; /* Place before station-text */
 }
 
 .wave-bar {
-  width: 8px;
-  background: linear-gradient(45deg, var(--accent), #A100FF);
+  width: 10px;
+  background: var(--accent);
   border-radius: 5px;
   animation: waveAnimation 1.2s infinite ease-in-out;
   animation-play-state: paused;
@@ -298,45 +281,25 @@ h1 {
   50% { transform: scaleY(1); }
 }
 
-@keyframes subtleGlow {
-  0%, 100% { text-shadow: var(--glow); }
-  50% { text-shadow: 0 0 8px var(--accent); }
-}
-
 .control-btn {
-  width: 60px;
-  height: 60px;
-  background: rgba(var(--container-bg-rgb), 0.85);
+  width: 80px;
+  height: 80px;
+  font-size: 32px;
+  background: var(--container-bg);
   color: var(--text);
   border: 2px solid var(--accent);
   border-radius: 50%;
   cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-  box-shadow: var(--glow);
-}
-
-.control-btn svg {
-  width: 20px;
-  height: 20px;
-  fill: var(--text);
-  transition: fill 0.3s ease;
 }
 
 .control-btn:hover {
-  background: linear-gradient(45deg, var(--accent), #A100FF);
+  background: var(--accent);
   color: #121212;
-  text-shadow: var(--glow);
-}
-
-.control-btn:hover svg {
-  fill: #121212;
-}
-
-.control-btn:not(:hover) {
-  opacity: 0.8;
+  transform: scale(1.1);
 }
 
 .control-btn:active {
@@ -355,13 +318,9 @@ h1 {
   }
 
   .control-btn {
-    width: 50px;
-    height: 50px;
-  }
-
-  .control-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 70px;
+    height: 70px;
+    font-size: 24px;
   }
 
   .station-list {
@@ -379,8 +338,8 @@ h1 {
     top: 5px;
     left: 5px;
     padding: 4px;
-    height: 35px;
-    width: 35px;
+    height: 30px;
+    width: 30px;
   }
 
   .current-station-info {
@@ -392,9 +351,12 @@ h1 {
     font-size: 24px;
   }
 
-  .current-station-info .station-genre,
+  .current-station-info .station-genre {
+    font-size: 16px;
+  }
+
   .current-station-info .station-country {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .station-info-content {
@@ -402,12 +364,12 @@ h1 {
   }
 
   .wave-progress {
-    width: 50px;
-    height: 35px;
+    width: 70px;
+    height: 50px;
   }
 
   .wave-bar {
-    width: 6px;
+    width: 8px;
   }
 
   .tab-btn {
