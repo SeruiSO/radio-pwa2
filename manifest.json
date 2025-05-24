@@ -9,6 +9,10 @@
   "orientation": "portrait",
   "id": "com.radio.so",
   "description": "Радіо додаток для прослуховування techno, trance та українських станцій із підтримкою Bluetooth.",
+  "lang": "uk",
+  "dir": "auto",
+  "categories": ["music", "radio"],
+  "iarc_rating_id": "e10",
   "launch_handler": {
     "client_mode": "navigate-existing",
     "intent_filters": [
@@ -94,12 +98,14 @@
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "icon-maskable-192.png",
@@ -113,5 +119,8 @@
       "type": "image/png",
       "purpose": "monochrome"
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "scope_extensions": []
 }

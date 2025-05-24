@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v147";
+﻿const CACHE_NAME = "radio-pwa-cache-v149";
 const urlsToCache = [
   "/",
   "index.html",
@@ -52,24 +52,51 @@ self.addEventListener("fetch", event => {
 });
 
 self.addEventListener("activate", event => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (!cacheWhitelist.includes(cacheName)) {
+          if (cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => {
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({ type: "UPDATE", message: "Додаток оновлено до нової версії!" });
-        });
-      });
     }).then(() => self.clients.claim())
   );
+});
+
+// Фонова синхронізація
+self.addEventListener("sync", event => {
+  if (event.tag === "background-sync") {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then(cache => {
+        return fetch("stations.json", { cache: "no-cache" })
+          .then(response => response.json())
+          .then(data => {
+            const updatedCache = new Response(JSON.stringify(data));
+            return cache.put("stations.json", updatedCache);
+          })
+          .catch(error => console.error("Помилка синхронізації:", error))
+      })
+    );
+  }
+});
+
+// Періодична синхронізація
+self.addEventListener("periodicsync", event => {
+  if (event.tag === "periodic-sync") {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then(cache => {
+        return fetch("stations.json", { cache: "no-cache" })
+          .then(response => response.json())
+          .then(data => {
+            const updatedCache = new Response(JSON.stringify(data));
+            return cache.put("stations.json", updatedCache);
+          })
+          .catch(error => console.error("Помилка періодичної синхронізації:", error))
+      })
+    );
+  }
 });
 
 // Моніторинг стану мережі
