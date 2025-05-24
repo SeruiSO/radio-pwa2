@@ -10,7 +10,19 @@
   "id": "com.radio.so",
   "description": "Радіо додаток для прослуховування techno, trance та українських станцій із підтримкою Bluetooth.",
   "launch_handler": {
-    "client_mode": "navigate-existing"
+    "client_mode": "navigate-existing",
+    "intent_filters": [
+      {
+        "action": "VIEW",
+        "category": ["BROWSABLE", "DEFAULT"],
+        "data": [
+          {
+            "host": "radioso2.netlify.app",
+            "scheme": "https"
+          }
+        ]
+      }
+    ]
   },
   "screenshots": [
     {
