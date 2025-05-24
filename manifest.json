@@ -1,10 +1,10 @@
 {
-  "name": "Radio S O",
-  "short_name": "Radio S O",
+  "name": "Radio Vibe",
+  "short_name": "Radio Vibe",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1a1a",
-  "theme_color": "#4682b4",
+  "background_color": "#0a0a23",
+  "theme_color": "#7e57c2",
   "icons": [
     {
       "src": "icon-192.png",

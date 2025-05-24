@@ -43,48 +43,92 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Radio Vibe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
 </head>
 <body>
-  <div class="theme-toggle" onclick="toggleTheme()">🌙</div>
-  <div class="container">
-    <h1>🎧 RADIO MUSIC</h1>
-    <div class="current-station-info" id="currentStationInfo">
-      <div class="station-info-content">
-        <div class="wave-progress">
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-        </div>
-        <div class="station-text">
-          <div class="station-name">Обирайте станцію</div>
-          <div class="station-genre">жанр: -</div>
-          <div class="station-country">країна: -</div>
-        </div>
+  <div class="app-container">
+    <!-- Бічна панель -->
+    <aside class="sidebar">
+      <h1 class="logo">Radio Vibe</h1>
+      <nav class="tabs">
+        <button class="tab-btn active" onclick="switchTab('best')">🔥 Найкраще</button>
+        <button class="tab-btn" onclick="switchTab('techno')">⚡ Техно</button>
+        <button class="tab-btn" onclick="switchTab('trance')">🎶 Транс</button>
+        <button class="tab-btn" onclick="switchTab('ukraine')">🇺🇦 Україна</button>
+      </nav>
+      <div class="sidebar-actions">
+        <button class="action-btn search-btn" onclick="toggleSearch()">🔍 Пошук</button>
+        <button class="action-btn timer-btn" onclick="toggleSleepTimer()">⏰ Таймер</button>
+        <button class="action-btn theme-btn" onclick="toggleTheme()">🌙 Тема</button>
       </div>
-    </div>
-    <div class="station-list" id="stationList"></div>
-    <div class="tabs">
-      <button class="tab-btn" onclick="switchTab('best')">BEST</button>
-      <button class="tab-btn" onclick="switchTab('techno')">TECHNO</button>
-      <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
-      <button class="tab-btn" onclick="switchTab('ukraine')">UKRAINE</button>
-    </div>
-    <div class="controls-container">
+    </aside>
+
+    <!-- Основна область -->
+    <main class="main-content">
+      <!-- Пошук -->
+      <div class="search-bar" id="searchBar" style="display: none;">
+        <input type="text" id="searchInput" placeholder="Шукати станцію..." oninput="searchStations()">
+        <button onclick="clearSearch()">✕</button>
+      </div>
+
+      <!-- Таймер сну -->
+      <div class="sleep-timer" id="sleepTimer" style="display: none;">
+        <label>Вимкнути через:</label>
+        <select id="timerSelect" onchange="setSleepTimer()">
+          <option value="0">Вимкнено</option>
+          <option value="15">15 хв</option>
+          <option value="30">30 хв</option>
+          <option value="60">60 хв</option>
+        </select>
+      </div>
+
+      <!-- Карусель популярних станцій -->
+      <section class="carousel">
+        <h2>Популярні станції</h2>
+        <div class="carousel-inner" id="carouselInner"></div>
+        <button class="carousel-btn prev" onclick="carouselPrev()">❮</button>
+        <button class="carousel-btn next" onclick="carouselNext()">❯</button>
+      </section>
+
+      <!-- Поточна станція -->
+      <section class="current-station">
+        <div class="equalizer" id="equalizer">
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+        </div>
+        <div class="station-info">
+          <h2 class="station-name">Обирайте станцію</h2>
+          <p class="station-genre">жанр: -</p>
+          <p class="station-country">країна: -</p>
+        </div>
+        <button class="share-btn" onclick="shareStation()">📤 Поділитися</button>
+      </section>
+
+      <!-- Список станцій -->
+      <section class="station-list" id="stationList"></section>
+    </main>
+
+    <!-- Панель керування -->
+    <footer class="control-panel">
+      <div class="volume-control">
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.9" oninput="setVolume(this.value)">
+      </div>
       <div class="controls">
         <button class="control-btn" onclick="prevStation()">⏮</button>
         <button class="control-btn" onclick="togglePlayPause()">▶</button>
         <button class="control-btn" onclick="nextStation()">⏭</button>
       </div>
-    </div>
+    </footer>
+
+    <audio id="audioPlayer"></audio>
   </div>
-  <audio id="audioPlayer"></audio>
+
   <script src="script.js"></script>
 </body>
 </html>
