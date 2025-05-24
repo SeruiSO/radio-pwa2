@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v142";
+﻿const CACHE_NAME = "radio-pwa-cache-v143";
 const urlsToCache = [
   "/",
   "index.html",
@@ -7,7 +7,11 @@ const urlsToCache = [
   "stations.json",
   "manifest.json",
   "icon-192.png",
-  "icon-512.png"
+  "icon-512.png",
+  "icon-maskable-192.png",
+  "icon-monochrome-192.png",
+  "screenshot-1.png",
+  "screenshot-2.png"
 ];
 
 self.addEventListener("install", event => {
