@@ -7,6 +7,29 @@
   "background_color": "#1a1a1a",
   "theme_color": "#4682b4",
   "orientation": "portrait",
+  "id": "com.radio.so",
+  "description": "Радіо додаток для прослуховування techno, trance та українських станцій із підтримкою Bluetooth.",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "screenshots": [
+    {
+      "src": "screenshot-1.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "Основний екран додатку"
+    },
+    {
+      "src": "screenshot-2.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "Список станцій"
+    }
+  ],
+  "display_override": ["window-controls-overlay"],
+  "window-controls-overlay": true,
   "icons": [
     {
       "src": "icon-192.png",
