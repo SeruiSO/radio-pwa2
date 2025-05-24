@@ -2,125 +2,19 @@
   "name": "Radio S O",
   "short_name": "Radio S O",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#4682b4",
-  "orientation": "portrait",
-  "id": "com.radio.so",
-  "description": "Радіо додаток для прослуховування techno, trance та українських станцій із підтримкою Bluetooth.",
-  "lang": "uk",
-  "dir": "auto",
-  "categories": ["music", "radio"],
-  "iarc_rating_id": "e10",
-  "launch_handler": {
-    "client_mode": "navigate-existing",
-    "intent_filters": [
-      {
-        "action": "VIEW",
-        "category": ["BROWSABLE", "DEFAULT"],
-        "data": [
-          {
-            "host": "radioso2.netlify.app",
-            "scheme": "https"
-          }
-        ]
-      }
-    ]
-  },
-  "screenshots": [
-    {
-      "src": "screenshot-1.png",
-      "sizes": "720x1280",
-      "type": "image/png",
-      "platform": "narrow",
-      "label": "Основний екран додатку"
-    },
-    {
-      "src": "screenshot-2.png",
-      "sizes": "720x1280",
-      "type": "image/png",
-      "platform": "narrow",
-      "label": "Список станцій"
-    }
-  ],
-  "display_override": ["window-controls-overlay"],
-  "window-controls-overlay": true,
-  "share_target": {
-    "action": "/share",
-    "method": "GET",
-    "enctype": "application/x-www-form-urlencoded",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  },
-  "shortcuts": [
-    {
-      "name": "Techno Stations",
-      "url": "/?tab=techno",
-      "description": "Відкрити вкладку з techno станціями",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Trance Stations",
-      "url": "/?tab=trance",
-      "description": "Відкрити вкладку з trance станціями",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Ukraine Stations",
-      "url": "/?tab=ukraine",
-      "description": "Відкрити вкладку з українськими станціями",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    }
-  ],
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-maskable-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "icon-monochrome-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "monochrome"
+      "type": "image/png"
     }
-  ],
-  "prefer_related_applications": false,
-  "related_applications": [],
-  "scope_extensions": []
+  ]
 }

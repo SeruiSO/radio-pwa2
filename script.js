@@ -103,10 +103,10 @@ if ("serviceWorker" in navigator) {
     if (event.data.type === "NETWORK_STATUS" && event.data.online && isPlaying && stationItems?.length && currentIndex < stationItems.length) {
       console.log("Отримано повідомлення від Service Worker: мережа відновлена");
       retryCount = 0;
-      retryStartTime = null;
-      audio.pause();
+      retryStartTime = null; // Скидаємо час для нових спроб
+      audio.pause(); // Перериваємо кешоване відтворення
       audio.src = stationItems[currentIndex].dataset.value;
-      tryAutoPlay();
+      tryAutoPlay(); // Негайна спроба відтворення
     }
   });
 }
@@ -119,13 +119,13 @@ function clearRetryTimer() {
   }
 }
 
-// Запуск періодичних перевірок
+// Запуск періодичних перевірок (повільний режим, кожні 5 секунд)
 function startRetryTimer() {
   clearRetryTimer();
   retryTimer = setInterval(() => {
     if (navigator.onLine && isPlaying && stationItems?.length && currentIndex < stationItems.length && !isAutoPlaying && audio.paused) {
-      console.log("Періодична спроба відновлення відтворення");
-      audio.pause();
+      console.log("Періодична спроба відновлення відтворення (повільний режим)");
+      audio.pause(); // Перериваємо кеш
       audio.src = stationItems[currentIndex].dataset.value;
       tryAutoPlay();
     }
@@ -145,7 +145,7 @@ function tryAutoPlay() {
   playPromise
     .then(() => {
       retryCount = 0;
-      retryStartTime = null;
+      retryStartTime = null; // Скидаємо час після успішного відтворення
       isAutoPlaying = false;
       document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
       clearRetryTimer();
@@ -161,17 +161,19 @@ function tryAutoPlay() {
 function handlePlaybackError() {
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
   if (!retryStartTime) {
-    retryStartTime = Date.now();
+    retryStartTime = Date.now(); // Починаємо відлік часу
   }
   const elapsedTime = Date.now() - retryStartTime;
 
   if (elapsedTime < FAST_RETRY_DURATION) {
+    // Часті спроби (кожну секунду) протягом 30 секунд
     retryCount++;
     setTimeout(() => {
-      audio.pause();
+      audio.pause(); // Перериваємо кеш перед новою спробою
       tryAutoPlay();
     }, FAST_RETRY_INTERVAL);
   } else {
+    // Переходимо до повільного режиму (кожні 5 секунд)
     retryCount = 0;
     startRetryTimer();
   }
@@ -265,7 +267,7 @@ function toggleFavorite(stationName) {
 function changeStation(index) {
   if (index < 0 || index >= stationItems.length || stationItems[index].classList.contains("empty")) return;
   retryCount = 0;
-  retryStartTime = null;
+  retryStartTime = null; // Скидаємо час при зміні станції
   clearRetryTimer();
   const item = stationItems[index];
   stationItems.forEach(i => i.classList.remove("selected"));
@@ -320,26 +322,6 @@ function togglePlayPause() {
   localStorage.setItem("isPlaying", isPlaying);
 }
 
-// Виявлення Bluetooth-пристроїв
-async function checkBluetoothDevice() {
-  if ("mediaDevices" in navigator && navigator.mediaDevices.enumerateDevices) {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const hasBluetooth = devices.some(device => 
-        device.kind === "audiooutput" && device.label.toLowerCase().includes("bluetooth")
-      );
-      if (hasBluetooth && isPlaying && stationItems?.length && currentIndex < stationItems.length) {
-        console.log("Виявлено Bluetooth-пристрій, спроба відтворення");
-        audio.pause();
-        audio.src = stationItems[currentIndex].dataset.value;
-        tryAutoPlay();
-      }
-    } catch (error) {
-      console.error("Помилка перевірки Bluetooth-пристроїв:", error);
-    }
-  }
-}
-
 // Обробники подій
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") prevStation();
@@ -378,10 +360,10 @@ window.addEventListener("online", () => {
   console.log("Мережа відновлена (window.online)");
   if (isPlaying && stationItems?.length && currentIndex < stationItems.length) {
     retryCount = 0;
-    retryStartTime = null;
-    audio.pause();
+    retryStartTime = null; // Скидаємо час для нових спроб
+    audio.pause(); // Перериваємо кешоване відтворення
     audio.src = stationItems[currentIndex].dataset.value;
-    tryAutoPlay();
+    tryAutoPlay(); // Негайна спроба відтворення
   }
   startRetryTimer();
 });
@@ -395,18 +377,19 @@ window.addEventListener("offline", () => {
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && isPlaying && navigator.onLine) {
     if (!audio.paused) {
+      // Якщо аудіо вже відтворюється, нічого не робимо
       console.log("Аудіо вже відтворюється, пропускаємо tryAutoPlay");
       return;
     }
     retryCount = 0;
-    retryStartTime = null;
-    audio.pause();
+    retryStartTime = null; // Скидаємо час
+    audio.pause(); // Перериваємо кешоване відтворення
     audio.src = stationItems[currentIndex].dataset.value;
-    tryAutoPlay();
-    checkBluetoothDevice();
+    tryAutoPlay(); // Спроба відтворення, якщо аудіо не грає
   }
   if (document.hidden && isPlaying && navigator.onLine) {
     if (!audio.paused) {
+      // Якщо аудіо відтворюється, не запускаємо таймер
       console.log("Аудіо відтворюється у фоновому режимі, пропускаємо startRetryTimer");
       return;
     }
@@ -418,45 +401,22 @@ document.addEventListener("visibilitychange", () => {
 document.addEventListener("resume", () => {
   if (isPlaying && navigator.connection?.type !== "none") {
     if (!audio.paused) {
+      // Якщо аудіо вже відтворюється, нічого не робимо
       console.log("Аудіо вже відтворюється після resume, пропускаємо tryAutoPlay");
       return;
     }
     retryCount = 0;
-    retryStartTime = null;
-    audio.pause();
+    retryStartTime = null; // Скидаємо час
+    audio.pause(); // Перериваємо кешоване відтворення
     audio.src = stationItems[currentIndex].dataset.value;
     tryAutoPlay();
-    checkBluetoothDevice();
   }
 });
 
-// Обробка підключення Bluetooth-пристроїв
-if ("mediaDevices" in navigator) {
-  navigator.mediaDevices.addEventListener("devicechange", () => {
-    console.log("Виявлено зміну аудіопристроїв");
-    checkBluetoothDevice();
-  });
-}
-
 // Media Session API
 if ("mediaSession" in navigator) {
-  navigator.mediaSession.setActionHandler("play", () => {
-    console.log("Отримано команду Play через Media Session");
-    if (audio.paused) {
-      isPlaying = true;
-      tryAutoPlay();
-      playPauseBtn.textContent = "⏸";
-      localStorage.setItem("isPlaying", isPlaying);
-    }
-  });
-  navigator.mediaSession.setActionHandler("pause", () => {
-    console.log("Отримано команду Pause через Media Session");
-    audio.pause();
-    isPlaying = false;
-    playPauseBtn.textContent = "▶";
-    localStorage.setItem("isPlaying", isPlaying);
-    clearRetryTimer();
-  });
+  navigator.mediaSession.setActionHandler("play", togglePlayPause);
+  navigator.mediaSession.setActionHandler("pause", togglePlayPause);
   navigator.mediaSession.setActionHandler("previoustrack", prevStation);
   navigator.mediaSession.setActionHandler("nexttrack", nextStation);
 }
@@ -474,6 +434,5 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isPlaying && navigator.onLine && audio.paused) {
       startRetryTimer();
     }
-    checkBluetoothDevice();
   }, 0);
 });
