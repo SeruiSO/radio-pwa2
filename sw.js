@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v520"; // Оновлено версію кешу
+﻿const CACHE_NAME = "radio-pwa-cache-v801"; // Оновлено версію кешу
 const urlsToCache = [
   "/",
   "index.html",
@@ -98,44 +98,68 @@ self.addEventListener("message", event => {
   }
 });
 
-setInterval(() => {
-  fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
-    .then(() => {
-      if (!wasOnline) {
-        wasOnline = true;
-        self.clients.matchAll().then(clients => {
-          if (!clients.length) {
-            // Якщо немає активних клієнтів, показуємо повідомлення
-            self.registration.showNotification("", {
-              tag: "network-reconnect",
-              silent: true
-            });
-          } else {
-            clients.forEach(client => {
-              client.postMessage({ type: "NETWORK_STATUS", online: true });
-              client.postMessage({ type: "NETWORK_RECONNECT" });
-            });
-          }
-        });
-      }
-    })
-    .catch(error => {
-      console.error("Помилка перевірки мережі:", error);
-      if (wasOnline) {
-        wasOnline = false;
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({ type: "NETWORK_STATUS", online: false });
-          });
-        });
-      }
-    });
+// Перевірка мережі з обмеженим числом спроб
+async function checkNetwork() {
+  const intervals = [
+    { attempts: 10, delay: 1000 }, // 10 спроб через 1 сек
+    { attempts: 10, delay: 2000 }, // 10 спроб через 2 сек
+    { attempts: 10, delay: 5000 }  // 10 спроб через 5 сек
+  ];
 
-  // Перевірка Bluetooth
+  for (const { attempts, delay } of intervals) {
+    for (let i = 0; i < attempts; i++) {
+      try {
+        await fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" });
+        if (!wasOnline) {
+          wasOnline = true;
+          self.clients.matchAll().then(clients => {
+            if (!clients.length) {
+              self.registration.showNotification("", {
+                tag: "network-reconnect",
+                silent: true
+              });
+            } else {
+              clients.forEach(client => {
+                client.postMessage({ type: "NETWORK_STATUS", online: true });
+                client.postMessage({ type: "NETWORK_RECONNECT" });
+              });
+            }
+          });
+        }
+        return; // Успішне підключення, зупиняємо перевірку
+      } catch (error) {
+        console.error(`Спроба ${i + 1} (інтервал ${delay}ms): Помилка перевірки мережі:`, error);
+        if (wasOnline) {
+          wasOnline = false;
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({ type: "NETWORK_STATUS", online: false });
+            });
+          });
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  console.log("Перевірка мережі завершена після всіх спроб");
+}
+
+// Запускаємо перевірку мережі при втраті з'єднання
+self.addEventListener("offline", () => {
+  wasOnline = false;
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({ type: "NETWORK_STATUS", online: false });
+    });
+  });
+  checkNetwork();
+});
+
+// Перевірка Bluetooth
+setInterval(() => {
   if (isBluetoothConnected) {
     self.clients.matchAll().then(clients => {
       if (!clients.length) {
-        // Якщо немає активних клієнтів, показуємо повідомлення
         self.registration.showNotification("", {
           tag: "bluetooth-reconnect",
           silent: true
@@ -147,4 +171,4 @@ setInterval(() => {
       }
     });
   }
-}, 1000); // Перевірка кожну секунду, як у вихідному коді
+}, 1000);

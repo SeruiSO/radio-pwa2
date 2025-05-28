@@ -1,4 +1,4 @@
-/* Updated on May 27, 2025 */
+/* Updated on May 28, 2025 */
 :root {
   --body-bg: #0A0A0A;
   --container-bg: #121212;
@@ -110,18 +110,63 @@ h1 {
   font-weight: 700;
   display: inline-flex;
   align-items: center;
+  transition: opacity 0.3s ease;
 }
 
 .current-station-info .station-genre {
   font-size: 18px;
   font-weight: 400;
   margin-top: 5px;
+  transition: opacity 0.3s ease;
 }
 
 .current-station-info .station-country {
   font-size: 18px;
   font-weight: 400;
   margin-top: 2px;
+  transition: opacity 0.3s ease;
+}
+
+.network-status {
+  font-size: 16px;
+  padding: 10px;
+  text-align: center;
+  border-radius: 8px;
+  margin: 5px 0;
+  transition: opacity 0.3s ease, background 0.4s ease;
+}
+
+.network-status.online {
+  background: var(--accent);
+  color: #0A0A0A;
+}
+
+.network-status.offline {
+  background: #FF4040;
+  color: var(--text);
+}
+
+.loading-spinner {
+  display: none;
+  text-align: center;
+  font-style: italic;
+  color: var(--text);
+  opacity: 0.7;
+  padding: 20px;
+  transition: opacity 0.3s ease;
+}
+
+.loading-spinner.active {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-spinner::before {
+  content: "⏳";
+  font-size: 24px;
+  margin-right: 10px;
+  animation: spin 1s linear infinite;
 }
 
 .tabs {
@@ -404,6 +449,11 @@ h1 {
 
   .tabs {
     bottom: 100px;
+  }
+
+  .network-status {
+    font-size: 14px;
+    padding: 8px;
   }
 }
 
