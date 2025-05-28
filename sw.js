@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v804"; // Оновлено версію кешу
+﻿const CACHE_NAME = "radio-pwa-cache-v808"; // Оновлено версію кешу
 const urlsToCache = [
   "/",
   "index.html",
@@ -6,8 +6,8 @@ const urlsToCache = [
   "script.js",
   "stations.json",
   "manifest.json",
-  "icon-192.png",
-  "icon-512.png"
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
 self.addEventListener("install", event => {
@@ -37,13 +37,17 @@ self.addEventListener("fetch", event => {
           });
           return networkResponse;
         })
-        .catch(() => caches.match(event.request) || Response.error())
+        .catch(() => {
+          return caches.match(event.request) || Response.error();
+        })
     );
   } else {
     event.respondWith(
       caches.match(event.request)
         .then(response => response || fetch(event.request))
-        .catch(() => caches.match(event.request))
+        .catch(() => {
+          return caches.match(event.request))
+        })
     );
   }
 });
@@ -61,14 +65,15 @@ self.addEventListener("activate", event => {
         })
       );
     }).then(() => {
-      console.log("Активація нового Service Worker");
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({ type: "UPDATE", message: "Додаток оновлено до нової версії!" });
+        console.log("Активація нового Service Worker");
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ type: "UPDATE", message: "Додаток оновлено до нової версії!"});
+          });
         });
       });
-    }).then(() => self.clients.claim())
-  );
+      .then(() => self.clients.claim())
+    );
 });
 
 // Моніторинг стану мережі та Bluetooth
@@ -101,12 +106,12 @@ self.addEventListener("message", event => {
 // Перевірка мережі з обмеженим числом спроб
 async function checkNetwork() {
   const intervals = [
-    { attempts: 10, delay: 1000 },   // 10 спроб через 1 сек
-    { attempts: 10, delay: 2000 },   // 10 спроб через 2 сек
+    { attempts: 10, delay: 1000 },   // 10 спроб через 1 с
+    { attempts: 10, delay: 2000 },   // 10 спроб через 2 с
     { attempts: 10, delay: 300000 }  // 10 спроб через 5 хв
   ];
 
-  for (const { attempts, delay } of intervals) {
+  for (let { attempts, delay } of intervals) {
     for (let i = 0; i < attempts; i++) {
       try {
         await fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" });
@@ -125,19 +130,20 @@ async function checkNetwork() {
               });
             }
           });
-        }
-        return; // Успішне підключення, зупиняємо перевірку
-      } catch (error) {
-        console.error(`Спроба ${i + 1} (інтервал ${delay}ms): Помилка перевірки мережі:`, error);
-        if (wasOnline) {
-          wasOnline = false;
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-              client.postMessage({ type: "NETWORK_STATUS", online: false });
+          }
+        return; // Успішне підключення
+        } catch (error) {
+          console.error(`Спроба ${i + 1} (інтервал ${delay}ms): Помилка перевірки мережі:`, error);
+          if (wasOnline) {
+            wasOnline = false;
+            self.clients.matchAll().then(clients => {
+              clients.forEach(client => {
+                client.postMessage({ type: "NETWORK_STATUS", online: false });
+              });
             });
-          });
+          }
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
-        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
@@ -146,8 +152,7 @@ async function checkNetwork() {
 
 // Запускаємо перевірку мережі при втраті з'єднання
 self.addEventListener("offline", () => {
-  wasOnline = false;
-  self.clients.matchAll().then(clients => {
+  wasOnline = false self.clients.matchAll().then(clients => {
     clients.forEach(client => {
       client.postMessage({ type: "NETWORK_STATUS", online: false });
     });
@@ -172,3 +177,4 @@ setInterval(() => {
     });
   }
 }, 1000);
+});

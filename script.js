@@ -1,7 +1,7 @@
-const audio = document.getElementById("audioPlayer");
+﻿const audio = document.getElementById("audioPlayer");
 const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
-const currentStationInfo = document.querySelector(".current-station-info");
+const currentStationInfo = document.getElementById("currentStationInfo");
 const themeToggle = document.querySelector(".theme-toggle");
 const networkStatus = document.querySelector(".network-status");
 const loadingSpinner = document.querySelector(".loading-spinner");
@@ -94,7 +94,7 @@ async function loadStations() {
 // Теми
 const themes = {
   "neon-pulse": {
-    bodyBg": "#0A0A0A",
+    bodyBg: "#0A0A0A",
     containerBg: "#121212",
     accent: "#00F0FF",
     text: "#F0F0F0",
@@ -143,7 +143,7 @@ const themes = {
     accentGradient: "#1A3C4B"
   },
   "aurora-haze": {
-    bodyBg": "#121212",
+    bodyBg: "#121212",
     containerBg: "#1A1A1A",
     accent: "#64FFDA",
     text: "#E0F7FA",
@@ -157,9 +157,9 @@ const themes = {
     accentGradient: "#2E1A47"
   },
   "lunar-frost": {
-    bodyBg": "#F5F7FA",
+    bodyBg: "#F5F7FA",
     containerBg: "#FFFFFF",
-    accent: "#40C4B3",
+    accent: "#40C4FF",
     text: "#212121",
     accentGradient: "#B3E5FC"
   }
@@ -193,16 +193,13 @@ function toggleTheme() {
     "mystic-jade",
     "aurora-haze",
     "starlit-amethyst",
-    "lunar-frost",
-  ",
+    "lunar-frost"
   ];
-  const nextTheme = themeOrder[
-    (themesOrder.indexOf(currentTheme) + 1) % themesOrder.length
-  ];
+  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
   applyTheme(nextTheme);
 }
 
-// Додаємо обробник події для кнопки зміни теми додаємо
+// Додаємо обробник події для кнопки зміни теми
 themeToggle.addEventListener("click", toggleTheme);
 
 // Налаштування Service Worker
@@ -219,6 +216,8 @@ if ("serviceWorker" in navigator) {
         }
       });
     });
+  });
+
   navigator.serviceWorker.addEventListener("message", event => {
     if (event.data.type === "NETWORK_STATUS") {
       updateNetworkStatus(event.data.online);
@@ -263,7 +262,6 @@ function tryAutoPlay() {
       localStorage.setItem("isPlaying", isPlaying);
       localStorage.setItem("lastActivity", Date.now());
       updateNetworkStatus(true);
-    );
     })
     .catch(error => {
       console.error("Помилка відтворення:", error);
@@ -278,7 +276,6 @@ function tryAutoPlay() {
         });
       }
     });
-  }
 }
 
 // Відстеження підключення Bluetooth
@@ -310,7 +307,7 @@ function setupBluetoothAutoPlay() {
           });
         }
       } catch (error) {
-        console.error("Помилка при відстеженні аудіопристроів: ", error);
+        console.error("Помилка при відстеженні аудіопристроїв:", error);
       }
     };
   }
