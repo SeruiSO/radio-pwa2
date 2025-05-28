@@ -8,10 +8,6 @@
   transition: all 0.4s ease;
 }
 
-* {
-  box-sizing: border-box;
-}
-
 body {
   font-family: 'Roboto', sans-serif;
   background: var(--body-bg);
@@ -23,6 +19,7 @@ body {
   justify-content: center;
   align-items: flex-start;
   overflow-x: hidden;
+  box-sizing: border-box;
   transition: background 0.4s ease, color 0.4s ease;
 }
 
@@ -34,11 +31,10 @@ body {
   border-radius: 15px;
   border: 1px solid var(--accent);
   margin: 0;
-  min-height: 100vh;
+  min-height: 90vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  overflow-x: hidden;
   transition: background 0.4s ease, border-color 0.4s ease;
 }
 
@@ -77,7 +73,7 @@ h1 {
   background: linear-gradient(45deg, var(--container-bg), var(--accent-gradient));
   padding: 20px;
   border-radius: 12px;
-  margin: 2px;
+  margin: 2px 0;
   color: var(--text);
   border: 2px solid var(--accent);
   text-align: left;
@@ -111,9 +107,22 @@ h1 {
 
 .current-station-info .station-name,
 .current-station-info .station-genre,
-.current-station-info .station-country,
-.current-station-info .network-status {
+.current-station-info .station-country {
   transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.current-station-info .station-name:empty,
+.current-station-info .station-genre:empty,
+.current-station-info .station-country:empty {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.current-station-info .station-name:not(:empty),
+.current-station-info .station-genre:not(:empty),
+.current-station-info .station-country:not(:empty) {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .current-station-info .station-name {
@@ -173,7 +182,7 @@ h1 {
   margin: 0 2px;
   text-align: center;
   font-size: 14px;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 }
 
 .tab-btn:hover {
@@ -190,9 +199,7 @@ h1 {
 
 .station-list {
   max-height: 500px;
-  max-width: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
   background: var(--container-bg);
   border: 2px solid var(--accent);
   border-radius: 10px;
@@ -200,7 +207,7 @@ h1 {
   padding: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) var(--container-bg);
-  flex: 1;
+  flex-grow: 1;
   position: relative;
   transition: border-color 0.4s ease;
 }
@@ -240,21 +247,20 @@ h1 {
   padding: 12px;
   cursor: pointer;
   border-radius: 8px;
+  font-weight: 500;
   border: 1px solid var(--text);
   margin: 5px 0;
   color: var(--text);
-  background-color: var(--container-bg);
+  background: var(--container-bg);
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: all 0.3s ease;
-  word-break: break-word;
 }
 
-.station-item:hover,
-.station-item.selected {
-  background: var(--accent);
-  border: 2px solid var(--accent);
+.station-item:hover, .station-item.selected {
+  background: var(--accent) !important;
+  border: 2px solid var(--accent) !important;
   color: #0A0A0A;
   transform: translateY(-2px);
 }
@@ -381,7 +387,7 @@ h1 {
   .container {
     padding: 0.8rem;
     margin: 0;
-    min-height: 100vh;
+    min-height: 90vh;
   }
   .control-btn {
     width: 4rem;
@@ -444,7 +450,7 @@ h1 {
 
 @media (max-height: 1600px) {
   .container {
-    min-height: 100vh;
+    min-height: 85vh;
   }
   .station-list {
     max-height: 450px;
