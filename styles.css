@@ -1,4 +1,8 @@
 /* Updated on May 28, 2025 */
+* {
+  box-sizing: border-box;
+}
+
 :root {
   --body-bg: #0A0A0A;
   --container-bg: #121212;
@@ -19,7 +23,6 @@ body {
   justify-content: center;
   align-items: flex-start;
   overflow-x: hidden;
-  box-sizing: border-box;
   transition: background 0.4s ease, color 0.4s ease;
 }
 
@@ -27,11 +30,11 @@ body {
   max-width: 100%;
   width: 100vw;
   background: var(--container-bg);
-  padding: 15px;
+  padding: 10px;
   border-radius: 15px;
   border: 1px solid var(--accent);
   margin: 0;
-  min-height: 90vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -200,6 +203,7 @@ h1 {
 .station-list {
   max-height: 500px;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--container-bg);
   border: 2px solid var(--accent);
   border-radius: 10px;
@@ -256,6 +260,7 @@ h1 {
   justify-content: space-between;
   align-items: center;
   transition: all 0.3s ease;
+  word-break: break-word;
 }
 
 .station-item:hover, .station-item.selected {
@@ -387,7 +392,7 @@ h1 {
   .container {
     padding: 0.8rem;
     margin: 0;
-    min-height: 90vh;
+    min-height: 100vh;
   }
   .control-btn {
     width: 4rem;
@@ -445,15 +450,6 @@ h1 {
   }
   .tabs {
     margin: 0.25rem 0;
-  }
-}
-
-@media (max-height: 1600px) {
-  .container {
-    min-height: 85vh;
-  }
-  .station-list {
-    max-height: 450px;
   }
 }
 
