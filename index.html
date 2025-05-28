@@ -46,7 +46,7 @@
   <title>Radio S O</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png">
+  <link rel="icon" href="/icon-192.png">
 </head>
 <body>
   <button class="theme-toggle">🌙</button>
@@ -72,19 +72,19 @@
       </div>
     </div>
     <div class="tabs">
-      <button class="tab-btn" onclick="switchTab('best')">BEST</button>
-      <button class="tab-btn" onclick="switchTab('techno')">TECHNO</button>
-      <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
-      <button class="tab-btn" onclick="switchTab('ukraine')">UKRAINE</button>
+      <button class="tab-btn" data-tab="best">BEST</button>
+      <button class="tab-btn" data-tab="techno">TECHNO</button>
+      <button class="tab-btn" data-tab="trance">TRANCE</button>
+      <button class="tab-btn" data-tab="ukraine">UKRAINE</button>
     </div>
     <div id="stationList" class="station-list">
       <div class="spinner"></div>
     </div>
     <div class="controls-container">
       <div class="controls">
-        <button class="control-btn" onclick="prevStation()">⏮</button>
-        <button class="control-btn" onclick="togglePlayPause()">▶</button>
-        <button class="control-btn" onclick="nextStation()">⏭</button>
+        <button class="control-btn prev-btn">⏮</button>
+        <button class="control-btn play-pause-btn">▶</button>
+        <button class="control-btn next-btn">⏭</button>
       </div>
     </div>
   </div>

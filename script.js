@@ -1,23 +1,28 @@
-const audio = document.getElementById("audioPlayer");
-const stationList = document.getElementById("stationList");
-const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
-const currentStationInfo = document.getElementById("currentStationInfo");
-const networkStatus = currentStationInfo?.querySelector(".network-status");
-const themeToggle = document.querySelector(".theme-toggle");
-
-// Перевірка існування DOM-елементів
-if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !networkStatus || !themeToggle) {
-  console.error("Один із необхідних DOM-елементів не знайдено");
-  throw new Error("Не вдалося ініціалізувати програму через відсутність DOM-елементів");
-}
-
+// Ініціалізація змінних
 let currentTab = localStorage.getItem("currentTab") || "techno";
 let currentIndex = 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = {};
-let stationThreads;
+let stationThreads = [];
 let isAutoPlaying = false;
+
+// DOM-елементи
+const audio = document.getElementById("audioPlayer");
+const stationList = document.getElementById("stationList");
+const playPauseBtn = document.querySelector(".play-pause-btn");
+const prevBtn = document.querySelector(".prev-btn");
+const nextBtn = document.querySelector(".next-btn");
+const currentStationInfo = document.querySelector(".current-station-info");
+const networkStatus = currentStationInfo?.querySelector(".network-status");
+const themeToggle = document.querySelector(".theme-toggle");
+const tabButtons = document.querySelectorAll(".tab-btn");
+
+// Перевірка існування DOM-елементів
+if (!audio || !stationList || !playPauseBtn || !prevBtn || !nextBtn || !currentStationInfo || !networkStatus || !themeToggle || !tabButtons.length) {
+  console.error("Один із необхідних DOM-елементів не знайдено");
+  throw new Error("Не вдалося ініціалізувати програму через відсутність DOM-елементів");
+}
 
 // Налаштування аудіо
 audio.preload = "auto";
@@ -159,8 +164,6 @@ function toggleTheme() {
   applyTheme(nextTheme);
 }
 
-themeToggle.addEventListener("click", toggleTheme);
-
 // Налаштування Service Worker
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").then(registration => {
@@ -292,7 +295,7 @@ function switchTab(tab) {
   currentIndex = savedIndex < maxIndex ? savedIndex : 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-  const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
+  const activeBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
   if (activeBtn) activeBtn.classList.add("active");
   if (stationThreads?.length && currentIndex < stationThreads.length) tryAutoPlay();
 }
@@ -404,20 +407,22 @@ function updateCurrentStationInfo(item) {
 
 // Керування відтворенням
 function prevStation() {
+  if (typeof currentIndex === "undefined" || !stationThreads) return;
   currentIndex = currentIndex > 0 ? currentIndex - 1 : stationThreads.length - 1;
   if (stationThreads[currentIndex].classList.contains("empty")) currentIndex = 0;
   changeStation(currentIndex);
 }
 
 function nextStation() {
+  if (typeof currentIndex === "undefined" || !stationThreads) return;
   currentIndex = currentIndex < stationThreads.length - 1 ? currentIndex + 1 : 0;
   if (stationThreads[currentIndex].classList.contains("empty")) currentIndex = 0;
   changeStation(currentIndex);
 }
 
 function togglePlayPause() {
-  if (!playPauseBtn || !audio) {
-    console.error("playPauseBtn або audio не знайдено");
+  if (!playPauseBtn || !audio || typeof isPlaying === "undefined") {
+    console.error("playPauseBtn, audio або isPlaying не ініціалізовані");
     return;
   }
   if (audio.paused) {
@@ -432,6 +437,17 @@ function togglePlayPause() {
     document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
   }
   localStorage.setItem("isPlaying", isPlaying);
+}
+
+// Додаємо слухачі подій для кнопок
+function addControlListeners() {
+  prevBtn.addEventListener("click", prevStation);
+  nextBtn.addEventListener("click", nextStation);
+  playPauseBtn.addEventListener("click", togglePlayPause);
+  tabButtons.forEach(btn => {
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
+  themeToggle.addEventListener("click", toggleTheme);
 }
 
 // Обробники подій
@@ -518,6 +534,7 @@ window.addEventListener("offline", () => {
 });
 
 // Ініціалізація слухачів
+addControlListeners();
 addEventListeners();
 
 // Очищення слухачів перед оновленням сторінки
