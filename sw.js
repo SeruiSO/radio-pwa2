@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v521"; // Оновлено версію кешу
+﻿const CACHE_NAME = "radio-pwa-cache-v522";
 const urlsToCache = [
   "/",
   "index.html",
@@ -56,7 +56,9 @@ self.addEventListener("activate", event => {
         cacheNames.map(cacheName => {
           if (!cacheWhitelist.includes(cacheName)) {
             console.log(`Видалення старого кешу: ${cacheName}`);
-            return caches.delete(cacheName);
+            return caches.delete(cacheName).catch(error => {
+              console.error(`Помилка видалення кешу ${cacheName}:`, error);
+            });
           }
         })
       );
@@ -74,77 +76,84 @@ self.addEventListener("activate", event => {
 // Моніторинг стану мережі та Bluetooth
 let wasOnline = navigator.onLine;
 let isBluetoothConnected = false;
+let retryAttempts = { 1: 0, 2: 0, 5: 0 };
+let retryInterval = null;
+
+function startNetworkCheck(interval) {
+  if (retryInterval) clearInterval(retryInterval);
+  retryAttempts[interval]++;
+  retryInterval = setInterval(() => {
+    fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
+      .then(() => {
+        if (!wasOnline) {
+          wasOnline = true;
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({ type: "NETWORK_STATUS", online: true });
+              client.postMessage({ type: "NETWORK_RECONNECT" });
+            });
+            if (!clients.length) {
+              self.registration.showNotification("", { tag: "network-reconnect", silent: true });
+            }
+          });
+          clearInterval(retryInterval);
+          retryAttempts = { 1: 0, 2: 0, 5: 0 };
+        }
+      })
+      .catch(() => {
+        if (retryAttempts[1] < 10) {
+          if (interval !== 1) startNetworkCheck(1);
+        } else if (retryAttempts[2] < 10) {
+          if (interval !== 2) startNetworkCheck(2);
+        } else if (retryAttempts[5] < 10) {
+          if (interval !== 5) startNetworkCheck(5);
+        } else {
+          clearInterval(retryInterval);
+          retryAttempts = { 1: 0, 2: 0, 5: 0 };
+        }
+      });
+  }, interval * 1000);
+}
 
 self.addEventListener("message", event => {
   if (event.data.type === "BLUETOOTH_STATUS") {
     isBluetoothConnected = event.data.connected;
     console.log(`Bluetooth status updated: ${isBluetoothConnected}`);
-  } else if (event.data.type === "REQUEST_RECONNECT") {
-    console.log(`Отримано запит на повторне підключення: ${event.data.reason}`);
-    self.clients.matchAll().then(clients => {
-      if (!clients.length) {
-        self.registration.showNotification("", {
-          tag: event.data.reason === "media" ? "bluetooth-reconnect" : "network-reconnect",
-          silent: true
-        });
-      } else {
-        clients.forEach(client => {
-          client.postMessage({
-            type: event.data.reason === "media" ? "BLUETOOTH_RECONNECT" : "NETWORK_RECONNECT"
-          });
-        });
-      }
-    });
-  }
-});
-
-setInterval(() => {
-  fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
-    .then(() => {
-      if (!wasOnline) {
-        wasOnline = true;
-        self.clients.matchAll().then(clients => {
-          if (!clients.length) {
-            // Якщо немає активних клієнтів, показуємо повідомлення
-            self.registration.showNotification("", {
-              tag: "network-reconnect",
-              silent: true
-            });
-          } else {
-            clients.forEach(client => {
-              client.postMessage({ type: "NETWORK_STATUS", online: true });
-              client.postMessage({ type: "NETWORK_RECONNECT" });
-            });
-          }
-        });
-      }
-    })
-    .catch(error => {
-      console.error("Помилка перевірки мережі:", error);
-      if (wasOnline) {
-        wasOnline = false;
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({ type: "NETWORK_STATUS", online: false });
-          });
-        });
-      }
-    });
-
-  // Перевірка Bluetooth
-  if (isBluetoothConnected) {
-    self.clients.matchAll().then(clients => {
-      if (!clients.length) {
-        // Якщо немає активних клієнтів, показуємо повідомлення
-        self.registration.showNotification("", {
-          tag: "bluetooth-reconnect",
-          silent: true
-        });
-      } else {
+    if (isBluetoothConnected) {
+      self.clients.matchAll().then(clients => {
         clients.forEach(client => {
           client.postMessage({ type: "BLUETOOTH_RECONNECT" });
         });
-      }
-    });
+        if (!clients.length) {
+          self.registration.showNotification("", { tag: "bluetooth-reconnect", silent: true });
+        }
+      });
+    }
+  } else if (event.data.type === "REQUEST_RECONNECT") {
+    console.log(`Отримано запит на повторне підключення: ${event.data.reason}`);
+    startNetworkCheck(1);
   }
-}, 1000); // Перевірка кожну секунду, як у вихідному коді
+});
+
+// Початок перевірки мережі при втраті з’єднання
+self.addEventListener("offline", () => {
+  wasOnline = false;
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({ type: "NETWORK_STATUS", online: false });
+    });
+  });
+  startNetworkCheck(1);
+});
+
+self.addEventListener("online", () => {
+  wasOnline = true;
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({ type: "NETWORK_STATUS", online: true });
+      client.postMessage({ type: "NETWORK_RECONNECT" });
+    });
+  });
+  clearInterval(retryInterval);
+  retryAttempts = { 1: 0, 2: 0, 5: 0 };
+});
