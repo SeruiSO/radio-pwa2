@@ -238,7 +238,6 @@ function tryAutoPlay() {
       }
       isAutoPlaying = false;
       document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
-      // Не змінювати статус мережі для AbortError
       if (error.name !== "AbortError" && !navigator.onLine) {
         updateNetworkStatus("Офлайн");
       }
@@ -365,8 +364,8 @@ function updateStationList() {
     }
     const item = e.target.closest(".station-item");
     if (item && !item.classList.contains("empty")) {
-      currentIndex = Array.from(stationItems).indexOf(item);
-      debouncedChangeStation(currentIndex);
+      const newIndex = Array.from(stationItems).indexOf(item);
+      debouncedChangeStation(newIndex);
     }
   };
 
@@ -397,12 +396,15 @@ function debouncedChangeStation(index) {
   }
   changeStationTimeout = setTimeout(() => {
     changeStation(index);
-  }, 200);
+  }, 300); // Збільшено до 300 мс
 }
 
 // Зміна станції
 function changeStation(index) {
   if (index < 0 || index >= stationItems.length || stationItems[index].classList.contains("empty")) return;
+  // Пропускаємо, якщо станція вже вибрана
+  if (currentIndex === index) return;
+
   const item = stationItems[index];
   stationItems?.forEach(i => i.classList.remove("selected"));
   item.classList.add("selected");
@@ -500,7 +502,9 @@ const eventListeners = {
     if (!document.hidden && isPlaying && navigator.onLine) {
       if (!audio.paused) return;
       audio.pause();
-      audio.src = stationItems[currentIndex].dataset.value;
+      if (stationItems[currentIndex]) {
+        audio.src = stationItems[currentIndex].dataset.value;
+      }
       tryAutoPlay();
     }
   },
@@ -508,7 +512,9 @@ const eventListeners = {
     if (isPlaying && navigator.connection?.type !== "none") {
       if (!audio.paused) return;
       audio.pause();
-      audio.src = stationItems[currentIndex].dataset.value;
+      if (stationItems[currentIndex]) {
+        audio.src = stationItems[currentIndex].dataset.value;
+      }
       tryAutoPlay();
     }
   }
