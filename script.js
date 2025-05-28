@@ -397,7 +397,7 @@ function debouncedChangeStation(index) {
   }
   changeStationTimeout = setTimeout(() => {
     changeStation(index);
-  }, 300); // Збільшено затримку до 300ms для стабільності
+  }, 200);
 }
 
 // Зміна станції
@@ -407,7 +407,6 @@ function changeStation(index) {
   stationItems?.forEach(i => i.classList.remove("selected"));
   item.classList.add("selected");
   currentIndex = index;
-  audio.src = ""; // Очищення джерела перед зміною
   audio.src = item.dataset.value;
   updateCurrentStationInfo(item);
   localStorage.setItem(`lastStation_${currentTab}`, currentIndex);

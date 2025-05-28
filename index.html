@@ -43,16 +43,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#00F0FF">
-  <title>Radio Music</title>
+  <title>Radio S O</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png">
+  <link rel="icon" href="/icon-192.png">
 </head>
 <body>
+  <button class="theme-toggle">🌙</button>
   <div class="container">
-    <div class="theme-toggle">🌙</div>
     <h1>🎧 RADIO MUSIC</h1>
-    <div class="current-station-info">
+    <div class="current-station-info" aria-live="polite">
       <div class="station-info-content">
         <div class="wave-progress">
           <div class="wave-bar"></div>
@@ -64,22 +64,21 @@
           <div class="wave-bar"></div>
         </div>
         <div class="station-text">
-          <div class="station-name"></div>
+          <div class="station-name" role="heading" aria-level="2"></div>
           <div class="station-genre"></div>
           <div class="station-country"></div>
           <div class="network-status">Завантаження...</div>
         </div>
       </div>
     </div>
+    <div id="stationList" class="station-list">
+      <div class="spinner"></div>
+    </div>
     <div class="tabs">
-      <button class="tab-btn active" data-tab="best">BEST</button>
+      <button class="tab-btn" data-tab="best">BEST</button>
       <button class="tab-btn" data-tab="techno">TECHNO</button>
       <button class="tab-btn" data-tab="trance">TRANCE</button>
       <button class="tab-btn" data-tab="ukraine">UKRAINE</button>
-    </div>
-    <div class="station-list" id="stationList">
-      <div class="station-item empty">Завантаження...</div>
-      <div class="spinner"></div>
     </div>
     <div class="controls-container">
       <div class="controls">
