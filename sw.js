@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v802"; // Оновлено версію кешу
+﻿const CACHE_NAME = "radio-pwa-cache-v804"; // Оновлено версію кешу
 const urlsToCache = [
   "/",
   "index.html",
@@ -101,9 +101,9 @@ self.addEventListener("message", event => {
 // Перевірка мережі з обмеженим числом спроб
 async function checkNetwork() {
   const intervals = [
-    { attempts: 10, delay: 1000 }, // 10 спроб через 1 сек
-    { attempts: 10, delay: 2000 }, // 10 спроб через 2 сек
-    { attempts: 10, delay: 5000 }  // 10 спроб через 5 сек
+    { attempts: 10, delay: 1000 },   // 10 спроб через 1 сек
+    { attempts: 10, delay: 2000 },   // 10 спроб через 2 сек
+    { attempts: 10, delay: 300000 }  // 10 спроб через 5 хв
   ];
 
   for (const { attempts, delay } of intervals) {

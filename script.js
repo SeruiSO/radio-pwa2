@@ -1,7 +1,7 @@
 const audio = document.getElementById("audioPlayer");
 const stationList = document.getElementById("stationList");
 const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
-const currentStationInfo = document.getElementById("currentStationInfo");
+const currentStationInfo = document.querySelector(".current-station-info");
 const themeToggle = document.querySelector(".theme-toggle");
 const networkStatus = document.querySelector(".network-status");
 const loadingSpinner = document.querySelector(".loading-spinner");
@@ -41,7 +41,7 @@ function updateNetworkStatus(online) {
 async function loadStations() {
   console.time("loadStations");
   loadingSpinner.classList.add("active");
-  stationList.innerHTML = "";
+  stationList.innerHTML = "<div class='station-item empty'>Завантаження...</div>";
   const maxRetries = 3;
   let attempt = 0;
 
@@ -94,7 +94,7 @@ async function loadStations() {
 // Теми
 const themes = {
   "neon-pulse": {
-    bodyBg: "#0A0A0A",
+    bodyBg": "#0A0A0A",
     containerBg: "#121212",
     accent: "#00F0FF",
     text: "#F0F0F0",
@@ -143,7 +143,7 @@ const themes = {
     accentGradient: "#1A3C4B"
   },
   "aurora-haze": {
-    bodyBg: "#121212",
+    bodyBg": "#121212",
     containerBg: "#1A1A1A",
     accent: "#64FFDA",
     text: "#E0F7FA",
@@ -157,9 +157,9 @@ const themes = {
     accentGradient: "#2E1A47"
   },
   "lunar-frost": {
-    bodyBg: "#F5F7FA",
+    bodyBg": "#F5F7FA",
     containerBg: "#FFFFFF",
-    accent: "#40C4FF",
+    accent: "#40C4B3",
     text: "#212121",
     accentGradient: "#B3E5FC"
   }
@@ -193,13 +193,16 @@ function toggleTheme() {
     "mystic-jade",
     "aurora-haze",
     "starlit-amethyst",
-    "lunar-frost"
+    "lunar-frost",
+  ",
   ];
-  const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
+  const nextTheme = themeOrder[
+    (themesOrder.indexOf(currentTheme) + 1) % themesOrder.length
+  ];
   applyTheme(nextTheme);
 }
 
-// Додаємо обробник події для кнопки зміни теми
+// Додаємо обробник події для кнопки зміни теми додаємо
 themeToggle.addEventListener("click", toggleTheme);
 
 // Налаштування Service Worker
@@ -216,8 +219,6 @@ if ("serviceWorker" in navigator) {
         }
       });
     });
-  });
-
   navigator.serviceWorker.addEventListener("message", event => {
     if (event.data.type === "NETWORK_STATUS") {
       updateNetworkStatus(event.data.online);
@@ -262,6 +263,7 @@ function tryAutoPlay() {
       localStorage.setItem("isPlaying", isPlaying);
       localStorage.setItem("lastActivity", Date.now());
       updateNetworkStatus(true);
+    );
     })
     .catch(error => {
       console.error("Помилка відтворення:", error);
@@ -276,6 +278,7 @@ function tryAutoPlay() {
         });
       }
     });
+  }
 }
 
 // Відстеження підключення Bluetooth
@@ -307,7 +310,7 @@ function setupBluetoothAutoPlay() {
           });
         }
       } catch (error) {
-        console.error("Помилка при відстеженні аудіопристроїв:", error);
+        console.error("Помилка при відстеженні аудіопристроів: ", error);
       }
     };
   }
@@ -344,7 +347,10 @@ function switchTab(tab) {
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
   if (activeBtn) activeBtn.classList.add("active");
-  if (stationItems?.length && currentIndex < stationItems.length) tryAutoPlay();
+  if (stationItems?.length && currentIndex < stationItems.length) {
+    changeStation(currentIndex);
+    tryAutoPlay();
+  }
 }
 
 // Оновлення списку станцій
@@ -434,18 +440,18 @@ function updateCurrentStationInfo(item) {
   const stationCountryElement = currentStationInfo.querySelector(".station-country");
 
   if (stationNameElement) {
-    stationNameElement.textContent = item.dataset.name || "Unknown";
+    stationNameElement.textContent = item.dataset.name || "Невідома станція";
   }
   if (stationGenreElement) {
-    stationGenreElement.textContent = `Жанр: ${item.dataset.genre || "Unknown"}`;
+    stationGenreElement.textContent = `Жанр: ${item.dataset.genre || "Невідомий"}`;
   }
   if (stationCountryElement) {
-    stationCountryElement.textContent = `Країна: ${item.dataset.country || "Unknown"}`;
+    stationCountryElement.textContent = `Країна: ${item.dataset.country || "Невідома"}`;
   }
   if ("mediaSession" in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: item.dataset.name || "Unknown Station",
-      artist: `${item.dataset.genre || "Unknown"} | ${item.dataset.country || "Unknown"}`,
+      title: item.dataset.name || "Невідома станція",
+      artist: `${item.dataset.genre || "Невідомий"} | ${item.dataset.country || "Невідома"}`,
       album: "Radio Music"
     });
   }
