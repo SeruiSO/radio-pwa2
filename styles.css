@@ -92,7 +92,7 @@ h1 {
   box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.5);
 }
 
-.station-info {
+.station-info-content {
   display: flex;
   align-items: center;
   gap: 15px;
@@ -110,66 +110,58 @@ h1 {
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  transition: opacity 0.3s ease;
 }
 
 .current-station-info .station-genre {
   font-size: 18px;
   font-weight: 400;
   margin-top: 5px;
-  transition: opacity 0.3s ease;
 }
 
 .current-station-info .station-country {
   font-size: 18px;
   font-weight: 400;
   margin-top: 2px;
-  transition: opacity 0.3s ease;
 }
 
-.current-station-info .network-status-text {
+.network-status-text {
   font-size: 16px;
   font-weight: 400;
   margin-top: 2px;
-  color: var(--text);
-  transition: opacity 0.3s ease;
-}
-
-.network-status-text.online {
   color: var(--accent);
 }
 
 .network-status-text.offline {
-  color: #FF4040;
+  color: #FF4081;
 }
 
 .loading-spinner {
   display: none;
   text-align: center;
-  font-style: italic;
-  color: var(--text);
-  opacity: 0.7;
-  padding: 20px;
-  transition: opacity 0.3s ease;
+  font-size: 18px;
+  color: var(--accent);
+  padding: 10px;
+  animation: spin 1s linear infinite;
 }
 
 .loading-spinner.active {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: block;
 }
 
-.loading-spinner::before {
-  content: "⏳";
-  font-size: 24px;
-  margin-right: 10px;
-  animation: spin 1s linear infinite;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .tabs {
   display: flex;
   justify-content: space-between;
-  margin: 5px 0;
+  margin: 10px 0;
+  position: fixed;
+  bottom: 110px;
+  left: 10px;
+  right: 10px;
+  z-index: 10;
   background: var(--container-bg);
   padding: 5px;
   border-radius: 10px;
@@ -259,6 +251,8 @@ h1 {
   font-size: 20px;
   cursor: pointer;
   transition: color 0.3s ease;
+  visibility: visible;
+  opacity: 1;
 }
 
 .station-item .favorite-btn.favorited {
@@ -288,12 +282,9 @@ h1 {
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .controls-container {
+  position: sticky;
+  bottom: 0;
   background: var(--container-bg);
   border-top: 2px solid var(--accent);
   padding: 15px;
@@ -420,11 +411,7 @@ h1 {
     font-size: 16px;
   }
 
-  .current-station-info .network-status-text {
-    font-size: 14px;
-  }
-
-  .station-info {
+  .station-info-content {
     gap: 10px;
   }
 
@@ -444,7 +431,7 @@ h1 {
   }
 
   .tabs {
-    margin: 5px 0;
+    bottom: 100px;
   }
 }
 
