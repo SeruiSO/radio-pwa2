@@ -1,4 +1,4 @@
-/* Updated on May 28, 2025 */
+/* Updated on May 27, 2025 */
 :root {
   --body-bg: #0A0A0A;
   --container-bg: #121212;
@@ -124,43 +124,12 @@ h1 {
   margin-top: 2px;
 }
 
-.network-status-text {
-  font-size: 16px;
-  font-weight: 400;
-  margin-top: 2px;
-  color: var(--accent);
-}
-
-.network-status-text.offline {
-  color: #FF4081;
-}
-
-.loading-spinner {
-  display: none;
-  text-align: center;
-  font-size: 18px;
-  color: var(--accent);
-  padding: 10px;
-  animation: spin 1s linear infinite;
-}
-
-.loading-spinner.active {
-  display: block;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .tabs {
   display: flex;
   justify-content: space-between;
   margin: 10px 0;
-  position: fixed;
+  position: sticky;
   bottom: 110px;
-  left: 10px;
-  right: 10px;
   z-index: 10;
   background: var(--container-bg);
   padding: 5px;
@@ -251,8 +220,6 @@ h1 {
   font-size: 20px;
   cursor: pointer;
   transition: color 0.3s ease;
-  visibility: visible;
-  opacity: 1;
 }
 
 .station-item .favorite-btn.favorited {
@@ -280,6 +247,11 @@ h1 {
   font-size: 24px;
   margin-right: 10px;
   animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .controls-container {
