@@ -6,8 +6,8 @@ let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = {};
 let stationItems = [];
 let isAutoPlaying = false;
-let lastPlayPromise = null; // Для відстеження активного запиту відтворення
-let changeStationTimeout = null; // Для дебатування changeStation
+let lastPlayPromise = null;
+let changeStationTimeout = null;
 
 // DOM-елементи
 const audio = document.getElementById("audioPlayer");
@@ -136,8 +136,8 @@ const themes = {
   "cosmic-indigo": { bodyBg: "#121212", containerBg: "#1A1A1A", accent: "#3F51B5", text: "#BBDEFB", accentGradient: "#1A2A5A" },
   "mystic-jade": { bodyBg: "#0A0A0A", containerBg: "#121212", accent: "#26A69A", text: "#B2DFDB", accentGradient: "#1A3C4B" },
   "aurora-haze": { bodyBg: "#121212", containerBg: "#1A1A1A", accent: "#64FFDA", text: "#E0F7FA", accentGradient: "#1A4B4B" },
-  "starlit-amethyst": { "bodyBg": "#0A0A", "containerBg": "#121212", "accent": "#B388FF", "text": "#E1BEE7", "accentGradient": "#2E1A47" },
-  "lunar-frost": { "bodyBg": "#F5F7FA", "containerBg": "#FFFFFF", "accent": "#40C4FF", "text": "#212121", "accentGradient": "#B3E5FC" }
+  "starlit-amethyst": { bodyBg: "#0A0A0A", containerBg: "#121212", accent: "#B388FF", text: "#E1BEE7", accentGradient: "#2E1A47" },
+  "lunar-frost": { bodyBg: "#F5F7FA", containerBg: "#FFFFFF", accent: "#40C4FF", text: "#212121", accentGradient: "#B3E5FC" }
 };
 let currentTheme = localStorage.getItem("selectedTheme") || "neon-pulse";
 
@@ -223,7 +223,7 @@ function tryAutoPlay() {
     .then(() => {
       isAutoPlaying = false;
       isPlaying = true;
-      playPauseBtn.textContent("⏸");
+      playPauseBtn.textContent = "⏸";
       document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
       localStorage.setItem("isPlaying", isPlaying);
       localStorage.setItem("lastActivity", Date.now());
@@ -244,8 +244,8 @@ function tryAutoPlay() {
       }
       lastPlayPromise = null;
       if (document.hidden && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller!.postMessage({
-          type: "type: "REQUEST_RECONNECT",
+        navigator.serviceWorker.controller.postMessage({
+          type: "REQUEST_RECONNECT",
           reason: error.name === "NotAllowedError" ? "media" : "network"
         });
       }
@@ -255,11 +255,11 @@ function tryAutoPlay() {
 // Відстеження підключення Bluetooth
 function setupBluetooth() {
   if ("mediaDevices" in navigator) {
-    navigator.mediaDevices!.ondevicechange = async () => {
+    navigator.mediaDevices.ondevicechange = async () => {
       try {
-        const devices = await navigator.mediaDevices!.enumerateDevices();
-        const audioOutputs = devices!.filter(device => device.kind === "audiooutput");
-        const hasBluetooth = audioOutputs.some(s => device.label.toLowerCase().includes("bluetooth"));
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioOutputs = devices.filter(device => device.kind === "audiooutput");
+        const hasBluetooth = audioOutputs.some(device => device.label.toLowerCase().includes("bluetooth"));
         if (hasBluetooth && stationItems?.length && currentIndex < stationItems.length) {
           console.log("Виявлено підключення Bluetooth-пристрою");
           localStorage.setItem("lastActivity", Date.now());
@@ -267,19 +267,23 @@ function setupBluetooth() {
             isPlaying = true;
             tryAutoPlay();
           }
-          navigator.serviceWorker.controller?.postMessage({
-            type: "BLUETOOTH_STATUS",
-            connected: true
-          });
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: "BLUETOOTH_STATUS",
+              connected: true
+            });
+          }
         } else if (!hasBluetooth) {
           console.log("Bluetooth-пристрій відключено");
-          navigator.serviceWorker.controller?.postMessage({
-            type: "BLUETOOTH_STATUS",
-            connected: false
-          });
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: "BLUETOOTH_STATUS",
+              connected: false
+            });
+          }
         }
       } catch (error) {
-        console.error("Помилка при відродження аудіопристроїв:", error);
+        console.error("Помилка при відстеженні аудіопристроїв:", error);
       }
     };
   }
@@ -287,7 +291,7 @@ function setupBluetooth() {
   if ("mediaSession" in navigator) {
     navigator.mediaSession.setActionHandler("play", () => {
       if (stationItems?.length && currentIndex < stationItems.length) {
-        console.log("Команда 'play' із Bluetooth-прикладає");
+        console.log("Команда 'play' із Bluetooth-пристрою");
         isPlaying = true;
         localStorage.setItem("lastActivity", Date.now());
         tryAutoPlay();
@@ -303,14 +307,14 @@ function setupBluetooth() {
   }
 }
 
-// Перемикаємо вкладки
+// Перемикання вкладок
 function switchTab(tab) {
   if (!["techno", "trance", "ukraine", "best"].includes(tab)) tab = "techno";
   currentTab = tab;
   localStorage.setItem("currentTab", tab);
-  const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0);
-  const maxIndex = tab === "best" ? favoriteStations.length : stationLists[tab]?.length || 0);
-  currentIndex = savedIndex < maxIndex ? savedIndex : 0);
+  const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
+  const maxIndex = tab === "best" ? favoriteStations.length : stationLists[tab]?.length || 0;
+  currentIndex = savedIndex < maxIndex ? savedIndex : 0;
   updateStationList();
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
@@ -327,18 +331,18 @@ function updateStationList() {
 
   let stations = currentTab === "best"
     ? favoriteStations
-        .map(name => Object.values(stationLists).flatMap().find(s => s.name === name))
+        .map(name => Object.values(stationLists).flat().find(s => s.name === name))
         .filter(s => s)
     : stationLists[currentTab] || [];
 
   if (!stations.length) {
     currentIndex = 0;
     stationItems = [];
-    stationList.innerHTML = `<div class='station-item empty'>${currentTab === "best" ? "Немає улюбленоїих станцій" : "Немає станцій у цій категорії"}</div>`;
+    stationList.innerHTML = `<div class='station-item empty'>${currentTab === "best" ? "Немає улюблених станцій" : "Немає станцій у цій категорії"}</div>`;
     return;
   }
 
-  const fragment = document.createDocument();
+  const fragment = document.createDocumentFragment();
   stations.forEach((station, index) => {
     const item = document.createElement("div");
     item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
@@ -353,7 +357,7 @@ function updateStationList() {
   stationList.appendChild(fragment);
   stationItems = stationList.querySelectorAll(".station-item");
 
-  stationList.onclick = function(e) => {
+  stationList.onclick = e => {
     const favoriteBtn = e.target.closest(".favorite-btn");
     if (favoriteBtn) {
       toggleFavorite(favoriteBtn.parentElement.dataset.name);
@@ -366,13 +370,12 @@ function updateStationList() {
     }
   };
 
-  // Викликати changeStation тільки якщо список змінився
   if (stationItems.length && currentIndex < stationItems.length) {
     debouncedChangeStation(currentIndex);
   }
 }
 
-// Перемикаємо унікальні станції
+// Перемикання улюблених станцій
 function toggleFavorite(stationName) {
   if (favoriteStations.includes(stationName)) {
     favoriteStations = favoriteStations.filter(name => name !== stationName);
@@ -380,7 +383,6 @@ function toggleFavorite(stationName) {
     favoriteStations.unshift(stationName);
   }
   localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-  // Оновити список тільки без автоматичного перемикація станції
   if (currentTab === "best") {
     switchTab("best");
   } else {
@@ -388,17 +390,17 @@ function toggleFavorite(stationName) {
   }
 }
 
-// Деактивувати changeStation
+// Дебатизація changeStation
 function debouncedChangeStation(index) {
   if (changeStationTimeout) {
     clearTimeout(changeStationTimeout);
   }
   changeStationTimeout = setTimeout(() => {
     changeStation(index);
-  }, 200); // Збільшено затримку до 100 мс
+  }, 200);
 }
 
-// Змінюємо станцію
+// Зміна станції
 function changeStation(index) {
   if (index < 0 || index >= stationItems.length || stationItems[index].classList.contains("empty")) return;
   const item = stationItems[index];
@@ -431,19 +433,18 @@ function updateCurrentStationInfo(item) {
     stationCountryElement.textContent = `Country: ${item.dataset.country || "Unknown"}`;
   }
   if ("mediaSession" in navigator) {
-    navigator.mediaSession.setMetadata(new MediaMetadata({
+    navigator.mediaSession.metadata = new MediaMetadata({
       title: item.dataset.name || "Unknown Station",
       artist: `${item.dataset.genre || "Unknown"} | ${item.dataset.country || "Unknown"}`,
       album: "Radio Music"
-    }));
+    });
   }
 }
 
 // Керування відтворенням
 function prevStation() {
   if (typeof currentIndex === "undefined" || !stationItems) return;
-  currentIndex = currentIndex > 0 ? currentIndex - 1 : stationItems.length -  if;
-(currentIndex < 1;
+  currentIndex = currentIndex > 0 ? currentIndex - 1 : stationItems.length - 1;
   if (stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
   debouncedChangeStation(currentIndex);
 }
@@ -466,7 +467,7 @@ function togglePlayPause() {
     playPauseBtn.textContent = "⏸";
     document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
   } else {
-    audio.paused();
+    audio.pause();
     isPlaying = false;
     playPauseBtn.textContent = "▶";
     document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
@@ -474,7 +475,7 @@ function togglePlayPause() {
   localStorage.setItem("isPlaying", isPlaying);
 }
 
-// Додаємо слухаємо слухачі подій для кнопок
+// Додаємо слухачі подій для кнопок
 function addControlListeners() {
   prevBtn.addEventListener("click", prevStation);
   nextBtn.addEventListener("click", nextStation);
@@ -483,7 +484,6 @@ function addControlListeners() {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
   });
   themeToggle.addEventListener("click", toggleTheme);
-});
 }
 
 // Обробники подій
@@ -491,7 +491,7 @@ const eventListeners = {
   keydown: e => {
     if (e.key === "ArrowLeft") prevStation();
     if (e.key === "ArrowRight") nextStation();
-    if (e.key === "Space") {
+    if (e.key === " ") {
       e.preventDefault();
       togglePlayPause();
     }
@@ -514,25 +514,24 @@ const eventListeners = {
   }
 };
 
-// Додаємо слухаємо слухачі
+// Додаємо слухачі
 function addEventListeners() {
   document.addEventListener("keydown", eventListeners.keydown);
   document.addEventListener("visibilitychange", eventListeners.visibilitychange);
   document.addEventListener("resume", eventListeners.resume);
-});
+}
 
 // Очищення слухачів
 function removeEventListeners() {
   document.removeEventListener("keydown", eventListeners.keydown);
   document.removeEventListener("visibilitychange", eventListeners.visibilitychange);
   document.removeEventListener("resume", eventListeners.resume);
-};
+}
 
-// Додаємо слухаємо слухачі подій
+// Додаємо слухачі подій
 audio.addEventListener("playing", () => {
   isPlaying = true;
   playPauseBtn.textContent = "⏸";
-  );
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
   localStorage.setItem("lastActivity", Date.now());
   localStorage.setItem("isPlaying", isPlaying);
@@ -542,7 +541,6 @@ audio.addEventListener("pause", () => {
   isPlaying = false;
   playPauseBtn.textContent = "▶";
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
-  );
   localStorage.setItem("isPlaying", isPlaying);
 });
 
@@ -550,7 +548,7 @@ audio.addEventListener("error", () => {
   document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
   if (!navigator.onLine) {
     updateNetworkStatus("Офлайн");
-  );
+  }
 });
 
 audio.addEventListener("volumechange", () => {
@@ -573,93 +571,26 @@ window.addEventListener("offline", () => {
   updateNetworkStatus("Офлайн");
 });
 
-// Ініціюємо слухачів
+// Ініціалізація слухачів
 addControlListeners();
 addEventListeners();
 
-// Очищення слухаємо слухачи перед оновленням сторінки
+// Очищення слухачів перед оновленням сторінки
 window.addEventListener("beforeunload", () => {
   removeEventListeners();
 });
 
-// Media Media API
+// Media Session API
 if ("mediaSession" in navigator) {
-  {
-    navigator.mediaSession.setActionHandler("play", togglePlayPause);
-    navigator.mediaSession.setActionHandler("pause", togglePlayPause);
-    navigator.mediaSession.setActionHandler("previoustrack", prevStation);
-    navigator.mediaSession.setActionHandler("nexttrack", nextStation);
-    );
+  navigator.mediaSession.setActionHandler("play", togglePlayPause);
+  navigator.mediaSession.setActionHandler("pause", togglePlayPause);
+  navigator.mediaSession.setActionHandler("previoustrack", prevStation);
+  navigator.mediaSession.setActionHandler("nexttrack", nextStation);
 }
 
-// Ініціюємо Bluetooth
+// Ініціалізація Bluetooth
 setupBluetooth();
 
-// Ініціюємо
+// Ініціалізація
 applyTheme(currentTheme);
 loadStations();
-</script>
-```
-
-**Зміни**:
-1. **Перейменовано `stationThreads`**:
-   - Замінено `stationThreads` на `stationItems` для узгодженості (була невідповідність у попередньому коді).
-2. **Добавлено дебатзацію**:
-   - Додана функція `debouncedChangeStation` із затримкою 200 мс для обробки кліків на станції у `stationList.onclick`.
-   - Використовується також у `prevStation`, `nextStation`, і `updateStationList`.
-3. **Оновлено `tryAutoPlay`**:
-   - Додано змінну `lastPlayPromise` для відстеження активного стану `audio.play()`.
-   - Викликається `audio.pause()` перед новим відтворенням для скасування попереднього запиту.
-   - Помилка `AbortError` ігнорується, а статус мережі змінюється на "Офлайн" лише якщо `navigator.onLine` підтверджує відсутність мережі.
-4. **Оновлено `updateNetworkStatus`**:
-   - Перевірка `navigator.onLine` додається перед зміною статусу в `audio.addEventListener("error")` для уникнення помилкового "Офлайн".
-5. **Виправлено помилки в синтаксисі**:
-   - Виправлено помилки в `applyTheme` (наприклад, `themes[theme].theme` → `themes[theme]`, видалено зайвий `style`).
-   - Виправлено `toggleTheme` (видалено `→`).
-   - Виправлено `tryAutoPlay` (наприклад, `playPauseBtn.textContent` вместо `playPauseBtn`).
-   - Виправлено `updateStationList` (видалено зайвий `=`).
-   - Виправлено `setupBluetooth` (наприклад, `navigator.mediaDevices` вместо `navigator.mediaDevices!`, `navigator.serviceWorker` для `controller`).
-   - Виправлено `updateCurrentStationInfo` (видалено зайвий `=`).
-   - Виправлено `addControlListeners`, `addEventListeners`, `removeEventListeners` (видалено зайві `)`).
-   - Виправлено слухачі подій (наприклад, видалено зайві `)`).
-   ---
-
-### Очікувані результати
-
-1. **Вкладки**:
-   - Вкладки (BEST, TECHNO, TRANCE, UKRAINE) тепер розташовані між списком станцій і панеллю керування.
-   - Відступи зверху та знизу для `.tabs` становлять 5px (або 0.25rem на малих екранах).
-
-2. **Ширина вікна**:
-   - Контейнер займає всю ширину екрана (`width: 100vw`, `margin: 0`).
-   - Вміст розтягується на всю ширину без бійних відступів.
-
-3. **Відступи**:
-   - Відступ між `<h1>` і `.current-station-info` зменшено до 2px.
-   - Відступ для `.station-list` зменшено до 5px.
-   - Відступ між `.current-station-info` і `.station-list` також зменшено (2px).
-
-4. **Помилка "Офлайн" при швидкому перемиканні**:
-   - Швидке перемикання станцій більше не викликає помилковий статус "Офлайн".
-   - Дебаунсинг у 200 мс запобігає множинним викликам `audio.play()`.
-   - Помилки `AbortError` ігноруються, а статус мережі змінюється лише за підтвердження `navigator.onLine`.
-
----
-
-### Рекомендації
-
-1. **Тестування**:
-   - Перевірте оновлення на `radioso2.netlify.app` після деплою.
-   - Протестуйте швидке перемикання станцій (кліки по різних станціях поспіль) і перевірте, чи статус залишається "Онлайн".
-   - Перевірте UI на різних пристроях (Samsung A13, десктоп) для оцінки нової ширини та відступів.
-   - Переконайтеся, що вкладки відображаються коректно між списком станцій і кнопками керування.
-
-2. **Деплой**:
-   - Оновіть `index.html`, `styles.css`, і `script.js` на Netlify.
-   - Очистіть кеш, якщо зміни не застосовуються.
-
-3. **Додаткові перевірки**:
-   - Якщо помилка "Офлайн" з’явиться в інших сценаріях, надайте логі для аналізу.
-   - Для ще більшої стабільності можна зменшити затримку дебаунсинга до 100 мс, якщо 200 мс здається надто повільним.
-
-Якщо потрібні додаткові уточнення чи правки, дайте знати!
