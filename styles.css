@@ -1,4 +1,4 @@
-﻿/* Updated on May 28, 2025 */
+/* Updated on May 28, 2025 */
 :root {
   --body-bg: #0A0A0A;
   --container-bg: #121212;
@@ -92,7 +92,7 @@ h1 {
   box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.5);
 }
 
-.station-info-content {
+.station-info {
   display: flex;
   align-items: center;
   gap: 15px;
@@ -127,23 +127,20 @@ h1 {
   transition: opacity 0.3s ease;
 }
 
-.network-status {
+.current-station-info .network-status-text {
   font-size: 16px;
-  padding: 10px;
-  text-align: center;
-  border-radius: 8px;
-  margin: 5px 0;
-  transition: opacity 0.3s ease, background 0.4s ease;
-}
-
-.network-status.online {
-  background: var(--accent);
-  color: #0A0A0A;
-}
-
-.network-status.offline {
-  background: #FF4040;
+  font-weight: 400;
+  margin-top: 2px;
   color: var(--text);
+  transition: opacity 0.3s ease;
+}
+
+.network-status-text.online {
+  color: var(--accent);
+}
+
+.network-status-text.offline {
+  color: #FF4040;
 }
 
 .loading-spinner {
@@ -172,10 +169,7 @@ h1 {
 .tabs {
   display: flex;
   justify-content: space-between;
-  margin: 10px 0;
-  position: sticky;
-  bottom: 110px;
-  z-index: 10;
+  margin: 5px 0;
   background: var(--container-bg);
   padding: 5px;
   border-radius: 10px;
@@ -300,8 +294,6 @@ h1 {
 }
 
 .controls-container {
-  position: sticky;
-  bottom: 0;
   background: var(--container-bg);
   border-top: 2px solid var(--accent);
   padding: 15px;
@@ -428,7 +420,11 @@ h1 {
     font-size: 16px;
   }
 
-  .station-info-content {
+  .current-station-info .network-status-text {
+    font-size: 14px;
+  }
+
+  .station-info {
     gap: 10px;
   }
 
@@ -448,12 +444,7 @@ h1 {
   }
 
   .tabs {
-    bottom: 100px;
-  }
-
-  .network-status {
-    font-size: 14px;
-    padding: 8px;
+    margin: 5px 0;
   }
 }
 
