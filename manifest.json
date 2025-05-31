@@ -5,6 +5,7 @@
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#00F0FF",
+  "description": "Портативне радіо з улюбленими станціями",
   "icons": [
     {
       "src": "icon-192.png",
@@ -15,6 +16,30 @@
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Улюблені станції",
+      "short_name": "BEST",
+      "url": "/?tab=best",
+      "icons": [{ "src": "icon-fav.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Гучність +",
+      "short_name": "Volume Up",
+      "url": "/?volume=up",
+      "icons": [{ "src": "icon-volume.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["music", "radio"],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }
