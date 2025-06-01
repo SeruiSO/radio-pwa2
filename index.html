@@ -1,16 +1,53 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#00F0FF">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>🎧 RADIO MUSIC</title>
-  <link rel="icon" type="image/png" href="/icon-192.png">
-  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <title>Radio S O</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <button class="theme-toggle">🌙</button>
@@ -34,13 +71,14 @@
         </div>
       </div>
     </div>
-    <div class="station-list" id="stationList"></div>
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('best')">BEST</button>
       <button class="tab-btn" onclick="switchTab('techno')">TECHNO</button>
       <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
-      <button class="tab-btn" onclick="switchTab('ukraine')">UKRAINE</button>
+      <button class="tab-btn" onclick="switchTab('ukraine')">UA</button>
+      <button class="tab-btn" onclick="switchTab('pop')">POP</button>
     </div>
+    <div class="station-list" id="stationList"></div>
     <div class="controls-container">
       <div class="controls">
         <button class="control-btn" onclick="prevStation()">⏮</button>
@@ -50,34 +88,6 @@
     </div>
   </div>
   <audio id="audioPlayer"></audio>
-  <script>
-    // Додаткові метадані для PWA
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').then(registration => {
-          console.log('ServiceWorker registration successful');
-        }).catch(err => {
-          console.log('ServiceWorker registration failed: ', err);
-        });
-      });
-    }
-
-    // Обробник першої взаємодії для автовідтворення
-    document.addEventListener('click', function initAudio() {
-      if (window.audioContext) return;
-      
-      window.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      document.removeEventListener('click', initAudio);
-      
-      // Спроба автовідтворення після взаємодії
-      if (localStorage.getItem('isPlaying') === 'true') {
-        const audioPlayer = document.getElementById('audioPlayer');
-        if (audioPlayer) {
-          audioPlayer.play().catch(e => console.log('Autoplay prevented:', e));
-        }
-      }
-    }, { once: true });
-  </script>
   <script src="script.js"></script>
 </body>
 </html>
