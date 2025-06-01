@@ -41,18 +41,18 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#00F0FF">
-  <title>Radio S O</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <title>🌙 🎧 RADIO MUSIC</title>
 </head>
 <body>
-  <button class="theme-toggle">🌙</button>
   <div class="container">
-    <h1>🎧 RADIO MUSIC</h1>
+    <h1>🌙 🎧 RADIO MUSIC</h1>
+    <div class="theme-toggle">🌙</div>
     <div class="current-station-info" id="currentStationInfo">
       <div class="station-info-content">
         <div class="wave-progress">
@@ -72,18 +72,18 @@
       </div>
     </div>
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('best')">BEST</button>
-      <button class="tab-btn" onclick="switchTab('techno')">TECHNO</button>
-      <button class="tab-btn" onclick="switchTab('trance')">TRANCE</button>
-      <button class="tab-btn" onclick="switchTab('ukraine')">UA</button>
-      <button class="tab-btn" onclick="switchTab('pop')">POP</button>
+      <div class="tab-btn">BEST</div>
+      <div class="tab-btn">TECHNO</div>
+      <div class="tab-btn">TRANCE</div>
+      <div class="tab-btn">UA</div>
+      <div class="tab-btn">POP</div>
     </div>
     <div class="station-list" id="stationList"></div>
     <div class="controls-container">
       <div class="controls">
-        <button class="control-btn" onclick="prevStation()">⏮</button>
-        <button class="control-btn" onclick="togglePlayPause()">▶</button>
-        <button class="control-btn" onclick="nextStation()">⏭</button>
+        <button class="control-btn">⏮</button>
+        <button class="control-btn">▶</button>
+        <button class="control-btn">⏭</button>
       </div>
     </div>
   </div>
