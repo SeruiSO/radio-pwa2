@@ -15,19 +15,6 @@
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
-    },
-    {
-      "src": "splash.png",
-      "sizes": "1080x2400",
-      "type": "image/png",
-      "purpose": "splash screen"
-    }
-  ],
-  "splash_pages": [
-    {
-      "src": "splash.png",
-      "size": "1080x2400",
-      "background_color": "#1a1a1a"
     }
   ]
 }
