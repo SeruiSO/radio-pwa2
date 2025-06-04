@@ -339,8 +339,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Переміщення поточної станції на початок списку
+      let sortedStations = [...stations];
+      if (currentIndex < stations.length && currentIndex >= 0) {
+        const currentStation = sortedStations.splice(currentIndex, 1)[0];
+        sortedStations.unshift(currentStation);
+        // Оновлюємо currentIndex, щоб він відповідав новій позиції (0)
+        currentIndex = 0;
+      }
+
       const fragment = document.createDocumentFragment();
-      stations.forEach((station, index) => {
+      sortedStations.forEach((station, index) => {
         const item = document.createElement("div");
         item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
         item.dataset.value = station.value;
