@@ -339,17 +339,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Переміщення поточної станції на початок списку
-      let sortedStations = [...stations];
-      if (currentIndex < stations.length && currentIndex >= 0) {
-        const currentStation = sortedStations.splice(currentIndex, 1)[0];
-        sortedStations.unshift(currentStation);
-        // Оновлюємо currentIndex, щоб він відповідав новій позиції (0)
-        currentIndex = 0;
-      }
-
       const fragment = document.createDocumentFragment();
-      sortedStations.forEach((station, index) => {
+      stations.forEach((station, index) => {
         const item = document.createElement("div");
         item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
         item.dataset.value = station.value;
@@ -362,6 +353,11 @@ document.addEventListener("DOMContentLoaded", () => {
       stationList.innerHTML = "";
       stationList.appendChild(fragment);
       stationItems = stationList.querySelectorAll(".station-item");
+
+      // Прокручування до поточної станції
+      if (stationItems.length && currentIndex < stationItems.length && !stationItems[currentIndex].classList.contains("empty")) {
+        stationItems[currentIndex].scrollIntoView({ behavior: "smooth", block: "start" });
+      }
 
       stationList.onclick = e => {
         const item = e.target.closest(".station-item");
