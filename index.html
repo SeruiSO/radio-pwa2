@@ -38,55 +38,50 @@
         return gk_fileData[filename] || "";
         }
         </script><!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#00F0FF">
   <link rel="manifest" href="manifest.json">
+  <title>RADIO MUSIC</title>
   <link rel="stylesheet" href="styles.css">
-  <title>Radio S O</title>
 </head>
 <body>
-  <div class="container">
-    <h1>🎧 RADIO MUSIC</h1>
-    <div class="theme-toggle">🌙</div>
-    <div id="currentStationInfo" class="current-station-info">
-      <div class="station-info-content">
-        <div class="station-text">
-          <div class="station-name">Обирайте станцію</div>
-          <div class="station-genre">жанр: -</div>
-          <div class="station-country">країна: -</div>
-        </div>
-      </div>
-    </div>
-    <div class="tabs">
-      <div class="tab-btn active">Best</div>
-      <div class="tab-btn">Tech</div>
-      <div class="tab-btn">Trnc</div>
-      <div class="tab-btn">UA</div>
-      <div class="tab-btn">Pop</div>
-      <div class="tab-btn">Srch</div>
-    </div>
-    <div id="stationList" class="station-list"></div>
-    <div class="controls-container">
-      <div class="controls">
-        <div class="control-btn">⏮</div>
-        <div class="control-btn">▶</div>
-        <div class="control-btn">⏭</div>
-      </div>
-      <div class="wave-progress">
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-      </div>
-    </div>
+  <header>
+    <h1>RADIO MUSIC</h1>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn" data-tab="best">Улюблені</button>
+    <button class="tab-btn" data-tab="search">Пошук</button>
   </div>
+
+  <div id="currentStationInfo">
+    <div class="station-name">No station playing</div>
+    <div class="station-genre">Genre: N/A</div>
+  </div>
+
+  <div id="stationList"></div>
+
+  <div class="controls">
+    <button class="control-btn">⏮</button>
+    <button class="control-btn">▶</button>
+    <button class="control-btn">⏭</button>
+  </div>
+
   <audio id="audioPlayer"></audio>
+
+  <div class="wave-bars">
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+  </div>
+
+  <div class="theme-toggle">🌙</div>
+
   <script src="script.js"></script>
 </body>
 </html>
