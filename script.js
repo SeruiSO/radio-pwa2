@@ -36,7 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.volume = parseFloat(localStorage.getItem("volume")) || 0.9;
 
     // Прив’язка обробників подій для кнопок вкладок
-    document.querySelectorAll(".tab-btn").forEach((btn, index) => {
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    if (tabButtons.length === 0) {
+      console.error("Елементи з класом .tab-btn не знайдено в DOM");
+      return;
+    }
+    tabButtons.forEach((btn, index) => {
       const tabs = ["best", "techno", "trance", "ukraine", "pop", "search"];
       const tab = tabs[index]; // Прив’язуємо вкладки за порядком
       btn.addEventListener("click", () => switchTab(tab));
