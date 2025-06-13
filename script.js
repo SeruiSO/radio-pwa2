@@ -236,25 +236,18 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
           try {
-            const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}&limit=50`);
-            const searchResults = await response.json();
-            stations = searchResults.map(s => ({
-              value: s.url_resolved || s.url,
-              name: s.name,
-              genre: s.tags || "Unknown",
-              country: s.country || "Unknown",
-              emoji: "🎶"
-            })).filter(s => isValidUrl(s.value));
-
+            const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const stations = await response.json();
             const fragment = document.createDocumentFragment();
             stations.forEach((station, index) => {
               const item = document.createElement("div");
               item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
-              item.dataset.value = station.value;
+              item.dataset.value = station.url_resolved || station.url;
               item.dataset.name = station.name;
-              item.dataset.genre = station.genre;
-              item.dataset.country = station.country;
-              item.innerHTML = `${station.emoji} ${station.name} <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}" data-name="${station.name}">★</button>`;
+              item.dataset.genre = station.tags || "Unknown";
+              item.dataset.country = station.country || "Unknown";
+              item.innerHTML = `${"🎶"} ${station.name} <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}" data-name="${station.name}">★</button>`;
               fragment.appendChild(item);
             });
             stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`;
