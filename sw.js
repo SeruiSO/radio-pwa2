@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "radio-pwa-cache-v974"; // Оновлено версію кешу
+const CACHE_NAME = "radio-pwa-cache-v975";
 const urlsToCache = [
   "/",
   "index.html",
@@ -10,16 +10,15 @@ const urlsToCache = [
   "icon-512.png"
 ];
 
-// Змінна для відстеження першого запиту до stations.json у сесії
 let isInitialLoad = true;
 
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log("Кешування файлів:", urlsToCache);
+        console.log("Caching files:", urlsToCache);
         return cache.addAll(urlsToCache).catch(error => {
-          console.error("Помилка кешування:", error);
+          console.error("Caching error:", error);
         });
       })
       .then(() => self.skipWaiting())
@@ -29,26 +28,22 @@ self.addEventListener("install", event => {
 self.addEventListener("fetch", event => {
   if (event.request.url.includes("stations.json")) {
     if (isInitialLoad) {
-      // При першому запиті обходимо кеш і йдемо в мережу
       event.respondWith(
         fetch(event.request, { cache: "no-cache" })
           .then(networkResponse => {
             if (!networkResponse || networkResponse.status !== 200) {
-              // Якщо мережевий запит не вдався, повертаємо кеш
               return caches.match(event.request) || Response.error();
             }
-            // Оновлюємо кеш і позначаємо, що початкове завантаження завершено
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then(cache => {
               cache.put(event.request, responseToCache);
             });
-            isInitialLoad = false; // Далі в цій сесії використовуємо кеш
+            isInitialLoad = false;
             return networkResponse;
           })
           .catch(() => caches.match(event.request) || Response.error())
       );
     } else {
-      // Для наступних запитів використовуємо кеш із можливістю оновлення
       event.respondWith(
         caches.match(event.request)
           .then(cachedResponse => {
@@ -69,7 +64,6 @@ self.addEventListener("fetch", event => {
       );
     }
   } else {
-    // Для інших ресурсів використовуємо стандартну стратегію кешування
     event.respondWith(
       caches.match(event.request)
         .then(response => response || fetch(event.request))
@@ -85,24 +79,23 @@ self.addEventListener("activate", event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (!cacheWhitelist.includes(cacheName)) {
-            console.log(`Видалення старого кешу: ${cacheName}`);
+            console.log(`Deleting old cache: ${cacheName}`);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log("Активація нового Service Worker");
-      isInitialLoad = true; // Скидаємо для нової сесії
+      console.log("Activating new Service Worker");
+      isInitialLoad = true;
       self.clients.matchAll().then(clients => {
         clients.forEach(client => {
-          client.postMessage({ type: "UPDATE", message: "Додаток оновлено до нової версії!" });
+          client.postMessage({ type: "UPDATE", message: "Application updated to a new version!" });
         });
       });
     }).then(() => self.clients.claim())
   );
 });
 
-// Моніторинг стану мережі
 let wasOnline = navigator.onLine;
 
 setInterval(() => {
@@ -118,7 +111,7 @@ setInterval(() => {
       }
     })
     .catch(error => {
-      console.error("Помилка перевірки мережі:", error);
+      console.error("Network check error:", error);
       if (wasOnline) {
         wasOnline = false;
         self.clients.matchAll().then(clients => {
