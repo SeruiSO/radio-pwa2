@@ -1,4 +1,4 @@
-const CACHE_NAME = "radio-pwa-cache-v978";
+const CACHE_NAME = "radio-pwa-cache-v979";
 const urlsToCache = [
   "/",
   "index.html",
@@ -26,7 +26,21 @@ self.addEventListener("install", event => {
 });
 
 self.addEventListener("fetch", event => {
-  if (event.request.url.includes("stations.json")) {
+  const url = new URL(event.request.url);
+
+  if (url.origin === "https://de1.api.radio-browser.info") {
+    event.respondWith(
+      fetch(event.request, { cache: "no-store" })
+        .then(response => {
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          return response;
+        })
+        .catch(error => {
+          console.error("API fetch error:", error);
+          return Response.error();
+        })
+    );
+  } else if (event.request.url.includes("stations.json")) {
     if (isInitialLoad) {
       event.respondWith(
         fetch(event.request, { cache: "no-cache" })

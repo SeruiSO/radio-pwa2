@@ -5,7 +5,7 @@ let currentIndex = 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = {};
-let stationItems;
+let stationItems = [];
 let abortController = new AbortController();
 let errorCount = 0;
 const ERROR_LIMIT = 5;
@@ -148,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }).catch(error => console.error("Service Worker registration failed:", error));
 
       navigator.serviceWorker.addEventListener("message", event => {
-        if (event.data.type === "NETWORK_STATUS" && event.data.online && isPlaying && stationItems?.length && currentIndex < stationItems.length) {
+        if (event.data.type === "NETWORK_STATUS" && event.data.online && isPlaying && stationItems.length && currentIndex < stationItems.length) {
           console.log("Received message from Service Worker: network restored");
           audio.pause();
           audio.src = "";
@@ -163,8 +163,8 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Device offline, skipping playback");
         return;
       }
-      if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length || !hasUserInteracted) {
-        console.log("Skipping tryAutoPlay", { isPlaying, hasStationItems: !!stationItems?.length, isIndexValid: currentIndex < stationItems.length, hasUserInteracted });
+      if (!isPlaying || !stationItems.length || currentIndex >= stationItems.length || !hasUserInteracted) {
+        console.log("Skipping tryAutoPlay", { isPlaying, hasStationItems: !!stationItems.length, isIndexValid: currentIndex < stationItems.length, hasUserInteracted });
         document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
         return;
       }
@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
       const activeBtn = document.querySelector(`.tab-btn:nth-child(${["best", "techno", "trance", "ukraine", "pop", "search"].indexOf(tab) + 1})`);
       if (activeBtn) activeBtn.classList.add("active");
-      if (stationItems?.length && currentIndex < stationItems.length) tryAutoPlay();
+      if (stationItems.length && currentIndex < stationItems.length) tryAutoPlay();
     }
 
     function updateStationList() {
@@ -215,15 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       let stations = currentTab === "best"
         ? favoriteStations.map(name => Object.values(stationLists).flat().find(s => s.name === name)).filter(s => s)
-        : currentTab === "search" && stationItems?.length
-          ? Array.from(stationItems).map(item => ({
-              value: item.dataset.value,
-              name: item.dataset.name,
-              genre: item.dataset.genre,
-              country: item.dataset.country,
-              emoji: item.querySelector(".favorite-btn") ? item.querySelector(".favorite-btn").previousSibling.textContent.trim() : "🎶"
-            }))
-          : stationLists[currentTab] || [];
+        : stationLists[currentTab] || [];
 
       if (currentTab === "search") {
         stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`;
@@ -238,20 +230,26 @@ document.addEventListener("DOMContentLoaded", () => {
           try {
             const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const stations = await response.json();
+            const searchResults = await response.json();
             const fragment = document.createDocumentFragment();
-            stations.forEach((station, index) => {
-              const item = document.createElement("div");
-              item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
-              item.dataset.value = station.url_resolved || station.url;
-              item.dataset.name = station.name;
-              item.dataset.genre = station.tags || "Unknown";
-              item.dataset.country = station.country || "Unknown";
-              item.innerHTML = `${"🎶"} ${station.name} <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}" data-name="${station.name}">★</button>`;
-              fragment.appendChild(item);
+            searchResults.forEach((station, index) => {
+              if (isValidUrl(station.url_resolved || station.url)) {
+                const item = document.createElement("div");
+                item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
+                item.dataset.value = station.url_resolved || station.url;
+                item.dataset.name = station.name;
+                item.dataset.genre = station.tags || "Unknown";
+                item.dataset.country = station.country || "Unknown";
+                item.innerHTML = `${"🎶"} ${station.name} <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}" data-name="${station.name}">★</button>`;
+                fragment.appendChild(item);
+              }
             });
             stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`;
-            stationList.appendChild(fragment);
+            if (fragment.childNodes.length > 0) {
+              stationList.appendChild(fragment);
+            } else {
+              stationList.innerHTML += "<div class='station-item empty'>Нічого не знайдено</div>";
+            }
             stationItems = stationList.querySelectorAll(".station-item:not(#searchInput)");
 
             stationList.onclick = (e) => {
@@ -334,7 +332,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function changeStation(index) {
-      if (index < 0 || index >= stationItems.length || stationItems[index].classList.contains("empty")) return;
+      if (index < 0 || index >= stationItems.length || !stationItems[index] || stationItems[index].classList.contains("empty")) return;
       const item = stationItems[index];
       stationItems.forEach(i => i.classList.remove("selected"));
       item.classList.add("selected");
@@ -367,15 +365,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function prevStation() {
       hasUserInteracted = true;
+      if (!stationItems || stationItems.length === 0) return;
       currentIndex = currentIndex > 0 ? currentIndex - 1 : stationItems.length - 1;
-      if (stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
+      if (stationItems[currentIndex] && stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
       changeStation(currentIndex);
     }
 
     function nextStation() {
       hasUserInteracted = true;
+      if (!stationItems || stationItems.length === 0) return;
       currentIndex = currentIndex < stationItems.length - 1 ? currentIndex + 1 : 0;
-      if (stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
+      if (stationItems[currentIndex] && stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
       changeStation(currentIndex);
     }
 
@@ -410,7 +410,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       },
       visibilitychange: () => {
-        if (!document.hidden && isPlaying && navigator.onLine) {
+        if (!document.hidden && isPlaying && navigator.onLine && stationItems.length && currentIndex < stationItems.length && stationItems[currentIndex]) {
           if (!audio.paused) return;
           audio.pause();
           audio.src = "";
@@ -419,7 +419,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       },
       resume: () => {
-        if (isPlaying && navigator.connection?.type !== "none") {
+        if (isPlaying && navigator.connection?.type !== "none" && stationItems.length && currentIndex < stationItems.length && stationItems[currentIndex]) {
           if (!audio.paused) return;
           audio.pause();
           audio.src = "";
@@ -470,7 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.addEventListener("online", () => {
       console.log("Network restored");
-      if (isPlaying && stationItems?.length && currentIndex < stationItems.length) {
+      if (isPlaying && stationItems.length && currentIndex < stationItems.length) {
         audio.pause();
         audio.src = "";
         audio.src = stationItems[currentIndex].dataset.value;
