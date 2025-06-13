@@ -228,18 +228,20 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
           try {
-            const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}`);
+            const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}&limit=50`, {
+              signal: abortController.signal
+            });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const searchResults = await response.json();
             const fragment = document.createDocumentFragment();
             searchResults.forEach((station, index) => {
-              if (isValidUrl(station.url_resolved || station.url)) {
+              if (isValidUrl(station.url_resolved)) {
                 const item = document.createElement("div");
                 item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
-                item.dataset.value = station.url_resolved || station.url;
+                item.dataset.value = station.url_resolved;
                 item.dataset.name = station.name;
-                item.dataset.genre = station.tags || "Unknown";
-                item.dataset.country = station.country || "Unknown";
+                item.dataset.genre = station.tags || "N/A";
+                item.dataset.country = station.country || "N/A";
                 item.innerHTML = `${"🎶"} ${station.name} <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}" data-name="${station.name}">★</button>`;
                 fragment.appendChild(item);
               }
