@@ -1,5 +1,5 @@
 // Declaration of variables at the top to avoid Temporal Dead Zone
-let currentTab = localStorage.getItem("currentTab") || "techno";
+let currentTab = localStorage.getItem("currentTab") || "best";
 let hasUserInteracted = false;
 let currentIndex = 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     tabButtons.forEach((btn, index) => {
-      const tabs = ["best", "techno", "trance", "ukraine", "pop", "search"];
+      const tabs = ["best", "search"];
       const tab = tabs[index];
       btn.addEventListener("click", () => switchTab(tab));
     });
@@ -79,9 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } else throw new Error(`HTTP ${response.status}`);
         favoriteStations = favoriteStations.filter(name => Object.values(stationLists).flat().some(s => s.name === name));
         localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-        const validTabs = [...Object.keys(stationLists), "best", "search"];
+        const validTabs = ["best", "search"];
         if (!validTabs.includes(currentTab)) {
-          currentTab = validTabs[0] || "techno";
+          currentTab = validTabs[0] || "best";
           localStorage.setItem("currentTab", currentTab);
         }
         currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
@@ -90,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (error.name !== 'AbortError') {
           console.error("Error loading stations:", error);
           stationList.innerHTML = "<div class='station-item empty'>Не вдалося завантажити станції</div>";
+          stationLists = {}; // Скидаємо, щоб уникнути подальших помилок
         }
       } finally {
         console.timeEnd("loadStations");
@@ -159,11 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function tryAutoPlay() {
-      if (!navigator.onLine) {
-        console.log("Device offline, skipping playback");
-        return;
-      }
-      if (!isPlaying || !stationItems.length || currentIndex >= stationItems.length || !hasUserInteracted) {
+      if (!navigator.onLine || !stationItems.length || currentIndex >= stationItems.length || !hasUserInteracted) {
         console.log("Skipping tryAutoPlay", { isPlaying, hasStationItems: !!stationItems.length, isIndexValid: currentIndex < stationItems.length, hasUserInteracted });
         document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
         return;
@@ -195,11 +192,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function switchTab(tab) {
-      if (!["techno", "trance", "ukraine", "pop", "best", "search"].includes(tab)) tab = "techno";
+      if (!["best", "search"].includes(tab)) tab = "best";
       currentTab = tab;
       localStorage.setItem("currentTab", tab);
       const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
-      const maxIndex = tab === "best" ? favoriteStations.length : tab === "search" ? 0 : stationLists[tab]?.length || 0;
+      const maxIndex = tab === "best" ? favoriteStations.length : tab === "search" ? 0 : 0;
       currentIndex = savedIndex < maxIndex ? savedIndex : 0;
       if (tab === "search" && !hasUserInteracted) {
         audio.pause();
@@ -208,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       updateStationList();
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-      const activeBtn = document.querySelector(`.tab-btn:nth-child(${["best", "techno", "trance", "ukraine", "pop", "search"].indexOf(tab) + 1})`);
+      const activeBtn = document.querySelector(`.tab-btn:nth-child(${["best", "search"].indexOf(tab) + 1})`);
       if (activeBtn) activeBtn.classList.add("active");
       if (stationItems.length && currentIndex < stationItems.length) tryAutoPlay();
     }
@@ -220,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       let stations = currentTab === "best"
         ? favoriteStations.map(name => Object.values(stationLists).flat().find(s => s.name === name)).filter(s => s)
-        : stationLists[currentTab] || [];
+        : [];
 
       if (currentTab === "search") {
         stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`;
@@ -277,7 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!stations.length) {
         currentIndex = 0;
         stationItems = [];
-        stationList.innerHTML = `<div class='station-item empty'>${currentTab === "best" ? "Немає улюблених станцій" : "Немає станцій у цій категорії"}</div>`;
+        stationList.innerHTML = `<div class='station-item empty'>${currentTab === "best" ? "Немає улюблених станцій" : ""}</div>`;
         return;
       }
 

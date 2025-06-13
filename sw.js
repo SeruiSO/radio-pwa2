@@ -1,4 +1,4 @@
-const CACHE_NAME = "radio-pwa-cache-v981";
+const CACHE_NAME = "radio-pwa-cache-v982";
 const urlsToCache = [
   "/",
   "index.html",
@@ -10,18 +10,16 @@ const urlsToCache = [
   "icon-512.png"
 ];
 
-let isInitialLoad = true;
-
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).catch(error => {
       console.error("Failed to open cache during install:", error);
-      return Promise.reject(error);
+      return caches.delete(CACHE_NAME).then(() => caches.open(CACHE_NAME));
     }).then(cache => {
       console.log("Caching files:", urlsToCache);
       return cache.addAll(urlsToCache).catch(error => {
         console.error("Caching error:", error);
-        return Promise.reject(error);
+        return Promise.resolve(); // Продовжуємо, навіть якщо кешування провалилося
       });
     }).then(() => self.skipWaiting())
   );
@@ -39,35 +37,29 @@ self.addEventListener("fetch", event => {
         })
         .catch(error => {
           console.error("API fetch error:", error);
-          return caches.match(event.request).then(cached => cached || Response.error());
+          return Response.error();
         })
     );
   } else if (event.request.url.includes("stations.json")) {
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
-        const fetchPromise = fetch(event.request, { cache: "no-cache", signal: AbortSignal.timeout(5000) })
+        return fetch(event.request, { cache: "no-cache", signal: AbortSignal.timeout(5000) })
           .then(networkResponse => {
             if (networkResponse && networkResponse.status === 200) {
               const responseToCache = networkResponse.clone();
-              caches.open(CACHE_NAME).catch(error => {
-                console.error("Failed to open cache for stations.json:", error);
-              }).then(cache => {
+              caches.open(CACHE_NAME).catch(err => console.error("Cache open error:", err)).then(cache => {
                 if (cache) cache.put(event.request, responseToCache);
               });
-              if (isInitialLoad) isInitialLoad = false;
               return networkResponse;
             }
             return cachedResponse || Response.error();
           })
           .catch(() => cachedResponse || Response.error());
-        return fetchPromise;
       })
     );
   } else {
     event.respondWith(
-      caches.match(event.request).then(response => {
-        return response || fetch(event.request).catch(() => caches.match(event.request));
-      })
+      caches.match(event.request).then(response => response || fetch(event.request).catch(() => Response.error()))
     );
   }
 });
@@ -86,15 +78,8 @@ self.addEventListener("activate", event => {
       );
     }).then(() => {
       console.log("Activating new Service Worker");
-      // Скидаємо isInitialLoad лише якщо потрібно оновити стан
-      if (self.clients && self.clients.claim) {
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({ type: "UPDATE", message: "Application updated to a new version!" });
-          });
-        });
-      }
-    }).then(() => self.clients.claim()).catch(error => {
+      return self.clients.claim();
+    }).catch(error => {
       console.error("Activation error:", error);
     })
   );
