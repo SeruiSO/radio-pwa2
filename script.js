@@ -225,25 +225,27 @@ document.addEventListener("DOMContentLoaded", () => {
             }))
           : stationLists[currentTab] || [];
 
-      if (currentTab === "search" && !stationItems?.length) {
+      if (currentTab === "search") {
         stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`;
         const searchInput = document.getElementById("searchInput");
         searchInput.addEventListener("input", async (e) => {
           const query = e.target.value.trim();
           if (query.length < 2) {
             stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`;
+            stationItems = [];
             return;
           }
           try {
-            const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}`);
+            const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}&limit=50`);
             const searchResults = await response.json();
             stations = searchResults.map(s => ({
-              value: s.url_resolved,
+              value: s.url_resolved || s.url,
               name: s.name,
               genre: s.tags || "Unknown",
               country: s.country || "Unknown",
               emoji: "🎶"
-            }));
+            })).filter(s => isValidUrl(s.value));
+
             const fragment = document.createDocumentFragment();
             stations.forEach((station, index) => {
               const item = document.createElement("div");
@@ -252,30 +254,31 @@ document.addEventListener("DOMContentLoaded", () => {
               item.dataset.name = station.name;
               item.dataset.genre = station.genre;
               item.dataset.country = station.country;
-              item.innerHTML = `${station.emoji} ${station.name}<button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>`;
+              item.innerHTML = `${station.emoji} ${station.name} <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>`;
               fragment.appendChild(item);
             });
             stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`;
             stationList.appendChild(fragment);
-            stationItems = stationList.querySelectorAll(".station-item");
-            if (stationItems[0]) stationItems[0].focus();
+            stationItems = stationList.querySelectorAll(".station-item:not(#searchInput)");
 
             stationList.onclick = e => {
-              const item = e.target.closest(".station-item");
+              const item = e.target.closest(".station-item:not(#searchInput)");
               const favoriteBtn = e.target.closest(".favorite-btn");
               hasUserInteracted = true;
-              if (item && !item.classList.contains("empty")) {
+              if (item) {
                 currentIndex = Array.from(stationItems).indexOf(item);
                 changeStation(currentIndex);
               }
               if (favoriteBtn) {
                 e.stopPropagation();
-                toggleFavorite(favoriteBtn.parentElement.dataset.name);
+                const stationName = favoriteBtn.parentElement.dataset.name;
+                toggleFavorite(stationName);
               }
             };
           } catch (error) {
             console.error("Search stations error:", error);
             stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;"><div class='station-item empty'>Помилка завантаження</div>`;
+            stationItems = [];
           }
         });
         return;
