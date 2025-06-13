@@ -254,14 +254,14 @@ document.addEventListener("DOMContentLoaded", () => {
               item.dataset.name = station.name;
               item.dataset.genre = station.genre;
               item.dataset.country = station.country;
-              item.innerHTML = `${station.emoji} ${station.name} <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>`;
+              item.innerHTML = `${station.emoji} ${station.name} <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}" data-name="${station.name}">★</button>`;
               fragment.appendChild(item);
             });
             stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`;
             stationList.appendChild(fragment);
             stationItems = stationList.querySelectorAll(".station-item:not(#searchInput)");
 
-            stationList.onclick = e => {
+            stationList.onclick = (e) => {
               const item = e.target.closest(".station-item:not(#searchInput)");
               const favoriteBtn = e.target.closest(".favorite-btn");
               hasUserInteracted = true;
@@ -271,7 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
               }
               if (favoriteBtn) {
                 e.stopPropagation();
-                const stationName = favoriteBtn.parentElement.dataset.name;
+                const stationName = favoriteBtn.getAttribute("data-name");
                 toggleFavorite(stationName);
               }
             };
@@ -299,7 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name;
         item.dataset.genre = station.genre;
         item.dataset.country = station.country;
-        item.innerHTML = `${station.emoji} ${station.name}<button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>`;
+        item.innerHTML = `${station.emoji} ${station.name}<button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}" data-name="${station.name}">★</button>`;
         fragment.appendChild(item);
       });
       stationList.innerHTML = "";
@@ -310,7 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
         stationItems[currentIndex].scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
-      stationList.onclick = e => {
+      stationList.onclick = (e) => {
         const item = e.target.closest(".station-item");
         const favoriteBtn = e.target.closest(".favorite-btn");
         hasUserInteracted = true;
@@ -320,7 +320,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (favoriteBtn) {
           e.stopPropagation();
-          toggleFavorite(favoriteBtn.parentElement.dataset.name);
+          const stationName = favoriteBtn.getAttribute("data-name");
+          toggleFavorite(stationName);
         }
       };
 
