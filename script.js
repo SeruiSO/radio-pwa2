@@ -201,6 +201,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
       const maxIndex = tab === "best" ? favoriteStations.length : tab === "search" ? 0 : stationLists[tab]?.length || 0;
       currentIndex = savedIndex < maxIndex ? savedIndex : 0;
+      if (tab === "search" && !hasUserInteracted) {
+        audio.pause();
+        audio.src = "";
+        currentIndex = 0;
+      }
       updateStationList();
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
       const activeBtn = document.querySelector(`.tab-btn:nth-child(${["best", "techno", "trance", "ukraine", "pop", "search"].indexOf(tab) + 1})`);
@@ -222,12 +227,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const searchInput = document.getElementById("searchInput");
         searchInput.addEventListener("input", async (e) => {
           const query = e.target.value.trim();
+          stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`; // Скидаємо перед новим запитом
           if (query.length < 2) {
-            stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`;
             stationItems = [];
             return;
           }
           try {
+            abortController.abort();
+            abortController = new AbortController();
             const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}&limit=50`, {
               signal: abortController.signal
             });
@@ -246,34 +253,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 fragment.appendChild(item);
               }
             });
-            stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;">`;
-            if (fragment.childNodes.length > 0) {
-              stationList.appendChild(fragment);
-            } else {
+            stationList.appendChild(fragment);
+            if (fragment.childNodes.length === 0) {
               stationList.innerHTML += "<div class='station-item empty'>Нічого не знайдено</div>";
             }
             stationItems = stationList.querySelectorAll(".station-item:not(#searchInput)");
-
-            stationList.onclick = (e) => {
-              const item = e.target.closest(".station-item:not(#searchInput)");
-              const favoriteBtn = e.target.closest(".favorite-btn");
-              hasUserInteracted = true;
-              if (item) {
-                currentIndex = Array.from(stationItems).indexOf(item);
-                changeStation(currentIndex);
-              }
-              if (favoriteBtn) {
-                e.stopPropagation();
-                const stationName = favoriteBtn.getAttribute("data-name");
-                toggleFavorite(stationName);
-              }
-            };
+            currentIndex = 0; // Скидаємо індекс для нового списку
+            if (stationItems.length && currentIndex < stationItems.length) {
+              changeStation(currentIndex);
+            }
           } catch (error) {
-            console.error("Search stations error:", error);
-            stationList.innerHTML = `<input type="text" id="searchInput" placeholder="Search stations..." class="station-item" style="border: 1px solid var(--text); background: var(--container-bg); color: var(--text); padding: 10px; margin: 5px 0;"><div class='station-item empty'>Помилка завантаження</div>`;
+            if (error.name !== 'AbortError') {
+              console.error("Search stations error:", error);
+              stationList.innerHTML += "<div class='station-item empty'>Помилка завантаження</div>";
+            }
             stationItems = [];
           }
         });
+        searchInput.addEventListener("click", () => hasUserInteracted = true); // Активуємо взаємодію
         return;
       }
 
