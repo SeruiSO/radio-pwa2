@@ -1,10 +1,10 @@
 {
-  "name": "Cosmic Radio",
-  "short_name": "Cosmic Radio",
+  "name": "Neon Orbit Radio",
+  "short_name": "Neon Orbit",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1E1E2F",
-  "theme_color": "#4A90E2",
+  "background_color": "#1A1A2E",
+  "theme_color": "#E94560",
   "icons": [
     {
       "src": "icon-192.png",

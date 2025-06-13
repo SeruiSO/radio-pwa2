@@ -1,11 +1,13 @@
-const CACHE_NAME = "cosmic-radio-cache-v1";
+const CACHE_NAME = "radio-pwa-cache-v973";
 const urlsToCache = [
   "/",
   "index.html",
   "styles.css",
   "script.js",
   "stations.json",
-  "manifest.json"
+  "manifest.json",
+  "icon-192.png",
+  "icon-512.png"
 ];
 
 self.addEventListener("install", event => {

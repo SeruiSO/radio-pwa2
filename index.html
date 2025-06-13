@@ -38,51 +38,58 @@
         return gk_fileData[filename] || "";
         }
         </script><!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Radio</title>
+  <title>Neon Orbit Radio</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1E1E2F">
+  <meta name="theme-color" content="#1A1A2E">
 </head>
 <body>
-  <div class="theme-toggle">🌌</div>
-  <div class="container">
-    <h1>Cosmic Radio</h1>
-    <div id="currentStationInfo" class="current-station-info">
-      <div class="station-info-content">
-        <div class="station-text">
-          <div class="station-name">Select a Station</div>
-          <div class="station-genre">Genre: -</div>
-          <div class="station-country">Origin: -</div>
+  <div class="theme-toggle">🌙</div>
+  <div class="app-container">
+    <nav class="sidebar">
+      <h2>Neon Orbit</h2>
+      <ul class="nav-links">
+        <li class="nav-item active" data-page="home">Home</li>
+        <li class="nav-item" data-page="details">Details</li>
+      </ul>
+    </nav>
+    <main class="main-content">
+      <section id="home-page" class="page active">
+        <h1>Welcome to Neon Orbit</h1>
+        <div class="tabs">
+          <div class="tab-btn active" data-tab="techno">Techno</div>
+          <div class="tab-btn" data-tab="trance">Trance</div>
+          <div class="tab-btn" data-tab="ukraine">Ukraine</div>
+          <div class="tab-btn" data-tab="pop">Pop</div>
         </div>
-      </div>
-    </div>
-    <div class="tabs">
-      <div class="tab-btn active">Galaxy</div>
-      <div class="tab-btn">Ambient</div>
-      <div class="tab-btn">Chill</div>
-      <div class="tab-btn">Electro</div>
-    </div>
-    <div id="stationList" class="station-list"></div>
-    <div class="controls-container">
-      <div class="controls">
-        <div class="control-btn">⏮</div>
-        <div class="control-btn">▶</div>
-        <div class="control-btn">⏭</div>
-      </div>
-      <div class="wave-progress">
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-      </div>
-    </div>
+        <div id="stationList" class="station-list"></div>
+        <div class="controls-container">
+          <div class="controls">
+            <div class="control-btn">⏮</div>
+            <div class="control-btn">▶</div>
+            <div class="control-btn">⏭</div>
+          </div>
+          <div class="wave-progress">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+        </div>
+      </section>
+      <section id="details-page" class="page">
+        <h1>Station Details</h1>
+        <div id="stationDetails" class="station-details"></div>
+        <button class="back-btn">Back to Home</button>
+      </section>
+    </main>
   </div>
   <audio id="audioPlayer"></audio>
   <script src="script.js"></script>

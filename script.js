@@ -2,13 +2,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("audioPlayer");
   const stationList = document.getElementById("stationList");
   const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
-  const currentStationInfo = document.getElementById("currentStationInfo");
+  const homePage = document.getElementById("home-page");
+  const detailsPage = document.getElementById("details-page");
+  const stationDetails = document.getElementById("stationDetails");
+  const backBtn = document.querySelector(".back-btn");
   const themeToggle = document.querySelector(".theme-toggle");
 
   audio.preload = "auto";
-  audio.volume = 0.8;
+  audio.volume = 0.7;
 
-  let currentTab = localStorage.getItem("currentTab") || "galaxy";
+  let currentTab = localStorage.getItem("currentTab") || "techno";
   let currentIndex = 0;
   let isPlaying = false;
   let stationLists = {};
@@ -30,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentIndex = 0;
     updateStationList();
     document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-    document.querySelector(`.tab-btn:nth-child(${["galaxy", "ambient", "chill", "electro"].indexOf(tab) + 1})`).classList.add("active");
+    document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add("active");
     if (stationList.children.length) playStation();
   }
 
@@ -41,27 +44,28 @@ document.addEventListener("DOMContentLoaded", () => {
       const item = document.createElement("div");
       item.className = "station-item";
       item.textContent = `${station.emoji} ${station.name}`;
-      item.addEventListener("click", () => {
-        currentIndex = index;
-        playStation();
-      });
+      item.addEventListener("click", () => showDetails(index));
       stationList.appendChild(item);
     });
+  }
+
+  function showDetails(index) {
+    const station = stationLists[currentTab][index];
+    currentIndex = index;
+    stationDetails.innerHTML = `
+      <h2>${station.name}</h2>
+      <p>Genre: ${station.genre}</p>
+      <p>Country: ${station.country}</p>
+      <p>Stream: ${station.value}</p>
+    `;
+    homePage.classList.remove("active");
+    detailsPage.classList.add("active");
   }
 
   function playStation() {
     const station = stationLists[currentTab][currentIndex];
     if (!station) return;
     audio.src = station.value;
-    currentStationInfo.innerHTML = `
-      <div class="station-info-content">
-        <div class="station-text">
-          <div class="station-name">${station.name}</div>
-          <div class="station-genre">Genre: ${station.genre}</div>
-          <div class="station-country">Origin: ${station.country}</div>
-        </div>
-      </div>
-    `;
     if (isPlaying) {
       audio.play().then(() => {
         document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
@@ -94,17 +98,30 @@ document.addEventListener("DOMContentLoaded", () => {
     playStation();
   }
 
-  document.querySelectorAll(".tab-btn").forEach((btn, index) => {
-    const tabs = ["galaxy", "ambient", "chill", "electro"];
-    btn.addEventListener("click", () => switchTab(tabs[index]));
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
+
+  document.querySelectorAll(".nav-item").forEach(item => {
+    item.addEventListener("click", () => {
+      document.querySelector(".nav-item.active").classList.remove("active");
+      item.classList.add("active");
+      document.querySelector(".page.active").classList.remove("active");
+      document.getElementById(`${item.dataset.page}-page`).classList.add("active");
+    });
   });
 
   document.querySelector(".controls .control-btn:nth-child(1)").addEventListener("click", prevStation);
   document.querySelector(".controls .control-btn:nth-child(2)").addEventListener("click", togglePlayPause);
   document.querySelector(".controls .control-btn:nth-child(3)").addEventListener("click", nextStation);
 
+  backBtn.addEventListener("click", () => {
+    detailsPage.classList.remove("active");
+    homePage.classList.add("active");
+  });
+
   themeToggle.addEventListener("click", () => {
-    const themes = ["#1E1E2F", "#2F2E1E", "#1E2F2E"];
+    const themes = ["#1A1A2E", "#2E1A1A", "#1A2E1A"];
     document.documentElement.style.setProperty("--body-bg", themes[Math.floor(Math.random() * themes.length)]);
   });
 
