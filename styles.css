@@ -263,7 +263,7 @@ h1 {
 
 #searchInput {
   display: none;
-  margin: 10px 0;
+  margin: 5px 0;
   padding: 10px;
   border-radius: 8px;
   border: 2px solid var(--accent);
@@ -273,6 +273,7 @@ h1 {
   width: 100%;
   box-sizing: border-box;
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
   transition: all 0.3s ease;
@@ -284,7 +285,8 @@ h1 {
 }
 
 #searchQuery, #searchCountry, #searchGenre {
-  flex: 1;
+  flex: 1 1 200px;
+  min-width: 120px;
   background: transparent;
   border: none;
   color: var(--text);
@@ -539,8 +541,8 @@ h1 {
   #searchQuery, #searchCountry, #searchGenre {
     font-size: 14px;
     padding: 6px;
-    flex: 1 1 45%;
-    min-width: 120px;
+    flex: 1 1 120px;
+    min-width: 100px;
   }
 
   #searchInput button.search-btn {

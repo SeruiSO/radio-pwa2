@@ -217,13 +217,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderSearchResults(stations) {
-      if (!stations.length) {
+      // Фільтруємо станції, щоб включати лише ті, що мають HTTPS-потоки
+      const httpsStations = stations.filter(station => 
+        (station.url || station.url_resolved || '').startsWith('https://')
+      );
+
+      if (!httpsStations.length) {
         stationList.innerHTML = "<div class='station-item empty'>Нічого не знайдено</div>";
         stationItems = [];
         return;
       }
+      
       const fragment = document.createDocumentFragment();
-      stations.forEach((station, index) => {
+      httpsStations.forEach((station, index) => {
         const item = document.createElement("div");
         item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
         item.dataset.value = station.url || station.url_resolved;
@@ -301,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
           value: item.dataset.value,
           name: item.dataset.name,
           genre: item.dataset.genre,
-          country: item.dataset.country,
+          country: item.dataset.country;
           emoji: "🎶"
         });
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
@@ -352,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "cosmic-indigo": {
         bodyBg: "#121212",
         containerBg: "#1A1A1A",
-        accent: "#3F51B5",
+        accent: "#3F51B5,
         text: "#BBDEFB",
         accentGradient: "#1A2A5A"
       },
@@ -365,13 +371,13 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "aurora-haze": {
         bodyBg: "#121212",
-        containerBg: "#1A1A1A",
+        containerBg: "#1A1A",
         accent: "#64FFDA",
         text: "#E0F7FA",
         accentGradient: "#1A4B4B"
       },
       "starlit-amethyst": {
-        bodyBg: "#0A0A0A",
+        bodyBg: "#0A0A0A,
         containerBg: "#121212",
         accent: "#B388FF",
         text: "#E1BEE7",
@@ -390,10 +396,10 @@ document.addEventListener("DOMContentLoaded", () => {
     function applyTheme(theme) {
       const root = document.documentElement;
       root.style.setProperty("--body-bg", themes[theme].bodyBg);
-      root.style.setProperty("--container-bg", themes[theme].containerBg);
-      root.style.setProperty("--accent", themes[theme].accent);
-      root.style.setProperty("--text", themes[theme].text);
-      root.style.setProperty("--accent-gradient", themes[theme].accentGradient);
+      root.setProperty("--container-bg", themes[theme].containerBg);
+      root.setProperty("--accent", themes[theme].accent);
+      root.setProperty("--text", themes[theme].text);
+      root.setProperty("--accent-gradient", themes[theme].accentGradient);
       localStorage.setItem("selectedTheme", theme);
       currentTheme = theme;
       document.documentElement.setAttribute("data-theme", theme);

@@ -52,7 +52,7 @@
 <body>
   <button class="theme-toggle" title="Змінити тему">🌙</button>
   <div class="container">
-    <h1>Radio Music</h1>
+    <h1>🎧 Radio Music</h1>
     <div id="currentStationInfo">
       <div class="station-info-content">
         <div class="station-text">
@@ -71,6 +71,14 @@
         </div>
       </div>
     </div>
+    <div id="stationList" class="station-list"></div>
+    <div id="searchInput">
+      <input id="searchQuery" type="text" placeholder="Назва станції..." list="pastSearches">
+      <input id="searchCountry" type="text" placeholder="Країна...">
+      <input id="searchGenre" type="text" placeholder="Жанр...">
+      <button class="search-btn">🔍</button>
+      <datalist id="pastSearches"></datalist>
+    </div>
     <div class="tabs">
       <button class="tab-btn">Best</button>
       <button class="tab-btn">Techno</button>
@@ -79,14 +87,6 @@
       <button class="tab-btn">Pop</button>
       <button class="tab-btn">Srch</button>
     </div>
-    <div id="searchInput">
-      <input id="searchQuery" type="text" placeholder="Назва станції..." list="pastSearches">
-      <input id="searchCountry" type="text" placeholder="Країна...">
-      <input id="searchGenre" type="text" placeholder="Жанр...">
-      <button class="search-btn">🔍</button>
-      <datalist id="pastSearches"></datalist>
-    </div>
-    <div id="stationList" class="station-list"></div>
     <div class="controls-container">
       <div class="controls">
         <button class="control-btn">⏮</button>
