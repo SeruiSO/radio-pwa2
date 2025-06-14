@@ -20,12 +20,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const themeToggle = document.querySelector(".theme-toggle");
   const searchInput = document.getElementById("searchInput");
   const searchName = document.getElementById("searchName");
-  const searchGenre = document.getElementById("searchGenre");
-  const searchCountry = document.getElementById("searchCountry");
   const searchBtn = document.getElementById("searchBtn");
 
   // Перевірка наявності всіх необхідних елементів
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchName || !searchGenre || !searchCountry || !searchBtn) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchName || !searchBtn) {
     console.error("Один із необхідних DOM-елементів не знайдено");
     setTimeout(initializeApp, 100);
     return;
@@ -54,16 +52,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Пошук станцій
     searchBtn.addEventListener("click", () => {
       const name = searchName.value.trim();
-      const genre = searchGenre.value.trim();
-      const country = searchCountry.value.trim();
-      if (name || genre || country) {
-        searchStations({ name, genre, country });
+      if (name) {
+        searchStations({ name });
       }
     });
-    [searchName, searchGenre, searchCountry].forEach(input => {
-      input.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") searchBtn.click();
-      });
+    searchName.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") searchBtn.click();
     });
 
     // Функція для перевірки валідності URL
@@ -145,8 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
         abortController = new AbortController();
         const searchParams = new URLSearchParams();
         if (query.name) searchParams.append("name", query.name);
-        if (query.genre) searchParams.append("tag", query.genre);
-        if (query.country) searchParams.append("country", query.country);
+        if (query.name) searchParams.append("tag", query.name);
         const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?${searchParams.toString()}&limit=100`, {
           signal: abortController.signal
         });
@@ -225,6 +218,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         selectionWindow.appendChild(tabButton);
       });
+      const cancelButton = document.createElement("button");
+      cancelButton.textContent = "Cancel";
+      cancelButton.addEventListener("click", () => {
+        document.body.removeChild(overlay);
+      });
+      selectionWindow.appendChild(cancelButton);
       overlay.appendChild(selectionWindow);
       document.body.appendChild(overlay);
     }
@@ -445,8 +444,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const maxIndex = tab === "best" ? favoriteStations.length : tab === "srch" ? 0 : stationLists[tab]?.length || 0;
       currentIndex = savedIndex < maxIndex ? savedIndex : 0;
       searchInput.style.display = tab === "srch" ? "block" : "none";
-      if (tab === "srch" && (searchName.value || searchGenre.value || searchCountry.value)) {
-        searchStations({ name: searchName.value, genre: searchGenre.value, country: searchCountry.value });
+      if (tab === "srch" && searchName.value) {
+        searchStations({ name: searchName.value });
       } else {
         updateStationList();
       }

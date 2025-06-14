@@ -155,7 +155,7 @@ h1 {
 .tabs {
   display: flex;
   justify-content: space-between;
-  margin: 5px 0;
+  margin: 5px 0 5px;
   position: relative;
   z-index: 10;
   background: var(--container-bg);
@@ -349,13 +349,7 @@ h1 {
   gap: 10px;
 }
 
-.search-fields {
-  display: flex;
-  flex-grow: 1;
-  gap: 10px;
-}
-
-#searchName, #searchGenre, #searchCountry {
+#searchName {
   flex-grow: 1;
   padding: 12px;
   font-size: 16px;
@@ -366,7 +360,7 @@ h1 {
   transition: border-color 0.4s ease, background 0.4s ease;
 }
 
-#searchName:focus, #searchGenre:focus, #searchCountry:focus {
+#searchName:focus {
   outline: none;
   border-color: var(--accent);
   background: #1A1A1A;
@@ -508,12 +502,7 @@ h1 {
     border-width: 1px;
   }
 
-  .search-fields {
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  #searchName, #searchGenre, #searchCountry {
+  #searchName {
     padding: 10px;
     font-size: 14px;
   }
