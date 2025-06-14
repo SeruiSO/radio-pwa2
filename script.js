@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
-      const country = searchCountry.value.trim();
+      const country = normalizeCountry(searchCountry.value.trim());
       console.log("Пошук запущено:", { query, country });
       if (query || country) {
         if (query && !pastSearches.includes(query)) {
@@ -90,6 +90,24 @@ document.addEventListener("DOMContentLoaded", () => {
         option.value = search;
         pastSearchesList.appendChild(option);
       });
+    }
+
+    function normalizeCountry(country) {
+      if (!country) return "";
+      const countryMap = {
+        "ukraine": "Ukraine",
+        "italy": "Italy",
+        "german": "Germany",
+        "germany": "Germany",
+        "france": "France",
+        "spain": "Spain",
+        "usa": "United States",
+        "united states": "United States",
+        "uk": "United Kingdom",
+        "united kingdom": "United Kingdom"
+      };
+      const normalized = country.toLowerCase();
+      return countryMap[normalized] || country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
     }
 
     function isValidUrl(url) {
@@ -364,7 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
       root.style.setProperty("--accent", themes[theme].accent);
       root.style.setProperty("--text", themes[theme].text);
       root.style.setProperty("--accent-gradient", themes[theme].accentGradient);
-      localStorage.setProperty("selectedTheme", theme);
+      localStorage.setItem("selectedTheme", theme);
       currentTheme = theme;
       document.documentElement.setAttribute("data-theme", theme);
       const themeColorMeta = document.querySelector('meta[name="theme-color"]');
@@ -475,11 +493,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const maxIndex = tab === "best" ? favoriteStations.length : tab === "srch" ? 0 : stationLists[tab]?.length || 0;
       currentIndex = savedIndex < maxIndex ? savedIndex : 0;
       searchInput.style.display = tab === "srch" ? "flex" : "none";
-      if (tab === "srch" && (searchQuery.value || searchCountry.value)) {
-        searchStations(searchQuery.value, searchCountry.value);
-      } else {
-        updateStationList();
-      }
+      searchQuery.value = "";
+      searchCountry.value = "";
+      updateStationList();
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
       const activeBtn = document.querySelector(`.tab-btn:nth-child(${["best", "techno", "trance", "ukraine", "pop", "srch"].indexOf(tab) + 1})`);
       if (activeBtn) activeBtn.classList.add("active");
@@ -519,8 +535,8 @@ document.addEventListener("DOMContentLoaded", () => {
       stationList.appendChild(fragment);
       stationItems = stationList.querySelectorAll(".station-item");
 
-      if (stationItems.length && currentIndex < stationItems.length && !stationItems[currentIndex].classList.contains("empty")) {
-        stationItems[currentIndex].scrollIntoView({ behavior: "smooth", block: "start" });
+      if (stationItems.length && stationItems[currentIndex] && !stationItems[currentIndex].classList.contains("empty")) {
+        stationItems[currentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
       }
 
       stationList.onclick = e => {
@@ -561,7 +577,7 @@ document.addEventListener("DOMContentLoaded", () => {
       item.classList.add("selected");
       currentIndex = index;
       updateCurrentStationInfo(item);
-      localStorage.setItem(`lastStation_${currentTab}`, currentIndex);
+      localStorage.setItem(`lastStation_${currentTab}`, index);
       tryAutoPlay();
     }
 
@@ -577,19 +593,19 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Оновлення currentStationInfo з даними:", item.dataset);
 
       if (stationNameElement) {
-        stationNameElement.textContent = item.dataset.name || "Unknown";
+        stationNameElement.textContent = item.dataset.name || "";
       } else {
-        console.error("Елемент .station-name не знайдено в currentStationInfo");
+        console.error("Елемент .station-name не знайдено");
       }
       if (stationGenreElement) {
-        stationGenreElement.textContent = `жанр: ${item.dataset.genre || "Unknown"}`;
+        stationGenreElement.textContent = `жанр: ${item.dataset.genre || ""}`;
       } else {
-        console.error("Елемент .station-genre не знайдено в currentStationInfo");
+        console.error("Елемент .station-genre не знайдено");
       }
       if (stationCountryElement) {
-        stationCountryElement.textContent = `країна: ${item.dataset.country || "Unknown"}`;
+        stationCountryElement.textContent = `країна: ${item.dataset.country || ""}`;
       } else {
-        console.error("Елемент .station-country не знайдено в currentStationInfo");
+        console.error("Елемент .station-country не знайдено");
       }
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -649,7 +665,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!audio.paused) return;
           audio.pause();
           audio.src = "";
-          audio.src = stationItems[currentIndex].dataset.value;
+          audio.src = stationItems[currentIndex]?.dataset.value || "";
           tryAutoPlay();
         }
       },
@@ -658,7 +674,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!audio.paused) return;
           audio.pause();
           audio.src = "";
-          audio.src = stationItems[currentIndex].dataset.value;
+          audio.src = stationItems[currentIndex]?.dataset.value || "";
           tryAutoPlay();
         }
       }
@@ -695,7 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     audio.addEventListener("error", () => {
       document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
-      console.error("Помилка аудіо:", audio.error?.message, "для URL:", audio.src);
+      console.error("Помилка аудіо:", audio.error?.message || "Невідома помилка", "для URL:", audio.src);
       if (isPlaying && errorCount < ERROR_LIMIT) {
         errorCount++;
         setTimeout(nextStation, 1000);
