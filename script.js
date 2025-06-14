@@ -159,7 +159,10 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         abortController.abort();
         abortController = new AbortController();
-        const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}`, {
+        const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?` +
+          `name=${encodeURIComponent(query)}&` +
+          `tag=${encodeURIComponent(query)}&` +
+          `country=${encodeURIComponent(query)}`, {
           signal: abortController.signal
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -207,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (addBtn) {
           e.stopPropagation();
-          saveStation(item);
+          showTabSelection(item);
         }
       };
     }
@@ -218,16 +221,37 @@ document.addEventListener("DOMContentLoaded", () => {
       return genres.length > 4 ? genres.slice(0, 4).join(", ") + "..." : genres.join(", ");
     }
 
-    // Збереження станції
-    function saveStation(item) {
+    // Показ вікна для вибору вкладки
+    function showTabSelection(item) {
       hasUserInteracted = true;
       const stationName = item.dataset.name;
       const tabs = ["techno", "trance", "ukraine", "pop"];
       const tabNames = ["TECHNO", "Trance", "UA", "POP"];
-      const selectedTabIndex = prompt("Оберіть вкладку:\n1. TECHNO\n2. Trance\n3. UA\n4. POP", "1") - 1;
-      const targetTab = tabs[selectedTabIndex] || "techno";
+      const overlay = document.createElement("div");
+      overlay.className = "overlay";
+      const selectionWindow = document.createElement("div");
+      selectionWindow.className = "tab-selection";
+      tabNames.forEach((tabName, index) => {
+        const tabButton = document.createElement("button");
+        tabButton.textContent = tabName;
+        tabButton.addEventListener("click", () => {
+          saveStation(item, tabs[index]);
+          document.body.removeChild(overlay);
+        });
+        selectionWindow.appendChild(tabButton);
+      });
+      const closeButton = document.createElement("button");
+      closeButton.textContent = "Закрити";
+      closeButton.addEventListener("click", () => document.body.removeChild(overlay));
+      selectionWindow.appendChild(closeButton);
+      overlay.appendChild(selectionWindow);
+      document.body.appendChild(overlay);
+    }
+
+    // Збереження станції
+    function saveStation(item, targetTab) {
       if (!stationLists[targetTab]) stationLists[targetTab] = [];
-      if (!stationLists[targetTab].some(s => s.name === stationName)) {
+      if (!stationLists[targetTab].some(s => s.name === item.dataset.name)) {
         stationLists[targetTab].unshift({
           value: item.dataset.value,
           name: item.dataset.name,
