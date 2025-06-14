@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("searchInput");
   const searchQuery = document.getElementById("searchQuery");
   const searchCountry = document.getElementById("searchCountry");
-  const searchBtn = document.getElementById("searchBtn");
+  const searchBtn = document.querySelector(".search-btn");
   const pastSearchesList = document.getElementById("pastSearches");
 
   if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchQuery || !searchCountry || !searchBtn || !pastSearchesList) {
@@ -364,7 +364,7 @@ document.addEventListener("DOMContentLoaded", () => {
       root.style.setProperty("--accent", themes[theme].accent);
       root.style.setProperty("--text", themes[theme].text);
       root.style.setProperty("--accent-gradient", themes[theme].accentGradient);
-      localStorage.setItem("selectedTheme", theme);
+      localStorage.setProperty("selectedTheme", theme);
       currentTheme = theme;
       document.documentElement.setAttribute("data-theme", theme);
       const themeColorMeta = document.querySelector('meta[name="theme-color"]');
