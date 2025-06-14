@@ -59,6 +59,15 @@
           <div class="station-genre">жанр: -</div>
           <div class="station-country">країна: -</div>
         </div>
+        <div class="wave-progress">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
       </div>
     </div>
     <div id="stationList" class="station-list"></div>
@@ -71,7 +80,8 @@
       <button class="tab-btn">SRCH</button>
     </div>
     <div id="searchInput" class="search-input" style="display: none;">
-      <input type="text" id="searchQuery" placeholder="Введіть для пошуку...">
+      <input type="text" id="searchQuery" placeholder="Введіть для пошуку..." list="pastSearches">
+      <datalist id="pastSearches"></datalist>
       <button id="searchBtn">🔍</button>
     </div>
     <div class="controls-container">
@@ -79,15 +89,6 @@
         <button class="control-btn">⏮</button>
         <button class="control-btn">▶</button>
         <button class="control-btn">⏭</button>
-      </div>
-      <div class="wave-progress">
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
       </div>
     </div>
   </div>

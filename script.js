@@ -4,11 +4,12 @@ let hasUserInteracted = false;
 let currentIndex = 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
-let stationLists = {};
+let stationLists = JSON.parse(localStorage.getItem("stationLists")) || {};
 let stationItems;
 let abortController = new AbortController();
 let errorCount = 0;
 const ERROR_LIMIT = 5;
+let pastSearches = JSON.parse(localStorage.getItem("pastSearches")) || [];
 
 // Очікування завантаження DOM
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,9 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("searchInput");
   const searchQuery = document.getElementById("searchQuery");
   const searchBtn = document.getElementById("searchBtn");
+  const pastSearchesList = document.getElementById("pastSearches");
 
   // Перевірка наявності всіх необхідних елементів
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchQuery || !searchBtn) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchQuery || !searchBtn || !pastSearchesList) {
     console.error("Один із необхідних DOM-елементів не знайдено");
     setTimeout(initializeApp, 100);
     return;
@@ -36,6 +38,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Налаштування аудіо
     audio.preload = "auto";
     audio.volume = parseFloat(localStorage.getItem("volume")) || 0.9;
+
+    // Оновлення попередніх пошукових запитів
+    updatePastSearches();
 
     // Прив’язка обробників подій для кнопок вкладок
     document.querySelectorAll(".tab-btn").forEach((btn, index) => {
@@ -52,11 +57,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // Пошук станцій
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
-      if (query) searchStations(query);
+      if (query) {
+        if (!pastSearches.includes(query)) {
+          pastSearches.unshift(query);
+          if (pastSearches.length > 5) pastSearches.pop();
+          localStorage.setItem("pastSearches", JSON.stringify(pastSearches));
+          updatePastSearches();
+        }
+        searchStations(query);
+      }
     });
     searchQuery.addEventListener("keypress", (e) => {
       if (e.key === "Enter") searchBtn.click();
     });
+
+    // Функція для оновлення попередніх пошукових запитів
+    function updatePastSearches() {
+      pastSearchesList.innerHTML = "";
+      pastSearches.forEach(search => {
+        const option = document.createElement("option");
+        option.value = search;
+        pastSearchesList.appendChild(option);
+      });
+    }
 
     // Функція для перевірки валідності URL
     function isValidUrl(url) {
@@ -73,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (stationGenreElement) stationGenreElement.textContent = "жанр: -";
       else console.error("Елемент .station-genre не знайдено в currentStationInfo");
       if (stationCountryElement) stationCountryElement.textContent = "країна: -";
-      else console.error("Елемент .station-country не знайдено в currentStationInfo");
+      else console.error("Елемент .station-country не знайdено в currentStationInfo");
     }
 
     // Завантаження станцій
@@ -94,13 +117,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (response.status === 304) {
           const cachedData = await caches.match("stations.json");
           if (cachedData) {
-            stationLists = await cachedData.json();
+            stationLists = { ...stationLists, ...await cachedData.json() };
             console.log("Використовується кешована версія stations.json");
           } else {
             throw new Error("Кеш не знайдено");
           }
         } else if (response.ok) {
-          stationLists = await response.json();
+          stationLists = { ...stationLists, ...await response.json() };
           localStorage.setItem("stationsLastModified", response.headers.get("Last-Modified") || "");
           console.log("Новий stations.json успішно завантажено");
         } else {
@@ -110,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
           Object.values(stationLists).flat().some(s => s.name === name)
         );
         localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
         const validTabs = [...Object.keys(stationLists), "best"];
         if (!validTabs.includes(currentTab)) {
           currentTab = validTabs[0] || "techno";
@@ -196,20 +220,23 @@ document.addEventListener("DOMContentLoaded", () => {
     function saveStation(item) {
       hasUserInteracted = true;
       const stationName = item.dataset.name;
-      const availableTabs = ["techno", "trance", "ukraine", "pop"];
-      const selectedTab = prompt("Оберіть вкладку для додавання (TECHNO, Trance, UA, POP):", "techno");
-      const targetTab = availableTabs.includes(selectedTab.toLowerCase()) ? selectedTab.toLowerCase() : "techno";
+      const tabs = ["techno", "trance", "ukraine", "pop"];
+      const tabNames = ["TECHNO", "Trance", "UA", "POP"];
+      const selectedTabIndex = prompt("Оберіть вкладку:\n1. TECHNO\n2. Trance\n3. UA\n4. POP", "1") - 1;
+      const targetTab = tabs[selectedTabIndex] || "techno";
       if (!stationLists[targetTab]) stationLists[targetTab] = [];
-      stationLists[targetTab].unshift({
-        value: item.dataset.value,
-        name: item.dataset.name,
-        genre: item.dataset.genre,
-        country: item.dataset.country,
-        emoji: "🎶"
-      });
-      localStorage.setItem("stationLists", JSON.stringify(stationLists));
-      if (currentTab === targetTab) switchTab(currentTab);
-      else updateStationList();
+      if (!stationLists[targetTab].some(s => s.name === stationName)) {
+        stationLists[targetTab].unshift({
+          value: item.dataset.value,
+          name: item.dataset.name,
+          genre: item.dataset.genre,
+          country: item.dataset.country,
+          emoji: "🎶"
+        });
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        if (currentTab === targetTab) switchTab(currentTab);
+        else updateStationList();
+      }
     }
 
     // Теми
