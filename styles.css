@@ -20,7 +20,7 @@ body {
   overflow-x: hidden;
   padding-top: 10px;
   box-sizing: border-box;
-  transition: background 0.4s ease, color 0.4s ease;
+  transition: background 0.4s ease, color 0.0.4s ease;
 }
 
 .container {
@@ -60,7 +60,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.0.3s ease;
 }
 
 .theme-toggle:hover {
@@ -70,7 +70,7 @@ h1 {
 }
 
 #currentStationInfo {
-  background: linear-gradient(45deg, var(--container-bg), var(--accent-gradient));
+  background: linear-gradient(45deg, var(--container-bg), var(--container-bg), var(--accent-gradient));
   padding: 20px;
   border-radius: 12px;
   margin: 10px 0;
@@ -83,13 +83,14 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
-  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3));
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, transform 0.4,
+  transform: 0.3s ease, box-shadow 0.3s ease;
 }
 
 #currentStationInfo:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.5);
+  box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.5));
 }
 
 .station-info-content {
@@ -173,21 +174,26 @@ h1 {
   transform: translateY(-2px);
 }
 
-.station-item .favorite-btn, .station-item .add-btn {
+.station-item .favorite-btn, .station-item .add-btn, .station-item .delete-btn {
   background: none;
   border: none;
   color: var(--text);
   font-size: 20px;
   cursor: pointer;
   transition: color 0.3s ease;
+  margin-left: 5px;
 }
 
 .station-item .favorite-btn.favorited {
   color: #FFD700;
 }
 
-.station-item .favorite-btn:hover, .station-item .add-btn:hover {
+.station-item .favorite-btn:hover, .station-item .add-btn:hover, .station-item .delete-btn:hover {
   color: #FFD700;
+}
+
+.station-item .delete-btn {
+  color: #FF4444;
 }
 
 .station-item.empty {

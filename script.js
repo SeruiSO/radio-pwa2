@@ -528,7 +528,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name;
         item.dataset.genre = shortenGenre(station.genre);
         item.dataset.country = station.country;
-        item.innerHTML = `${station.emoji || "🎶"} ${station.name}<button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>`;
+        item.innerHTML = `${station.emoji || "🎶"} ${station.name}<button class="delete-btn">🗑</button><button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>`;
         fragment.appendChild(item);
       });
       stationList.innerHTML = "";
@@ -542,6 +542,7 @@ document.addEventListener("DOMContentLoaded", () => {
       stationList.onclick = e => {
         const item = e.target.closest(".station-item");
         const favoriteBtn = e.target.closest(".favorite-btn");
+        const deleteBtn = e.target.closest(".delete-btn");
         hasUserInteracted = true;
         if (item && !item.classList.contains("empty")) {
           currentIndex = Array.from(stationItems).indexOf(item);
@@ -550,6 +551,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (favoriteBtn) {
           e.stopPropagation();
           toggleFavorite(item.dataset.name);
+        }
+        if (deleteBtn) {
+          e.stopPropagation();
+          if (confirm(`Ви впевнені, що хочете видалити станцію "${item.dataset.name}" зі списку?`)) {
+            deleteStation(item.dataset.name);
+          }
         }
       };
 
@@ -568,6 +575,20 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
       if (currentTab === "best") switchTab("best");
       else updateStationList();
+    }
+
+    function deleteStation(stationName) {
+      hasUserInteracted = true;
+      stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
+      favoriteStations = favoriteStations.filter(name => name !== stationName);
+      localStorage.setItem("stationLists", JSON.stringify(stationLists));
+      localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+      if (stationLists[currentTab].length === 0) {
+        currentIndex = 0;
+      } else if (currentIndex >= stationLists[currentTab].length) {
+        currentIndex = stationLists[currentTab].length - 1;
+      }
+      switchTab(currentTab);
     }
 
     function changeStation(index) {
