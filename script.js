@@ -18,9 +18,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
   const currentStationInfo = document.getElementById("currentStationInfo");
   const themeToggle = document.querySelector(".theme-toggle");
+  const searchInput = document.getElementById("searchInput");
+  const searchQuery = document.getElementById("searchQuery");
+  const searchBtn = document.getElementById("searchBtn");
 
   // Перевірка наявності всіх необхідних елементів
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchQuery || !searchBtn) {
     console.error("Один із необхідних DOM-елементів не знайдено");
     setTimeout(initializeApp, 100);
     return;
@@ -37,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Прив’язка обробників подій для кнопок вкладок
     document.querySelectorAll(".tab-btn").forEach((btn, index) => {
       const tabs = ["best", "techno", "trance", "ukraine", "pop", "srch"];
-      const tab = tabs[index]; // Прив’язуємо вкладки за порядком
+      const tab = tabs[index];
       btn.addEventListener("click", () => switchTab(tab));
     });
 
@@ -45,6 +48,15 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector(".controls .control-btn:nth-child(1)").addEventListener("click", prevStation);
     document.querySelector(".controls .control-btn:nth-child(2)").addEventListener("click", togglePlayPause);
     document.querySelector(".controls .control-btn:nth-child(3)").addEventListener("click", nextStation);
+
+    // Пошук станцій
+    searchBtn.addEventListener("click", () => {
+      const query = searchQuery.value.trim();
+      if (query) searchStations(query);
+    });
+    searchQuery.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") searchBtn.click();
+    });
 
     // Функція для перевірки валідності URL
     function isValidUrl(url) {
@@ -150,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name || "Unknown";
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
-        item.innerHTML = `${station.emoji || "🎶"} ${station.name}<button class="favorite-btn">★</button>`;
+        item.innerHTML = `${station.emoji || "🎶"} ${station.name}<button class="add-btn">ADD</button>`;
         fragment.appendChild(item);
       });
       stationList.innerHTML = "";
@@ -161,13 +173,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       stationList.onclick = e => {
         const item = e.target.closest(".station-item");
-        const favoriteBtn = e.target.closest(".favorite-btn");
+        const addBtn = e.target.closest(".add-btn");
         hasUserInteracted = true;
         if (item && !item.classList.contains("empty")) {
           currentIndex = Array.from(stationItems).indexOf(item);
           changeStation(currentIndex);
         }
-        if (favoriteBtn) {
+        if (addBtn) {
           e.stopPropagation();
           saveStation(item);
         }
@@ -184,26 +196,20 @@ document.addEventListener("DOMContentLoaded", () => {
     function saveStation(item) {
       hasUserInteracted = true;
       const stationName = item.dataset.name;
-      if (!favoriteStations.includes(stationName)) {
-        const tabs = ["best", "techno", "trance", "ukraine", "pop"];
-        const selectedTab = prompt("Оберіть вкладку для додавання (BEST, TECHNO, TRANCE, UA, POP):", "best");
-        const targetTab = tabs.includes(selectedTab.toLowerCase()) ? selectedTab.toLowerCase() : "best";
-        favoriteStations.unshift(stationName);
-        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-        if (targetTab !== "best") {
-          if (!stationLists[targetTab]) stationLists[targetTab] = [];
-          stationLists[targetTab].unshift({
-            value: item.dataset.value,
-            name: item.dataset.name,
-            genre: item.dataset.genre,
-            country: item.dataset.country,
-            emoji: item.querySelector("button") ? "★" : "🎶"
-          });
-          localStorage.setItem("stationLists", JSON.stringify(stationLists));
-        }
-        if (currentTab === "best" || currentTab === targetTab) switchTab(currentTab);
-        else updateStationList();
-      }
+      const availableTabs = ["techno", "trance", "ukraine", "pop"];
+      const selectedTab = prompt("Оберіть вкладку для додавання (TECHNO, Trance, UA, POP):", "techno");
+      const targetTab = availableTabs.includes(selectedTab.toLowerCase()) ? selectedTab.toLowerCase() : "techno";
+      if (!stationLists[targetTab]) stationLists[targetTab] = [];
+      stationLists[targetTab].unshift({
+        value: item.dataset.value,
+        name: item.dataset.name,
+        genre: item.dataset.genre,
+        country: item.dataset.country,
+        emoji: "🎶"
+      });
+      localStorage.setItem("stationLists", JSON.stringify(stationLists));
+      if (currentTab === targetTab) switchTab(currentTab);
+      else updateStationList();
     }
 
     // Теми
@@ -403,12 +409,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
       const maxIndex = tab === "best" ? favoriteStations.length : tab === "srch" ? 0 : stationLists[tab]?.length || 0;
       currentIndex = savedIndex < maxIndex ? savedIndex : 0;
-      if (tab === "srch") {
-        const query = prompt("Введіть назву, жанр або країну для пошуку:", "");
-        if (query) searchStations(query);
-      } else {
-        updateStationList();
-      }
+      searchInput.style.display = tab === "srch" ? "block" : "none";
+      if (tab === "srch" && searchQuery.value) searchStations(searchQuery.value);
+      else updateStationList();
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
       const activeBtn = document.querySelector(`.tab-btn:nth-child(${["best", "techno", "trance", "ukraine", "pop", "srch"].indexOf(tab) + 1})`);
       if (activeBtn) activeBtn.classList.add("active");
