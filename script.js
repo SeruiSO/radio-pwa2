@@ -118,7 +118,6 @@ document.addEventListener("DOMContentLoaded", () => {
           console.log("Використовується кешована версія stations.json");
         } else if (response.ok) {
           const newStations = await response.json();
-          // Об'єднуємо з існуючими станціями, щоб не перезаписувати додані вручну
           Object.keys(newStations).forEach(tab => {
             if (!stationLists[tab]) stationLists[tab] = [];
             stationLists[tab] = [
@@ -159,10 +158,11 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         abortController.abort();
         abortController = new AbortController();
-        const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?` +
-          `name=${encodeURIComponent(query)}&` +
-          `tag=${encodeURIComponent(query)}&` +
-          `country=${encodeURIComponent(query)}`, {
+        const searchParams = new URLSearchParams();
+        searchParams.append("name", query);
+        searchParams.append("tag", query); // Пошук за жанром
+        searchParams.append("country", query); // Пошук за країною
+        const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?${searchParams.toString()}`, {
           signal: abortController.signal
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -187,11 +187,11 @@ document.addEventListener("DOMContentLoaded", () => {
       stations.forEach((station, index) => {
         const item = document.createElement("div");
         item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
-        item.dataset.value = station.url || station.url_resolved;
+        item.dataset.value = station.url_resolved || station.url || "";
         item.dataset.name = station.name || "Unknown";
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
-        item.innerHTML = `${station.emoji || "🎶"} ${station.name}<button class="add-btn">ADD</button>`;
+        item.innerHTML = `${station.favicon ? `<img src="${station.favicon}" alt="${station.name}" class="station-icon" onerror="this.style.display='none';">` : station.emoji || "🎶"} ${station.name}<button class="add-btn">ADD</button>`;
         fragment.appendChild(item);
       });
       stationList.innerHTML = "";
@@ -240,10 +240,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         selectionWindow.appendChild(tabButton);
       });
-      const closeButton = document.createElement("button");
-      closeButton.textContent = "Закрити";
-      closeButton.addEventListener("click", () => document.body.removeChild(overlay));
-      selectionWindow.appendChild(closeButton);
       overlay.appendChild(selectionWindow);
       document.body.appendChild(overlay);
     }
@@ -431,7 +427,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
         return;
       }
-      // Скасувати попереднє відтворення
       audio.pause();
       audio.src = "";
       audio.src = stationItems[currentIndex].dataset.value;
@@ -507,7 +502,6 @@ document.addEventListener("DOMContentLoaded", () => {
       stationList.appendChild(fragment);
       stationItems = stationList.querySelectorAll(".station-item");
 
-      // Прокручування до поточної станції
       if (stationItems.length && currentIndex < stationItems.length && !stationItems[currentIndex].classList.contains("empty")) {
         stationItems[currentIndex].scrollIntoView({ behavior: "smooth", block: "start" });
       }
