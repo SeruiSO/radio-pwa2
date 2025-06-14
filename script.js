@@ -23,7 +23,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const pastSearchesList = document.getElementById("pastSearches");
 
   if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchQuery || !searchCountry || !searchBtn || !pastSearchesList) {
-    console.error("Один із необхідних DOM-елементів не знайдено");
+    console.error("Один із необхідних DOM-елементів не знайдено", {
+      audio: !!audio,
+      stationList: !!stationList,
+      playPauseBtn: !!playPauseBtn,
+      currentStationInfo: !!currentStationInfo,
+      themeToggle: !!themeToggle,
+      searchInput: !!searchInput,
+      searchQuery: !!searchQuery,
+      searchCountry: !!searchCountry,
+      searchBtn: !!searchBtn,
+      pastSearchesList: !!pastSearchesList
+    });
     setTimeout(initializeApp, 100);
     return;
   }
@@ -49,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
       const country = searchCountry.value.trim();
+      console.log("Пошук запущено:", { query, country });
       if (query || country) {
         if (query && !pastSearches.includes(query)) {
           pastSearches.unshift(query);
@@ -57,6 +69,9 @@ document.addEventListener("DOMContentLoaded", () => {
           updatePastSearches();
         }
         searchStations(query, country);
+      } else {
+        console.warn("Обидва поля пошуку порожні");
+        stationList.innerHTML = "<div class='station-item empty'>Введіть назву або країну</div>";
       }
     });
 
@@ -153,11 +168,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams();
         if (query) params.append("name", query);
         if (country) params.append("country", country);
-        const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`, {
+        const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
+        console.log("Запит до API:", url);
+        const response = await fetch(url, {
           signal: abortController.signal
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
         const stations = await response.json();
+        console.log("Отримано станцій:", stations.length);
         renderSearchResults(stations);
       } catch (error) {
         if (error.name !== 'AbortError') {
@@ -240,7 +260,7 @@ document.addEventListener("DOMContentLoaded", () => {
           closeModal();
         });
       });
-      modal.querySelector(".modal-cancel-btn").addEventListener("click", closegroupModal);
+      modal.querySelector(".modal-cancel-btn").addEventListener("click", closeModal);
     }
 
     function saveStation(item, targetTab) {

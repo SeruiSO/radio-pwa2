@@ -47,14 +47,14 @@
   <title>Radio Music</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
     <button class="theme-toggle">🌙</button>
     <h1>Radio Music</h1>
-    <div class="current-station-info">
+    <div id="currentStationInfo">
       <div class="station-info-content">
         <div class="wave-progress">
           <div class="wave-bar"></div>
@@ -72,6 +72,7 @@
         </div>
       </div>
     </div>
+    <div class="station-list" id="stationList"></div>
     <div class="tabs">
       <button class="tab-btn">Best</button>
       <button class="tab-btn active">Techno</button>
@@ -86,7 +87,6 @@
       <button class="search-btn">🔍</button>
       <datalist id="pastSearches"></datalist>
     </div>
-    <div class="station-list" id="stationList"></div>
     <div class="controls-container">
       <div class="controls">
         <button class="control-btn">⏮</button>
