@@ -294,8 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
           emoji: "🎶"
         });
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
-        if (currentTab === targetTab) switchTab(currentTab);
-        else updateStationList();
+        updateStationList();
       } else {
         alert("Ця станція вже додана до обраної вкладки!");
       }
@@ -528,7 +527,15 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name;
         item.dataset.genre = shortenGenre(station.genre);
         item.dataset.country = station.country;
-        item.innerHTML = `${station.emoji || "🎶"} ${station.name}<button class="delete-btn">🗑</button><button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>`;
+        const deleteButton = ["techno", "trance", "ukraine", "pop"].includes(currentTab)
+          ? `<button class="delete-btn">🗑</button>`
+          : "";
+        item.innerHTML = `
+          ${station.emoji || "🎶"} ${station.name}
+          <div class="buttons-container">
+            ${deleteButton}
+            <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>
+          </div>`;
         fragment.appendChild(item);
       });
       stationList.innerHTML = "";
