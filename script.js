@@ -115,17 +115,19 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         console.log(`Статус відповіді: ${response.status}`);
         if (response.status === 304) {
-          const cachedData = await caches.match("stations.json");
-          if (cachedData) {
-            stationLists = { ...stationLists, ...await cachedData.json() };
-            console.log("Використовується кешована версія stations.json");
-          } else {
-            throw new Error("Кеш не знайдено");
-          }
+          console.log("Використовується кешована версія stations.json");
         } else if (response.ok) {
-          stationLists = { ...stationLists, ...await response.json() };
+          const newStations = await response.json();
+          // Об'єднуємо з існуючими станціями, щоб не перезаписувати додані вручну
+          Object.keys(newStations).forEach(tab => {
+            if (!stationLists[tab]) stationLists[tab] = [];
+            stationLists[tab] = [
+              ...newStations[tab].filter(s => !stationLists[tab].some(existing => existing.name === s.name)),
+              ...stationLists[tab]
+            ];
+          });
           localStorage.setItem("stationsLastModified", response.headers.get("Last-Modified") || "");
-          console.log("Новий stations.json успішно завантажено");
+          console.log("Новий stations.json успішно завантажено та об'єднано");
         } else {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -236,6 +238,8 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
         if (currentTab === targetTab) switchTab(currentTab);
         else updateStationList();
+      } else {
+        alert("Ця станція вже додана до обраної вкладки!");
       }
     }
 
