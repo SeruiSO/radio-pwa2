@@ -38,61 +38,63 @@
         return gk_fileData[filename] || "";
         }
         </script><!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#00F0FF">
-  <link rel="manifest" href="manifest.json">
+  <title>Радіо UA</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <title>Radio S O</title>
 </head>
 <body>
-  <div class="theme-toggle">🌙</div>
   <div class="container">
-    <h1>🎧 RADIO MUSIC</h1>
+    <h1>Радіо UA</h1>
+    <div class="theme-toggle">🌙</div>
     <div id="currentStationInfo" class="current-station-info">
       <div class="station-info-content">
-        <div class="station-text">
-          <div class="station-name">Обирайте станцію</div>
-          <div class="station-genre">жанр: -</div>
-          <div class="station-country">країна: -</div>
-        </div>
-        <div class="wave-progress">
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-          <div class="wave-bar"></div>
-        </div>
+        <span class="station-text">
+          <span class="station-name">Обирайте станцію</span>
+          <span class="station-genre">жанр: -</span>
+          <span class="station-country">країна: -</span>
+        </span>
       </div>
     </div>
-    <div id="stationList" class="station-list"></div>
     <div class="tabs">
-      <button class="tab-btn">BEST</button>
-      <button class="tab-btn">TECHNO</button>
-      <button class="tab-btn">TRANCE</button>
-      <button class="tab-btn">UA</button>
-      <button class="tab-btn">POP</button>
-      <button class="tab-btn">SRCH</button>
+      <button class="tab-btn active" data-tab="best">Best</button>
+      <button class="tab-btn" data-tab="techno">Techno</button>
+      <button class="tab-btn" data-tab="trance">Trance</button>
+      <button class="tab-btn" data-tab="ukraine">UA</button>
+      <button class="tab-btn" data-tab="pop">Pop</button>
+      <button class="tab-btn" data-tab="srch">Search</button>
     </div>
     <div id="searchInput" class="search-input" style="display: none;">
-      <input type="text" id="searchQuery" placeholder="Введіть для пошуку..." list="pastSearches">
-      <datalist id="pastSearches"></datalist>
+      <select id="pastSearches"></select>
+      <div class="search-fields">
+        <input type="text" id="searchName" placeholder="Назва станції...">
+        <input type="text" id="searchGenre" placeholder="Жанр...">
+        <input type="text" id="searchCountry" placeholder="Країна...">
+      </div>
       <button id="searchBtn">🔍</button>
     </div>
+    <div id="stationList" class="station-list"></div>
     <div class="controls-container">
       <div class="controls">
         <button class="control-btn">⏮</button>
         <button class="control-btn">▶</button>
         <button class="control-btn">⏭</button>
       </div>
+      <div class="wave-progress">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+      </div>
     </div>
   </div>
   <audio id="audioPlayer"></audio>
   <script src="script.js"></script>
-</body>
-</html>
