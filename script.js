@@ -18,10 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const themeToggle = document.querySelector(".theme-toggle");
   const searchInput = document.getElementById("searchInput");
   const searchQuery = document.getElementById("searchQuery");
+  const searchCountry = document.getElementById("searchCountry");
   const searchBtn = document.getElementById("searchBtn");
   const pastSearchesList = document.getElementById("pastSearches");
 
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchQuery || !searchBtn || !pastSearchesList) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchQuery || !searchCountry || !searchBtn || !pastSearchesList) {
     console.error("Один із необхідних DOM-елементів не знайдено");
     setTimeout(initializeApp, 100);
     return;
@@ -47,17 +48,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
-      if (query) {
-        if (!pastSearches.includes(query)) {
+      const country = searchCountry.value.trim();
+      if (query || country) {
+        if (query && !pastSearches.includes(query)) {
           pastSearches.unshift(query);
           if (pastSearches.length > 5) pastSearches.pop();
           localStorage.setItem("pastSearches", JSON.stringify(pastSearches));
           updatePastSearches();
         }
-        searchStations(query);
+        searchStations(query, country);
       }
     });
+
     searchQuery.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") searchBtn.click();
+    });
+
+    searchCountry.addEventListener("keypress", (e) => {
       if (e.key === "Enter") searchBtn.click();
     });
 
@@ -83,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (stationGenreElement) stationGenreElement.textContent = "жанр: -";
       else console.error("Елемент .station-genre не знайдено в currentStationInfo");
       if (stationCountryElement) stationCountryElement.textContent = "країна: -";
-      else console.error("Елемент .station-country не знайdено в currentStationInfo");
+      else console.error("Елемент .station-country не знайдено в currentStationInfo");
     }
 
     async function loadStations() {
@@ -138,12 +145,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    async function searchStations(query) {
+    async function searchStations(query, country) {
       stationList.innerHTML = "<div class='station-item empty'>Пошук...</div>";
       try {
         abortController.abort();
         abortController = new AbortController();
-        const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}`, {
+        const params = new URLSearchParams();
+        if (query) params.append("name", query);
+        if (country) params.append("country", country);
+        const response = await fetch(`https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`, {
           signal: abortController.signal
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -202,11 +212,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function showTabModal(item) {
       hasUserInteracted = true;
-      // Створюємо оверлей
       const overlay = document.createElement("div");
       overlay.className = "modal-overlay";
-
-      // Створюємо модальне вікно
       const modal = document.createElement("div");
       modal.className = "modal";
       modal.innerHTML = `
@@ -219,20 +226,13 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="modal-cancel-btn">Відміна</button>
         </div>
       `;
-
       document.body.appendChild(overlay);
       document.body.appendChild(modal);
-
-      // Обробник для закриття модального вікна
       const closeModal = () => {
         overlay.remove();
         modal.remove();
       };
-
-      // Закриття при кліку на оверлей
       overlay.addEventListener("click", closeModal);
-
-      // Обробники для кнопок вкладок
       modal.querySelectorAll(".modal-tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           const targetTab = btn.dataset.tab;
@@ -240,9 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
           closeModal();
         });
       });
-
-      // Обробник для кнопки "Відміна"
-      modal.querySelector(".modal-cancel-btn").addEventListener("click", closeModal);
+      modal.querySelector(".modal-cancel-btn").addEventListener("click", closegroupModal);
     }
 
     function saveStation(item, targetTab) {
@@ -456,9 +454,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
       const maxIndex = tab === "best" ? favoriteStations.length : tab === "srch" ? 0 : stationLists[tab]?.length || 0;
       currentIndex = savedIndex < maxIndex ? savedIndex : 0;
-      searchInput.style.display = tab === "srch" ? "block" : "none";
-      if (tab === "srch" && searchQuery.value) searchStations(searchQuery.value);
-      else updateStationList();
+      searchInput.style.display = tab === "srch" ? "flex" : "none";
+      if (tab === "srch" && (searchQuery.value || searchCountry.value)) {
+        searchStations(searchQuery.value, searchCountry.value);
+      } else {
+        updateStationList();
+      }
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
       const activeBtn = document.querySelector(`.tab-btn:nth-child(${["best", "techno", "trance", "ukraine", "pop", "srch"].indexOf(tab) + 1})`);
       if (activeBtn) activeBtn.classList.add("active");
@@ -568,7 +569,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (stationCountryElement) {
         stationCountryElement.textContent = `країна: ${item.dataset.country || "Unknown"}`;
       } else {
-        console.error("Елемент .station-country не знайdено в currentStationInfo");
+        console.error("Елемент .station-country не знайдено в currentStationInfo");
       }
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
