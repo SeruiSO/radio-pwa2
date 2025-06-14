@@ -9,7 +9,6 @@ let stationItems;
 let abortController = new AbortController();
 let errorCount = 0;
 const ERROR_LIMIT = 5;
-let pastSearches = JSON.parse(localStorage.getItem("pastSearches")) || [];
 
 // Очікування завантаження DOM
 document.addEventListener("DOMContentLoaded", () => {
@@ -24,10 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchGenre = document.getElementById("searchGenre");
   const searchCountry = document.getElementById("searchCountry");
   const searchBtn = document.getElementById("searchBtn");
-  const pastSearchesList = document.getElementById("pastSearches");
 
   // Перевірка наявності всіх необхідних елементів
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchName || !searchGenre || !searchCountry || !searchBtn || !pastSearchesList) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchName || !searchGenre || !searchCountry || !searchBtn) {
     console.error("Один із необхідних DOM-елементів не знайдено");
     setTimeout(initializeApp, 100);
     return;
@@ -40,9 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Налаштування аудіо
     audio.preload = "auto";
     audio.volume = parseFloat(localStorage.getItem("volume")) || 0.9;
-
-    // Оновлення попередніх пошукових запитів
-    updatePastSearches();
 
     // Прив’язка обробників подій для кнопок вкладок
     document.querySelectorAll(".tab-btn").forEach((btn, index) => {
@@ -61,15 +56,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const name = searchName.value.trim();
       const genre = searchGenre.value.trim();
       const country = searchCountry.value.trim();
-      const query = { name, genre, country };
       if (name || genre || country) {
-        if (!pastSearches.includes(JSON.stringify(query))) {
-          pastSearches.unshift(JSON.stringify(query));
-          if (pastSearches.length > 5) pastSearches.pop();
-          localStorage.setItem("pastSearches", JSON.stringify(pastSearches));
-          updatePastSearches();
-        }
-        searchStations(query);
+        searchStations({ name, genre, country });
       }
     });
     [searchName, searchGenre, searchCountry].forEach(input => {
@@ -77,22 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Enter") searchBtn.click();
       });
     });
-
-    // Функція для оновлення попередніх пошукових запитів
-    function updatePastSearches() {
-      pastSearchesList.innerHTML = "";
-      pastSearches.forEach(search => {
-        const option = document.createElement("option");
-        option.value = search;
-        pastSearchesList.appendChild(option);
-      });
-      pastSearchesList.addEventListener("change", () => {
-        const [name, genre, country] = JSON.parse(pastSearchesList.value);
-        searchName.value = name || "";
-        searchGenre.value = genre || "";
-        searchCountry.value = country || "";
-      });
-    }
 
     // Функція для перевірки валідності URL
     function isValidUrl(url) {
@@ -204,7 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name || "Unknown";
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
-        item.innerHTML = `${station.favicon ? `<img src="${station.favicon}" alt="${station.name}" class="station-icon" onerror="this.style.display='none';">` : station.emoji || "🎶"} ${station.name}<button class="add-btn">ADD</button>`;
+        item.innerHTML = `${station.name} <span class="station-details">(${item.dataset.genre}, ${item.dataset.country})</span><button class="add-btn">ADD</button>`;
         fragment.appendChild(item);
       });
       stationList.innerHTML = "";

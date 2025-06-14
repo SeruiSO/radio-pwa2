@@ -124,12 +124,39 @@ h1 {
   margin-top: 2px;
 }
 
+.wave-progress {
+  display: flex;
+  gap: 4px;
+  height: 60px;
+  width: 84px;
+}
+
+.wave-bar {
+  width: 10px;
+  background: var(--accent);
+  border-radius: 5px;
+  animation: waveAnimation 1.2s infinite ease-in-out;
+  animation-play-state: paused;
+  transition: background 0.4s ease;
+}
+
+.wave-bar:nth-child(2) { animation-delay: 0.2s; }
+.wave-bar:nth-child(3) { animation-delay: 0.3s; }
+.wave-bar:nth-child(4) { animation-delay: 0.4s; }
+.wave-bar:nth-child(5) { animation-delay: 0.5s; }
+.wave-bar:nth-child(6) { animation-delay: 0.6s; }
+.wave-bar:nth-child(7) { animation-delay: 0.7s; }
+
+@keyframes waveAnimation {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
 .tabs {
   display: flex;
   justify-content: space-between;
   margin: 5px 0;
-  position: sticky;
-  bottom: 100px;
+  position: relative;
   z-index: 10;
   background: var(--container-bg);
   padding: 5px;
@@ -272,10 +299,8 @@ h1 {
 }
 
 .controls-container {
-  position: sticky;
-  bottom: 0;
+  position: relative;
   background: var(--container-bg);
-  border-top: 2px solid var(--accent);
   padding: 15px;
   display: flex;
   align-items: center;
@@ -289,34 +314,6 @@ h1 {
   display: flex;
   justify-content: center;
   gap: 50px;
-}
-
-.wave-progress {
-  display: flex;
-  gap: 4px;
-  height: 60px;
-  width: 84px;
-}
-
-.wave-bar {
-  width: 10px;
-  background: var(--accent);
-  border-radius: 5px;
-  animation: waveAnimation 1.2s infinite ease-in-out;
-  animation-play-state: paused;
-  transition: background 0.4s ease;
-}
-
-.wave-bar:nth-child(2) { animation-delay: 0.2s; }
-.wave-bar:nth-child(3) { animation-delay: 0.3s; }
-.wave-bar:nth-child(4) { animation-delay: 0.4s; }
-.wave-bar:nth-child(5) { animation-delay: 0.5s; }
-.wave-bar:nth-child(6) { animation-delay: 0.6s; }
-.wave-bar:nth-child(7) { animation-delay: 0.7s; }
-
-@keyframes waveAnimation {
-  0%, 100% { transform: scaleY(0.3); }
-  50% { transform: scaleY(1); }
 }
 
 .control-btn {
@@ -390,16 +387,6 @@ h1 {
   background: var(--accent);
   color: #0A0A0A;
   transform: translateY(-2px);
-}
-
-#pastSearches {
-  padding: 12px;
-  font-size: 16px;
-  border: 2px solid var(--accent);
-  border-radius: 8px;
-  background: var(--container-bg);
-  color: var(--text);
-  transition: border-color 0.4s ease, background 0.4s ease;
 }
 
 .overlay {
@@ -521,10 +508,6 @@ h1 {
     border-width: 1px;
   }
 
-  .tabs {
-    bottom: 90px;
-  }
-
   .search-fields {
     flex-direction: column;
     gap: 5px;
@@ -537,11 +520,6 @@ h1 {
 
   #searchBtn {
     padding: 10px 15px;
-    font-size: 14px;
-  }
-
-  #pastSearches {
-    padding: 10px;
     font-size: 14px;
   }
 
