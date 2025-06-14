@@ -20,7 +20,7 @@ body {
   overflow-x: hidden;
   padding-top: 10px;
   box-sizing: border-box;
-  transition: background 0.4s ease, color 0.0.4s ease;
+  transition: background 0.4s ease, color 0.4s ease;
 }
 
 .container {
@@ -60,7 +60,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .theme-toggle:hover {
@@ -83,14 +83,13 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3));
-  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, transform 0.4,
-  transform: 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 #currentStationInfo:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.5));
+  box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.5);
 }
 
 .station-info-content {
@@ -284,7 +283,7 @@ h1 {
   box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
 }
 
-#searchQuery, #searchCountry {
+#searchQuery, #searchCountry, #searchGenre {
   flex: 1;
   background: transparent;
   border: none;
@@ -294,7 +293,7 @@ h1 {
   padding: 8px;
 }
 
-#searchQuery::placeholder, #searchCountry::placeholder {
+#searchQuery::placeholder, #searchCountry::placeholder, #searchGenre::placeholder {
   color: var(--text);
   opacity: 0.6;
 }
@@ -537,7 +536,7 @@ h1 {
     gap: 8px;
   }
 
-  #searchQuery, #searchCountry {
+  #searchQuery, #searchCountry, #searchGenre {
     font-size: 14px;
     padding: 6px;
     flex: 1 1 45%;

@@ -4,11 +4,12 @@ let currentIndex = 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = JSON.parse(localStorage.getItem("stationLists")) || {};
-let stationItems;
+let stationItems = [];
 let abortController = new AbortController();
 let errorCount = 0;
 const ERROR_LIMIT = 5;
 let pastSearches = JSON.parse(localStorage.getItem("pastSearches")) || [];
+let deletedStations = JSON.parse(localStorage.getItem("deletedStations")) || [];
 
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("audioPlayer");
@@ -19,10 +20,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("searchInput");
   const searchQuery = document.getElementById("searchQuery");
   const searchCountry = document.getElementById("searchCountry");
+  const searchGenre = document.getElementById("searchGenre");
   const searchBtn = document.querySelector(".search-btn");
   const pastSearchesList = document.getElementById("pastSearches");
 
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchQuery || !searchCountry || !searchBtn || !pastSearchesList) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList) {
     console.error("Один із необхідних DOM-елементів не знайдено", {
       audio: !!audio,
       stationList: !!stationList,
@@ -32,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
       searchInput: !!searchInput,
       searchQuery: !!searchQuery,
       searchCountry: !!searchCountry,
+      searchGenre: !!searchGenre,
       searchBtn: !!searchBtn,
       pastSearchesList: !!pastSearchesList
     });
@@ -60,18 +63,19 @@ document.addEventListener("DOMContentLoaded", () => {
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
       const country = normalizeCountry(searchCountry.value.trim());
-      console.log("Пошук запущено:", { query, country });
-      if (query || country) {
+      const genre = searchGenre.value.trim().toLowerCase();
+      console.log("Пошук запущено:", { query, country, genre });
+      if (query || country || genre) {
         if (query && !pastSearches.includes(query)) {
           pastSearches.unshift(query);
           if (pastSearches.length > 5) pastSearches.pop();
           localStorage.setItem("pastSearches", JSON.stringify(pastSearches));
           updatePastSearches();
         }
-        searchStations(query, country);
+        searchStations(query, country, genre);
       } else {
-        console.warn("Обидва поля пошуку порожні");
-        stationList.innerHTML = "<div class='station-item empty'>Введіть назву або країну</div>";
+        console.warn("Усі поля пошуку порожні");
+        stationList.innerHTML = "<div class='station-item empty'>Введіть назву, країну або жанр</div>";
       }
     });
 
@@ -80,6 +84,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     searchCountry.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") searchBtn.click();
+    });
+
+    searchGenre.addEventListener("keypress", (e) => {
       if (e.key === "Enter") searchBtn.click();
     });
 
@@ -146,10 +154,12 @@ document.addEventListener("DOMContentLoaded", () => {
           const newStations = await response.json();
           Object.keys(newStations).forEach(tab => {
             if (!stationLists[tab]) stationLists[tab] = [];
-            stationLists[tab] = [
-              ...newStations[tab].filter(s => !stationLists[tab].some(existing => existing.name === s.name)),
-              ...stationLists[tab]
-            ];
+            const newStationsForTab = newStations[tab].filter(s => 
+              !stationLists[tab].some(existing => existing.name === s.name) &&
+              !deletedStations.includes(s.name)
+            );
+            stationLists[tab] = [...stationLists[tab], ...newStationsForTab];
+            console.log(`Додано до ${tab}:`, newStationsForTab.map(s => s.name));
           });
           localStorage.setItem("stationsLastModified", response.headers.get("Last-Modified") || "");
           console.log("Новий stations.json успішно завантажено та об'єднано");
@@ -178,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    async function searchStations(query, country) {
+    async function searchStations(query, country, genre) {
       stationList.innerHTML = "<div class='station-item empty'>Пошук...</div>";
       try {
         abortController.abort();
@@ -186,6 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams();
         if (query) params.append("name", query);
         if (country) params.append("country", country);
+        if (genre) params.append("tag", genre);
         const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
         console.log("Запит до API:", url);
         const response = await fetch(url, {
@@ -294,7 +305,9 @@ document.addEventListener("DOMContentLoaded", () => {
           emoji: "🎶"
         });
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
-        updateStationList();
+        if (currentTab !== "srch") {
+          updateStationList();
+        }
       } else {
         alert("Ця станція вже додана до обраної вкладки!");
       }
@@ -494,6 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
       searchInput.style.display = tab === "srch" ? "flex" : "none";
       searchQuery.value = "";
       searchCountry.value = "";
+      searchGenre.value = "";
       updateStationList();
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
       const activeBtn = document.querySelector(`.tab-btn:nth-child(${["best", "techno", "trance", "ukraine", "pop", "srch"].indexOf(tab) + 1})`);
@@ -588,8 +602,11 @@ document.addEventListener("DOMContentLoaded", () => {
       hasUserInteracted = true;
       stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
       favoriteStations = favoriteStations.filter(name => name !== stationName);
+      deletedStations.push(stationName);
       localStorage.setItem("stationLists", JSON.stringify(stationLists));
       localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+      localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
+      console.log(`Видалено станцію ${stationName} з ${currentTab}, додано до deletedStations:`, deletedStations);
       if (stationLists[currentTab].length === 0) {
         currentIndex = 0;
       } else if (currentIndex >= stationLists[currentTab].length) {
@@ -599,7 +616,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function changeStation(index) {
-      if (index < 0 || index >= stationItems.length || stationItems[index].classList.contains("empty")) return;
+      if (!stationItems || index < 0 || index >= stationItems.length || stationItems[index].classList.contains("empty")) return;
       const item = stationItems[index];
       stationItems?.forEach(i => i.classList.remove("selected"));
       item.classList.add("selected");
@@ -646,6 +663,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function prevStation() {
       hasUserInteracted = true;
+      if (!stationItems?.length) return;
       currentIndex = currentIndex > 0 ? currentIndex - 1 : stationItems.length - 1;
       if (stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
       changeStation(currentIndex);
@@ -653,6 +671,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function nextStation() {
       hasUserInteracted = true;
+      if (!stationItems?.length) return;
       currentIndex = currentIndex < stationItems.length - 1 ? currentIndex + 1 : 0;
       if (stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
       changeStation(currentIndex);
