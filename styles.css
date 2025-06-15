@@ -341,7 +341,6 @@ h1 {
   gap: 4px;
   height: 60px;
   width: 84px;
-  align-items: center;
 }
 
 .wave-bar {
@@ -523,15 +522,6 @@ datalist {
     width: 35px;
   }
 
-  .wave-progress {
-    width: 70px;
-    height: 50px;
-  }
-
-  .wave-bar {
-    width: 8px;
-  }
-
   #currentStationInfo {
     padding: 12px;
     height: auto;
@@ -551,6 +541,15 @@ datalist {
 
   .station-info-content {
     gap: 10px;
+  }
+
+  .wave-progress {
+    width: 70px;
+    height: 50px;
+  }
+
+  .wave-bar {
+    width: 8px;
   }
 
   .tab-btn {
