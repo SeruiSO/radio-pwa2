@@ -339,25 +339,29 @@ h1 {
 .wave-progress {
   display: flex;
   gap: 4px;
-  height: 60px;
-  width: 84px;
+  height: 40px; /* Зменшено висоту для #currentStationInfo */
+  width: transparent;
+}
+
+#currentStationInfo .wave-progress {
+  align-items: center;
 }
 
 .wave-bar {
-  width: 10px;
+  width: 6px; /* Зменшено ширину для компактності */
   background: var(--accent);
-  border-radius: 5px;
-  animation: waveAnimation 1.2s infinite ease-in-out;
+  border-radius: 3px;
+  animation: waveAnimation 1.2s ease-in-out;
   animation-play-state: paused;
-  transition: background 0.4s ease;
+  transition: background 0.3s ease;
 }
 
 .wave-bar:nth-child(2) { animation-delay: 0.2s; }
-.wave-bar:nth-child(3) { animation-delay: 0.3s; }
-.wave-bar:nth-child(4) { animation-delay: 0.4s; }
-.wave-bar:nth-child(5) { animation-delay: 0.5s; }
-.wave-bar:nth-child(6) { animation-delay: 0.6s; }
-.wave-bar:nth-child(7) { animation-delay: 0.7s; }
+.wave-bar:nth-child(3) { animation-delay: 0.4s; }
+.wave-bar:nth-child(4) { animation-delay: 0.6s; }
+.wave-bar:nth-child(5) { animation-delay: 0.8s; }
+.wave-bar:nth-child(6) { animation-delay: 1.0s; }
+.wave-bar:nth-child(7) { animation-delay: 1.2s; }
 
 @keyframes waveAnimation {
   0%, 100% { transform: scaleY(0.3); }
@@ -544,12 +548,12 @@ datalist {
   }
 
   .wave-progress {
-    width: 70px;
-    height: 50px;
+    width: 60px;
+    height: 30px;
   }
 
   .wave-bar {
-    width: 8px;
+    width: 5px;
   }
 
   .tab-btn {
