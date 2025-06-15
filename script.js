@@ -48,6 +48,12 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.preload = "auto";
     audio.volume = parseFloat(localStorage.getItem("volume")) || 0.9;
 
+    // Ініціалізація стану візуалізатора
+    document.querySelectorAll(".wave-bar").forEach(bar => {
+      bar.style.animationPlayState = isPlaying ? "running" : "paused";
+    });
+    console.log("Ініціалізація візуалізатора: animationPlayState =", isPlaying ? "running" : "paused");
+
     updatePastSearches();
 
     document.querySelectorAll(".tab-btn").forEach((btn, index) => {
@@ -127,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function isValidUrl(url) {
-      return /^https:\/\/[^\s/$.?#].[^\s]*$/i.test(url); // Змінено на перевірку лише HTTPS
+      return /^https:\/\/[^\s/$.?#].[^\s]*$/i.test(url);
     }
 
     function resetStationInfo() {
@@ -205,9 +211,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (query) params.append("name", query);
         if (country) params.append("country", country);
         if (genre) params.append("tag", genre);
-        params.append("order", "clickcount"); // Сортування за популярністю
-        params.append("reverse", "true"); // Найпопулярніші першими
-        params.append("limit", "500"); // Обмеження до 500 станцій
+        params.append("order", "clickcount");
+        params.append("reverse", "true");
+        params.append("limit", "500");
         const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
         console.log("Запит до API:", url);
         const response = await fetch(url, {
@@ -217,7 +223,6 @@ document.addEventListener("DOMContentLoaded", () => {
           throw new Error(`HTTP ${response.status}`);
         }
         let stations = await response.json();
-        // Фільтруємо лише HTTPS-потоки
         stations = stations.filter(station => station.url_resolved && isValidUrl(station.url_resolved));
         console.log("Отримано станцій (після фільтрації HTTPS):", stations.length);
         renderSearchResults(stations);
