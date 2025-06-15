@@ -339,19 +339,22 @@ h1 {
 .wave-progress {
   display: flex;
   gap: 4px;
-  height: 40px; /* Зменшено висоту для #currentStationInfo */
-  width: transparent;
+  height: 40px;
+  width: 84px; /* Відновлено явну ширину */
+  opacity: 1; /* Переконаємося, що елемент видимий */
+  visibility: visible; /* Переконаємося, що елемент не прихований */
 }
 
 #currentStationInfo .wave-progress {
   align-items: center;
+  justify-content: flex-end;
 }
 
 .wave-bar {
-  width: 6px; /* Зменшено ширину для компактності */
+  width: 6px;
   background: var(--accent);
   border-radius: 3px;
-  animation: waveAnimation 1.2s ease-in-out;
+  animation: waveAnimation 1.2s ease-in-out infinite;
   animation-play-state: paused;
   transition: background 0.3s ease;
 }
