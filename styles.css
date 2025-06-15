@@ -471,7 +471,7 @@ datalist {
 }
 
 #searchQuery[list], #searchCountry[list], #searchGenre[list] {
-  background: var(--container-bg);
+  background: var(--radius);
   border: 1px solid var(--accent);
   border-radius: 4px;
   padding: 8px;
