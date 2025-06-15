@@ -96,7 +96,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 15px;
-  flex: 1;
+  width: 100%;
 }
 
 .station-text {
@@ -339,15 +339,14 @@ h1 {
 .wave-progress {
   display: flex;
   gap: 4px;
-  height: 40px;
-  width: 60px;
-  align-items: center;
+  height: 60px;
+  width: 84px;
 }
 
 .wave-bar {
-  width: 6px;
+  width: 10px;
   background: var(--accent);
-  border-radius: 3px;
+  border-radius: 5px;
   animation: waveAnimation 1.2s infinite ease-in-out;
   animation-play-state: paused;
   transition: background 0.4s ease;
@@ -545,12 +544,12 @@ datalist {
   }
 
   .wave-progress {
-    width: 50px;
-    height: 35px;
+    width: 70px;
+    height: 50px;
   }
 
   .wave-bar {
-    width: 5px;
+    width: 8px;
   }
 
   .tab-btn {
