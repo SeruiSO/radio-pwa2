@@ -82,8 +82,35 @@
     <div id="searchInput">
       <input type="text" id="searchQuery" list="pastSearches" placeholder="Назва станції">
       <datalist id="pastSearches"></datalist>
-      <input type="text" id="searchCountry" placeholder="Країна">
-      <input type="text" id="searchGenre" placeholder="Жанр">
+      <input type="text" id="searchCountry" list="countries" placeholder="Країна">
+      <datalist id="countries">
+        <option value="Україна">
+        <option value="Німеччина">
+        <option value="Франція">
+        <option value="Іспанія">
+        <option value="США">
+        <option value="Велика Британія">
+        <option value="Нідерланди">
+        <option value="Швейцарія">
+        <option value="Канада">
+        <option value="Австралія">
+        <option value="Польща">
+        <option value="Австрія">
+        <option value="Ірландія">
+      </datalist>
+      <input type="text" id="searchGenre" list="genres" placeholder="Жанр">
+      <datalist id="genres">
+        <option value="Techno">
+        <option value="Trance">
+        <option value="Pop">
+        <option value="Rock">
+        <option value="Dance">
+        <option value="Electronic">
+        <option value="House">
+        <option value="Minimal Techno">
+        <option value="Vocal Trance">
+        <option value="EDM">
+      </datalist>
       <button class="search-btn">🔍</button>
     </div>
     <div id="stationList" class="station-list"></div>
