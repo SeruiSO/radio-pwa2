@@ -1,4 +1,3 @@
-```javascript
 let currentTab = localStorage.getItem("currentTab") || "techno";
 let hasUserInteracted = false;
 let currentIndex = 0;
@@ -218,19 +217,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderSearchResults(stations) {
-      // Фільтруємо станції, щоб включати лише ті, що мають HTTPS-потоки
-      const httpsStations = stations.filter(station => 
-        (station.url || station.url_resolved || '').startsWith('https://')
-      );
-
-      if (!httpsStations.length) {
+      if (!stations.length) {
         stationList.innerHTML = "<div class='station-item empty'>Нічого не знайдено</div>";
         stationItems = [];
         return;
       }
-      
       const fragment = document.createDocumentFragment();
-      httpsStations.forEach((station, index) => {
+      stations.forEach((station, index) => {
         const item = document.createElement("div");
         item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
         item.dataset.value = station.url || station.url_resolved;
@@ -813,4 +806,3 @@ document.addEventListener("DOMContentLoaded", () => {
     loadStations();
   }
 });
-```
