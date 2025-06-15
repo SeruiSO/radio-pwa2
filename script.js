@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.volume = parseFloat(localStorage.getItem("volume")) || 0.9;
 
     updatePastSearches();
+    populateSearchSuggestions();
 
     document.querySelectorAll(".tab-btn").forEach((btn, index) => {
       const tabs = ["best", "techno", "trance", "ukraine", "pop", "search"];
@@ -90,6 +91,56 @@ document.addEventListener("DOMContentLoaded", () => {
     searchGenre.addEventListener("keypress", (e) => {
       if (e.key === "Enter") searchBtn.click();
     });
+
+    function populateSearchSuggestions() {
+      const suggestedCountries = [
+        "Germany",
+        "Ukraine",
+        "United States",
+        "United Kingdom",
+        "Netherlands",
+        "France",
+        "Spain",
+        "Switzerland",
+        "Belgium",
+        "Poland",
+        "Canada",
+        "Ireland",
+        "Australia",
+        "Austria",
+        "Italy",
+        "Greece",
+        "Cyprus",
+        "Turkey",
+        "Czech Republic",
+        "New Zealand",
+        "Bulgaria",
+        "Azerbaijan"
+      ];
+      const suggestedGenres = [
+        "Techno",
+        "Trance",
+        "Pop",
+        "Dance",
+        "Rock",
+        "Electronic",
+        "Vocal Trance",
+        "Minimal Techno",
+        "Melodic Techno",
+        "House",
+        "EDM",
+        "Jazz",
+        "Classical",
+        "Hip-Hop",
+        "Country"
+      ];
+
+      const countryDatalist = document.getElementById("suggestedCountries");
+      const genreDatalist = document.getElementById("suggestedGenres");
+
+      countryDatalist.innerHTML = suggestedCountries.map(country => `<option value="${country}">`).join("");
+      genreDatalist.innerHTML = suggestedGenres.map(genre => `<option value="${genre}">`).join("");
+    }
 
     function updatePastSearches() {
       pastSearchesList.innerHTML = "";
@@ -521,6 +572,7 @@ document.addEventListener("DOMContentLoaded", () => {
       searchQuery.value = "";
       searchCountry.value = "";
       searchGenre.value = "";
+      if (tab === "search") populateSearchSuggestions();
       updateStationList();
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
       const activeBtn = document.querySelector(`.tab-btn:nth-child(${["best", "techno", "trance", "ukraine", "pop", "search"].indexOf(tab) + 1})`);
