@@ -80,6 +80,7 @@ h1 {
   height: auto;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -96,13 +97,11 @@ h1 {
   display: flex;
   align-items: center;
   gap: 15px;
-  width: 100%;
 }
 
 .station-text {
   display: flex;
   flex-direction: column;
-  flex: 1;
 }
 
 #currentStationInfo .station-name {
@@ -340,13 +339,14 @@ h1 {
   display: flex;
   gap: 4px;
   height: 60px;
-  width: 84px;
+  margin-left: 8px;
+  margin-right: 8px;
 }
 
 .wave-bar {
-  width: 10px;
+  width: 8px;
   background: var(--accent);
-  border-radius: 5px;
+  border-radius: 4px;
   animation: waveAnimation 1.2s infinite ease-in-out;
   animation-play-state: paused;
   transition: background 0.4s ease;
@@ -544,12 +544,14 @@ datalist {
   }
 
   .wave-progress {
-    width: 70px;
-    height: 50px;
+    height: 40px;
+    margin-left: 6px;
+    margin-right: 6px;
   }
 
   .wave-bar {
-    width: 8px;
+    width: 6px;
+    border-radius: 3px;
   }
 
   .tab-btn {
