@@ -644,7 +644,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
       if (currentTab === "best") switchTab("best");
-      else updateStation(currentIndex);
+      else updateStationList();
     }
 
     function deleteStation(stationName) {
@@ -684,7 +684,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationGenreElement = currentStationInfo.querySelector(".station-genre");
       const stationCountryElement = currentStationInfo.querySelector(".station-country");
 
-      console.log("Оновлення currentStationInfo з даними:", item.dataset.name);
+      console.log("Оновлення currentStationInfo з даними:", item.dataset);
 
       if (stationNameElement) {
         stationNameElement.textContent = item.dataset.name || "";
@@ -703,7 +703,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
-          title: item.dataset.name || item.dataset.name || "Unknown Station",
+          title: item.dataset.name || "Unknown Station",
           artist: `${item.dataset.genre || ""} | ${item.dataset.country || ""}`,
           album: "Radio Music S O"
         });
@@ -766,34 +766,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       },
       resume: () => {
-          if (isPlaying && navigator.connection?.type !== "none") {
-            if (!audio.paused) return;
-            audio.pause();
-            audio.src = "";
-            audio.src = stationItems[currentIndex]?.dataset.value || "";
-            tryAutoPlay();
-          }
-        },
-      };
+        if (isPlaying && navigator.connection?.type !== "none") {
+          if (!audio.paused) return;
+          audio.pause();
+          audio.src = "";
+          audio.src = stationItems[currentIndex]?.dataset.value || "";
+          tryAutoPlay();
+        }
+      },
+      click: () => {
+        hasUserInteracted = true;
+      }
+    };
 
     function addEventListeners() {
       document.addEventListener("keydown", eventListeners.keydown);
       document.addEventListener("visibilitychange", eventListeners.visibilitychange);
-      document.addEventListener("click", eventListeners.resume);
-      forEach(event => {
-        hasUserInteracted = true;
-      }
-        );
-
-      }
+      document.addEventListener("resume", eventListeners.resume);
+      document.addEventListener("click", eventListeners.click);
+    }
 
     function removeEventListeners() {
       document.removeEventListener("keydown", eventListeners.keydown);
       document.removeEventListener("visibilitychange", eventListeners.visibilitychange);
-      forEach(event => removeEventListener("click");
-      );
       document.removeEventListener("resume", eventListeners.resume);
-      );
+      document.removeEventListener("click", eventListeners.click);
     }
 
     audio.addEventListener("playing", () => {
@@ -801,8 +798,7 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.textContent = "⏸";
       document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
       localStorage.setItem("isPlaying", isPlaying);
-      );
-    }
+    });
 
     audio.addEventListener("pause", () => {
       isPlaying = false;
@@ -812,7 +808,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = null;
       }
-      );
     });
 
     audio.addEventListener("error", () => {
@@ -820,7 +815,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Помилка аудіо:", audio.error?.message || "Невідома помилка", "для URL:", audio.src);
       if (isPlaying && errorCount < ERROR_LIMIT) {
         errorCount++;
-        setTimeout(() => nextStation, 1000);
+        setTimeout(nextStation, 1000);
       } else if (errorCount >= ERROR_LIMIT) {
         console.error("Досягнуто ліміт помилок відтворення");
       }
@@ -828,14 +823,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     audio.addEventListener("volumechange", () => {
       localStorage.setItem("volume", audio.volume);
-      event => {
-        localStorage.setItem("volume", event.volume);
-      }
-
     });
 
     window.addEventListener("online", () => {
-      console.log("Мережа restored");
+      console.log("Мережа відновлена");
       if (isPlaying && stationItems?.length && currentIndex < stationItems.length) {
         audio.pause();
         audio.src = "";
@@ -859,14 +850,9 @@ document.addEventListener("DOMContentLoaded", () => {
       navigator.mediaSession.setActionHandler("pause", togglePlayPause);
       navigator.mediaSession.setActionHandler("previoustrack", prevStation);
       navigator.mediaSession.setActionHandler("nexttrack", nextStation);
-      );
     }
-
-    document.addEventListener("click", () => {
-      hasUserInteracted = true;
-    });
 
     applyTheme(currentTheme);
     loadStations();
-  });
+  }
 });
