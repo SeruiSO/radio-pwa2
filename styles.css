@@ -5,7 +5,6 @@
   --accent: #00F0FF;
   --text: #F0F0F0;
   --accent-gradient: #003C4B;
-  --station-icon-size: 32px;
 }
 
 body {
@@ -102,7 +101,6 @@ h1 {
 
 .station-info-content {
   display: flex;
-  flex-direction: row;
   align-items: center;
   gap: 15px;
   width: 100%;
@@ -128,12 +126,6 @@ h1 {
 }
 
 #currentStationInfo .station-country {
-  font-size: 18px;
-  font-weight: 400;
-  margin-top: 2px;
-}
-
-#currentStationInfo .station-track {
   font-size: 18px;
   font-weight: 400;
   margin-top: 2px;
@@ -181,12 +173,11 @@ h1 {
   transition: all 0.3s ease;
 }
 
-.station-icon {
-  width: var(--station-icon-size);
-  height: var(--station-icon-size);
-  margin-right: 8px;
+.station-item img {
+  width: 24px;
+  height: 24px;
   object-fit: contain;
-  border-radius: 4px;
+  margin-right: 10px;
 }
 
 .station-item:hover, .station-item.selected {
@@ -537,11 +528,6 @@ datalist {
     margin: 4px 0;
   }
 
-  .station-icon {
-    width: 24px;
-    height: 24px;
-  }
-
   .theme-toggle, .share-button {
     top: 5px;
     padding: 4px;
@@ -571,10 +557,6 @@ datalist {
   }
 
   #currentStationInfo .station-country {
-    font-size: 16px;
-  }
-
-  #currentStationInfo .station-track {
     font-size: 16px;
   }
 

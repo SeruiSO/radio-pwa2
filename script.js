@@ -10,7 +10,6 @@ let errorCount = 0;
 const ERROR_LIMIT = 5;
 let pastSearches = JSON.parse(localStorage.getItem("pastSearches")) || [];
 let deletedStations = JSON.parse(localStorage.getItem("deletedStations")) || [];
-let trackUpdateInterval = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("audioPlayer");
@@ -18,28 +17,28 @@ document.addEventListener("DOMContentLoaded", () => {
   const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
   const currentStationInfo = document.getElementById("currentStationInfo");
   const themeToggle = document.querySelector(".theme-toggle");
+  const shareButton = document.querySelector(".share-button");
   const searchInput = document.getElementById("searchInput");
   const searchQuery = document.getElementById("searchQuery");
   const searchCountry = document.getElementById("searchCountry");
   const searchGenre = document.getElementById("searchGenre");
   const searchBtn = document.querySelector(".search-btn");
   const pastSearchesList = document.getElementById("pastSearches");
-  const shareButton = document.querySelector(".share-button");
 
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !shareButton) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList) {
     console.error("Один із необхідних DOM-елементів не знайдено", {
       audio: !!audio,
       stationList: !!stationList,
       playPauseBtn: !!playPauseBtn,
       currentStationInfo: !!currentStationInfo,
       themeToggle: !!themeToggle,
+      shareButton: !!shareButton,
       searchInput: !!searchInput,
       searchQuery: !!searchQuery,
       searchCountry: !!searchCountry,
       searchGenre: !!searchGenre,
       searchBtn: !!searchBtn,
-      pastSearchesList: !!pastSearchesList,
-      shareButton: !!shareButton
+      pastSearchesList: !!pastSearchesList
     });
     setTimeout(initializeApp, 100);
     return;
@@ -58,6 +57,18 @@ document.addEventListener("DOMContentLoaded", () => {
       const tabs = ["best", "techno", "trance", "ukraine", "pop", "search"];
       const tab = tabs[index];
       btn.addEventListener("click", () => switchTab(tab));
+    });
+
+    shareButton.addEventListener("click", () => {
+      if (navigator.share) {
+        navigator.share({
+          title: "Radio S O",
+          text: "Слухайте улюблені радіостанції з Radio S O!",
+          url: window.location.href
+        }).catch(error => console.error("Помилка при спробі поділитися:", error));
+      } else {
+        alert("Функція поділитися не підтримується у вашому браузері.");
+      }
     });
 
     document.querySelector(".controls .control-btn:nth-child(1)").addEventListener("click", prevStation);
@@ -93,24 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     searchGenre.addEventListener("keypress", (e) => {
       if (e.key === "Enter") searchBtn.click();
-    });
-
-    shareButton.addEventListener("click", () => {
-      hasUserInteracted = true;
-      const shareData = {
-        title: "Radio Music",
-        text: "Listen to your favorite radio stations with Radio Music!",
-        url: window.location.href
-      };
-      if (navigator.share) {
-        navigator.share(shareData)
-          .then(() => console.log("Поділитися успішно"))
-          .catch(error => console.error("Помилка під час поширення:", error));
-      } else {
-        navigator.clipboard.writeText(shareData.url)
-          .then(() => alert("Посилання скопійовано до буфера обміну!"))
-          .catch(error => console.error("Помилка копіювання:", error));
-      }
     });
 
     function populateSearchSuggestions() {
@@ -214,44 +207,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationNameElement = currentStationInfo.querySelector(".station-name");
       const stationGenreElement = currentStationInfo.querySelector(".station-genre");
       const stationCountryElement = currentStationInfo.querySelector(".station-country");
-      const stationTrackElement = currentStationInfo.querySelector(".station-track");
       if (stationNameElement) stationNameElement.textContent = "Обирайте станцію";
       else console.error("Елемент .station-name не знайдено в currentStationInfo");
       if (stationGenreElement) stationGenreElement.textContent = "жанр: -";
       else console.error("Елемент .station-genre не знайдено в currentStationInfo");
       if (stationCountryElement) stationCountryElement.textContent = "країна: -";
       else console.error("Елемент .station-country не знайдено в currentStationInfo");
-      if (stationTrackElement) stationTrackElement.textContent = "трек: -";
-      else console.error("Елемент .station-track не знайдено в currentStationInfo");
-    }
-
-    async function fetchCurrentTrack(stationuuid) {
-      if (!stationuuid || stationuuid === "null") {
-        const stationTrackElement = currentStationInfo.querySelector(".station-track");
-        if (stationTrackElement) stationTrackElement.textContent = "трек: -";
-        return;
-      }
-      try {
-        const response = await fetch(`https://de1.api.radio-browser.info/json/stations/byuuid/${stationuuid}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const [station] = await response.json();
-        const stationTrackElement = currentStationInfo.querySelector(".station-track");
-        if (stationTrackElement) {
-          const trackInfo = station.lastcheckok && station.tags ? station.tags.split(",")[0] : "-";
-          stationTrackElement.textContent = `трек: ${trackInfo}`;
-          if ("mediaSession" in navigator) {
-            navigator.mediaSession.metadata = new MediaMetadata({
-              title: station.name || "Unknown Station",
-              artist: trackInfo || "Unknown",
-              album: "Radio Music"
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Помилка отримання метаданих треку:", error);
-        const stationTrackElement = currentStationInfo.querySelector(".station-track");
-        if (stationTrackElement) stationTrackElement.textContent = "трек: -";
-      }
     }
 
     async function loadStations() {
@@ -354,10 +315,8 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name || "Unknown";
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
-        item.dataset.stationuuid = station.stationuuid || null;
-        item.dataset.favicon = station.favicon || "";
-        const favicon = station.favicon ? `<img class="station-icon" src="${station.favicon}" alt="" onerror="this.src='icon-192.png'">` : `${station.emoji || "🎶"}`;
-        item.innerHTML = `${favicon} ${station.name}<button class="add-btn">ADD</button>`;
+        const favicon = station.favicon || "https://via.placeholder.com/24";
+        item.innerHTML = `<img src="${favicon}" alt="${station.name} icon" onerror="this.src='https://via.placeholder.com/24'">${station.name}<button class="add-btn">ADD</button>`;
         fragment.appendChild(item);
       });
       stationList.innerHTML = "";
@@ -429,9 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
           name: item.dataset.name,
           genre: item.dataset.genre,
           country: item.dataset.country,
-          emoji: "🎶",
-          favicon: item.dataset.favicon || "",
-          stationuuid: item.dataset.stationuuid || null
+          emoji: "🎶"
         });
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
         if (currentTab !== "search") {
@@ -613,11 +570,6 @@ document.addEventListener("DOMContentLoaded", () => {
           errorCount = 0;
           console.log("Відтворення розпочато успішно");
           document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
-          if (stationItems[currentIndex].dataset.stationuuid) {
-            clearInterval(trackUpdateInterval);
-            fetchCurrentTrack(stationItems[currentIndex].dataset.stationuuid);
-            trackUpdateInterval = setInterval(() => fetchCurrentTrack(stationItems[currentIndex].dataset.stationuuid), 15000);
-          }
         })
         .catch(error => {
           console.error("Помилка відтворення:", error);
@@ -676,14 +628,11 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name;
         item.dataset.genre = shortenGenre(station.genre);
         item.dataset.country = station.country;
-        item.dataset.stationuuid = station.stationuuid || null;
-        item.dataset.favicon = station.favicon || "";
         const deleteButton = ["techno", "trance", "ukraine", "pop"].includes(currentTab)
           ? `<button class="delete-btn">🗑</button>`
           : "";
-        const favicon = station.favicon ? `<img class="station-icon" src="${station.favicon}" alt="" onerror="this.src='icon-192.png'">` : `${station.emoji || "🎶"}`;
         item.innerHTML = `
-          ${favicon} ${station.name}
+          ${station.emoji || "🎶"} ${station.name}
           <div class="buttons-container">
             ${deleteButton}
             <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>
@@ -772,7 +721,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationNameElement = currentStationInfo.querySelector(".station-name");
       const stationGenreElement = currentStationInfo.querySelector(".station-genre");
       const stationCountryElement = currentStationInfo.querySelector(".station-country");
-      const stationTrackElement = currentStationInfo.querySelector(".station-track");
 
       console.log("Оновлення currentStationInfo з даними:", item.dataset);
 
@@ -791,15 +739,12 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         console.error("Елемент .station-country не знайдено");
       }
-      if (stationTrackElement) {
-        stationTrackElement.textContent = "трек: -";
-      } else {
-        console.error("Елемент .station-track не знайдено");
-      }
-      clearInterval(trackUpdateInterval);
-      if (item.dataset.stationuuid && item.dataset.stationuuid !== "null") {
-        fetchCurrentTrack(item.dataset.stationuuid);
-        trackUpdateInterval = setInterval(() => fetchCurrentTrack(item.dataset.stationuuid), 15000);
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: item.dataset.name || "Unknown Station",
+          artist: `${item.dataset.genre || "Unknown"} | ${item.dataset.country || "Unknown"}`,
+          album: "Radio Music"
+        });
       }
     }
 
@@ -835,7 +780,6 @@ document.addEventListener("DOMContentLoaded", () => {
         isPlaying = false;
         playPauseBtn.textContent = "▶";
         document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
-        clearInterval(trackUpdateInterval);
       }
       localStorage.setItem("isPlaying", isPlaying);
     }
@@ -894,7 +838,6 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.textContent = "▶";
       document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
       localStorage.setItem("isPlaying", isPlaying);
-      clearInterval(trackUpdateInterval);
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = null;
       }
