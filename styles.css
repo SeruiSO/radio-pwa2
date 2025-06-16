@@ -174,8 +174,8 @@ h1 {
 }
 
 .station-item img {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
   margin-right: 10px;
 }
@@ -526,6 +526,11 @@ datalist {
   .station-item {
     padding: 10px;
     margin: 4px 0;
+  }
+
+  .station-item img {
+    width: 28px;
+    height: 28px;
   }
 
   .theme-toggle, .share-button {
