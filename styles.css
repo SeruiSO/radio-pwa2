@@ -147,32 +147,36 @@ h1 {
   justify-content: center;
 }
 
-.mini-equalizer {
-  display: flex;
-  gap: 4px;
+.expanding-rings {
+  position: relative;
+  width: 20px;
+  height: 20px;
   margin-left: auto;
-  order: 3; /* Еквалайзер останній */
+  order: 3; /* Кільця останні */
 }
 
-.equalizer-bar {
-  width: 6px;
-  height: 20px;
-  background: var(--accent);
-  border-radius: 3px;
-  animation: equalizer 1.2s infinite ease-in-out;
+.ring {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: expand 2s infinite ease-out;
   animation-play-state: paused;
 }
 
-.equalizer-bar.playing {
+.ring.playing {
   animation-play-state: running;
 }
 
-.equalizer-bar:nth-child(2) { animation-delay: 0.2s; }
-.equalizer-bar:nth-child(3) { animation-delay: 0.4s; }
+.ring:nth-child(2) {
+  animation-delay: 1s;
+}
 
-@keyframes equalizer {
-  0%, 100% { transform: scaleY(0.4); }
-  50% { transform: scaleY(1); }
+@keyframes expand {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(2); opacity: 0; }
 }
 
 .station-list {
@@ -629,9 +633,9 @@ datalist {
     font-size: 50px; /* Для емодзі на мобільних */
   }
 
-  .equalizer-bar {
-    width: 5px;
-    height: 16px;
+  .ring {
+    width: 12px;
+    height: 12px;
   }
 
   .tab-btn {

@@ -42,18 +42,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Radio Music</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#00F0FF">
+  <title>Radio Music S O</title>
+  <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <audio id="audioPlayer" preload="auto"></audio>
-  <div class="theme-toggle">🌙</div>
-  <div class="share-button">📤</div>
+  <button class="theme-toggle">🌙</button>
+  <button class="share-button">📤</button>
   <div class="container">
     <h1>🎧 Radio Music</h1>
+    <audio id="audioPlayer"></audio>
     <div id="currentStationInfo">
       <div class="station-info-content">
         <div class="station-icon">🎵</div>
@@ -62,14 +61,12 @@
           <div class="station-genre">жанр: -</div>
           <div class="station-country">країна: -</div>
         </div>
-        <div class="mini-equalizer">
-          <div class="equalizer-bar"></div>
-          <div class="equalizer-bar"></div>
-          <div class="equalizer-bar"></div>
+        <div class="expanding-rings">
+          <div class="ring"></div>
+          <div class="ring"></div>
         </div>
       </div>
     </div>
-    <div id="stationList" class="station-list"></div>
     <div class="tabs">
       <button class="tab-btn">Best</button>
       <button class="tab-btn">Techno</button>
@@ -79,19 +76,29 @@
       <button class="tab-btn">Search</button>
     </div>
     <div id="searchInput">
-      <input id="searchQuery" type="text" placeholder="Назва станції..." list="pastSearches">
+      <input type="text" id="searchQuery" list="pastSearches" placeholder="Назва станції">
       <datalist id="pastSearches"></datalist>
-      <input id="searchCountry" type="text" placeholder="Країна..." list="suggestedCountries">
+      <input type="text" id="searchCountry" list="suggestedCountries" placeholder="Країна">
       <datalist id="suggestedCountries"></datalist>
-      <input id="searchGenre" type="text" placeholder="Жанр..." list="suggestedGenres">
+      <input type="text" id="searchGenre" list="suggestedGenres" placeholder="Жанр">
       <datalist id="suggestedGenres"></datalist>
       <button class="search-btn">🔍</button>
     </div>
+    <div id="stationList" class="station-list"></div>
     <div class="controls-container">
       <div class="controls">
         <button class="control-btn">⏮</button>
         <button class="control-btn">▶</button>
         <button class="control-btn">⏭</button>
+      </div>
+      <div class="wave-progress">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
       </div>
     </div>
   </div>
