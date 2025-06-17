@@ -137,15 +137,15 @@ h1 {
 }
 
 .station-icon {
-  width: 60px; /* Розмір зображення станції */
-  height: 60px;
+  width: 80px; /* Збільшено на ~33% з 60px */
+  height: 80px;
   object-fit: contain;
   order: 1; /* Зображення перше */
 }
 
 .pulse-dot {
-  width: 12px;
-  height: 12px;
+  width: 16px; /* Збільшено на ~33% з 12px */
+  height: 16px;
   background: var(--accent);
   border-radius: 50%;
   animation: pulse 1.5s infinite ease-in-out;
@@ -160,7 +160,7 @@ h1 {
 
 @keyframes pulse {
   0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.5); opacity: 0.7; }
+  50% { transform: scale(2); opacity: 0.6; } /* Збільшено масштаб для інтенсивнішої пульсації */
   100% { transform: scale(1); opacity: 1; }
 }
 
@@ -274,7 +274,7 @@ h1 {
 .tabs {
   display: flex;
   justify-content: space-between;
-  margin: 5px 0;
+  margin: 5px 0; /* Зменшено відступи */
   background: var(--container-bg);
   padding: 5px;
   border-radius: 10px;
@@ -310,7 +310,7 @@ h1 {
 
 #searchInput {
   display: none;
-  margin: 5px 0;
+  margin: 5px 0; /* Зменшено відступи */
   padding: 10px;
   border-radius: 8px;
   border: 2px solid var(--accent);
@@ -603,13 +603,13 @@ datalist {
   }
 
   .station-icon {
-    width: 50px;
-    height: 50px;
+    width: 65px; /* Збільшено на ~30% з 50px для мобільних */
+    height: 65px;
   }
 
   .pulse-dot {
-    width: 10px;
-    height: 10px;
+    width: 13px; /* Збільшено на ~30% з 10px для мобільних */
+    height: 13px;
   }
 
   .tab-btn {
