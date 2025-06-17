@@ -673,7 +673,7 @@ document.addEventListener("DOMContentLoaded", () => {
       item.classList.add("selected");
       currentIndex = index;
       updateCurrentStation(item);
-      localStorage.setProperty(`lastStation_${currentTab}`, index);
+      localStorage.setItem(`lastStation_${currentTab}`, index);
       tryAutoPlay();
     }
 
