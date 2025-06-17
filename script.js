@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (stationCountryElement) stationCountryElement.textContent = "країна: -";
       else console.error("Елемент .station-country не знайдено");
       if (stationIconElement) {
-        stationIconElement.innerHTML = "🎵";
+        stationIconElement.innerHTML = "📻";
         stationIconElement.style.backgroundImage = "none";
       } else console.error("Елемент .station-icon не знайдено");
     }
@@ -283,7 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
-        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '">` : "🎵 ";
+        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='📻 '">` : "📻 ";
         item.innerHTML = `${iconHtml}<span class="station-name">${station.name}</span><button class="add-btn">ADD</button>`;
         fragment.appendChild(item);
       });
@@ -505,9 +505,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length || !hasUserInteracted) {
         console.log("Пропуск tryAutoPlay", { isPlaying, hasStationItems: !!stationItems?.length, isIndexValid: currentIndex < stationItems.length, hasUserInteracted });
         document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.remove("playing"));
-        if (!hasUserInteracted && isPlaying) {
-          alert("Будь ласка, взаємодійте зі сторінкою (наприклад, натисніть кнопку), щоб увімкнути відтворення аудіо.");
-        }
         return;
       }
       if (audio.src === stationItems[currentIndex].dataset.value && !audio.paused) {
@@ -593,7 +590,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.genre = shortenGenre(station.genre);
         item.dataset.country = station.country;
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
-        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '">` : "🎵 ";
+        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='📻 '">` : "📻 ";
         const deleteButton = ["techno", "trance", "ukraine", "pop"].includes(currentTab)
           ? `<button class="delete-btn">🗑</button>`
           : "";
@@ -676,7 +673,7 @@ document.addEventListener("DOMContentLoaded", () => {
       item.classList.add("selected");
       currentIndex = index;
       updateCurrentStation(item);
-      localStorage.setItem(`lastStation_${currentTab}`, index);
+      localStorage.setProperty(`lastStation_${currentTab}`, index);
       tryAutoPlay();
     }
 
@@ -715,7 +712,7 @@ document.addEventListener("DOMContentLoaded", () => {
           stationIconElement.style.backgroundRepeat = "no-repeat";
           stationIconElement.style.backgroundPosition = "center";
         } else {
-          stationIconElement.innerHTML = "🎵";
+          stationIconElement.innerHTML = "📻";
           stationIconElement.style.backgroundImage = "none";
         }
       } else {
