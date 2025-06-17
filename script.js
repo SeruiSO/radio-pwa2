@@ -169,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationNameElement = currentStationInfo.querySelector(".station-name");
       const stationGenreElement = currentStationInfo.querySelector(".station-genre");
       const stationCountryElement = currentStationInfo.querySelector(".station-country");
-      const stationIconElement = currentStationInfo.querySelector(".station-icon");
+      const stationIconElement = document.querySelector(".station-icon");
       if (stationNameElement) stationNameElement.textContent = "Обирайте станцію";
       else console.error("Елемент .station-name не знайдено");
       if (stationGenreElement) stationGenreElement.textContent = "жанр: -";
@@ -413,57 +413,57 @@ document.addEventListener("DOMContentLoaded", () => {
         bodyBg: "#0A0A0A",
         containerBg: "#121212",
         accent: "#FF4081",
-        text: "#FCE4FF",
+        text: "#FCE4EC",
         accentGradient: "#4B1A2E"
       },
       "violet-vortex": {
-        bodyBg": "#121212",
-        containerBg": "#1A1A",
+        bodyBg: "#121212",
+        containerBg: "#1A1A1A",
         accent: "#7C4DFF",
-        text: "#EDE7FF",
-        accentGradient: "#2E1F4A"
+        text: "#EDE7F6",
+        accentGradient: "#2E1A47"
       },
       "aqua-glow": {
-        bodyBg": "#0A0A0A",
-        containerBg": "#121212",
+        bodyBg: "#0A0A0A",
+        containerBg: "#121212",
         accent: "#26C6DA",
-        text: "#E5F2FF",
-        accentGradient: "#1A4B4C"
+        text: "#B2EBF2",
+        accentGradient: "#1A3C4B"
       },
       "cosmic-indigo": {
         bodyBg: "#121212",
-        containerBg": "#1A1A1A",
+        containerBg: "#1A1A1A",
         accent: "#3F51B5",
-        text: "#E7F0",
-        accentGradient: "#1A2A5B"
+        text: "#BBDEFB",
+        accentGradient: "#1A2A5A"
       },
       "mystic-jade": {
-        bodyBg": "#0A0A0A",
-        containerBg": "#121212",
+        bodyBg: "#0A0A0A",
+        containerBg: "#121212",
         accent: "#26A69A",
-        text: "#E2FFF",
-        accentGradient: "#1A4B",
+        text: "#B2DFDB",
+        accentGradient: "#1A3C4B"
       },
       "aurora-haze": {
-        bodyBg": "#121212",
-        containerBg": "#1A1A",
+        bodyBg: "#121212",
+        containerBg: "#1A1A1A",
         accent: "#64FFDA",
-        text: "#E0FFFF",
+        text: "#E0F7FA",
         accentGradient: "#1A4B4B"
       },
       "starlit-amethyst": {
-        bodyBg": "#0A0A0A",
-        containerBg": "#121212",
+        bodyBg: "#0A0A0A",
+        containerBg: "#121212",
         accent: "#B388FF",
-        text: "#E1E7EB",
-        accentGradient: "#2E1A4A"
+        text: "#E1BEE7",
+        accentGradient: "#2E1A47"
       },
       "lunar-frost": {
-        bodyBg": "#F5F7FA",
-        containerBg": "#FFFFFF",
+        bodyBg: "#F5F7FA",
+        containerBg: "#FFFFFF",
         accent: "#40C4FF",
         text: "#212121",
-        accentGradient: "#E0F5FC"
+        accentGradient: "#B3E5FC"
       }
     };
     let currentTheme = localStorage.getItem("selectedTheme") || "neon-pulse";
@@ -486,8 +486,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function toggleTheme() {
       const themesOrder = [
-        "neon-pulse", "lime-surge", "flamingo-f", "violet-vortex",
-        "aqua-glow", "cosmic-indi", "mystic-j", "aurora-h",
+        "neon-pulse", "lime-surge", "flamingo-flash", "violet-vortex",
+        "aqua-glow", "cosmic-indigo", "mystic-jade", "aurora-haze",
         "starlit-amethyst", "lunar-frost"
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
@@ -512,13 +512,15 @@ document.addEventListener("DOMContentLoaded", () => {
             });
           }
         });
+      });
+
       navigator.serviceWorker.addEventListener("message", event => {
         if (event.data.type === "CACHE_UPDATED" && event.data.reload) {
           console.log('Оновлено кеш, виконую примусове перезавантаження...');
           window.location.reload(true);
         }
         if (event.data.type === "NETWORK_STATUS" && event.data.online && isPlaying && stationItems?.length && currentIndex < stationItems.length) {
-          console.log("Отримано повідомлення від Service Worker: мережа відновлена');
+          console.log("Отримано повідомлення від Service Worker: мережа відновлена");
           audio.pause();
           audio.src = "";
           audio.src = stationItems[currentIndex].dataset.value;
@@ -528,8 +530,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function tryAutoPlay() {
-      if (!navigator.onLine()) {
-        console.log('Пристрій офлайн, пропускаємо відтворення');
+      if (!navigator.onLine) {
+        console.log("Пристрій офлайн, пропускаємо відтворення");
         return;
       }
       if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length || !hasUserInteracted) {
