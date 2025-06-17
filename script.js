@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!url) return false;
       try {
         new URL(url);
-        return /^https:\/\/[^\s/$.?#].[^\s]*$/i.test(url);
+        return /^https:\/\/[^\s/$.?#].[^\s]*$/i.test(url) && !url.includes('example.com');
       } catch {
         return false;
       }
@@ -214,15 +214,27 @@ document.addEventListener("DOMContentLoaded", () => {
           // Примусово оновлюємо станції
           Object.keys(newStations).forEach(tab => {
             if (!stationLists[tab]) stationLists[tab] = [];
-            const newStationsForTab = newStations[tab].filter(
-              s => !stationLists[tab].some(existing => existing.value === s.value) &&
-              !deletedStations.includes(s.value)
+            // Оновлюємо тільки якщо є нові favicon або нові станції
+            const newStationsForTab = newStations[tab].map(s => ({
+              ...s,
+              favicon: isValidUrl(s.favicon) ? s.favicon : ""
+            })).filter(
+              s => !deletedStations.includes(s.value) &&
+              (!stationLists[tab].some(existing => existing.value === s.value) ||
+              stationLists[tab].some(existing => existing.value === s.value && !existing.favicon && s.favicon))
             );
             if (newStationsForTab.length > 0) {
-              console.log(`Оновлення ${tab}: заміна старих станцій`);
-              stationLists[tab] = [...newStationsForTab];
+              console.log(`Оновлення ${tab}: додано ${newStationsForTab.length} станцій`);
+              // Замінюємо старі станції новими, якщо є favicon
+              stationLists[tab] = stationLists[tab].map(existing => {
+                const newStation = newStationsForTab.find(s => s.value === existing.value);
+                return newStation || existing;
+              });
+              // Додаємо нові станції
+              stationLists[tab].push(...newStationsForTab.filter(s => !stationLists[tab].some(existing => existing.value === s.value)));
+            } else {
+              console.log(`Додано до ${tab}: 0 станцій`);
             }
-            console.log(`Додано до ${tab}: ${newStationsForTab.length} станцій`);
           });
           localStorage.setItem("stationsLastModified", response.headers.get("Last-Modified") || "");
           console.log("Новий stations.json успішно завантажено та оновлено");
@@ -297,7 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name || "Unknown";
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
-        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
+        item.dataset.favicon = isValidUrl(station.favicon) ? station.favicon : "";
         const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.src='/icon-192.png'; console.log('Помилка favicon: ${station.favicon}');">` : "🎵 ";
         item.innerHTML = `${iconHtml}<span class="station-name">${station.name}</span><button class="add-btn">ADD</button>`;
         fragment.appendChild(item);
@@ -401,57 +413,57 @@ document.addEventListener("DOMContentLoaded", () => {
         bodyBg: "#0A0A0A",
         containerBg: "#121212",
         accent: "#FF4081",
-        text: "#FCE4EC",
+        text: "#FCE4FF",
         accentGradient: "#4B1A2E"
       },
       "violet-vortex": {
-        bodyBg: "#121212",
-        containerBg: "#1A1A1A",
+        bodyBg": "#121212",
+        containerBg": "#1A1A",
         accent: "#7C4DFF",
-        text: "#EDE7F6",
-        accentGradient: "#2E1A47"
+        text: "#EDE7FF",
+        accentGradient: "#2E1F4A"
       },
       "aqua-glow": {
-        bodyBg: "#0A0A0A",
-        containerBg: "#121212",
+        bodyBg": "#0A0A0A",
+        containerBg": "#121212",
         accent: "#26C6DA",
-        text: "#B2EBF2",
-        accentGradient: "#1A3C4B"
+        text: "#E5F2FF",
+        accentGradient: "#1A4B4C"
       },
       "cosmic-indigo": {
         bodyBg: "#121212",
-        containerBg: "#1A1A1A",
+        containerBg": "#1A1A1A",
         accent: "#3F51B5",
-        text: "#BBDEFB",
-        accentGradient: "#1A2A5A"
+        text: "#E7F0",
+        accentGradient: "#1A2A5B"
       },
       "mystic-jade": {
-        bodyBg: "#0A0A0A",
-        containerBg: "#121212",
+        bodyBg": "#0A0A0A",
+        containerBg": "#121212",
         accent: "#26A69A",
-        text: "#B2DFDB",
-        accentGradient: "#1A3C4B"
+        text: "#E2FFF",
+        accentGradient: "#1A4B",
       },
       "aurora-haze": {
-        bodyBg: "#121212",
-        containerBg: "#1A1A1A",
+        bodyBg": "#121212",
+        containerBg": "#1A1A",
         accent: "#64FFDA",
-        text: "#E0F7FA",
+        text: "#E0FFFF",
         accentGradient: "#1A4B4B"
       },
       "starlit-amethyst": {
-        bodyBg: "#0A0A0A",
-        containerBg: "#121212",
+        bodyBg": "#0A0A0A",
+        containerBg": "#121212",
         accent: "#B388FF",
-        text: "#E1BEE7",
-        accentGradient: "#2E1A47"
+        text: "#E1E7EB",
+        accentGradient: "#2E1A4A"
       },
       "lunar-frost": {
-        bodyBg: "#F5F7FA",
-        containerBg: "#FFFFFF",
+        bodyBg": "#F5F7FA",
+        containerBg": "#FFFFFF",
         accent: "#40C4FF",
         text: "#212121",
-        accentGradient: "#B3E5FC"
+        accentGradient: "#E0F5FC"
       }
     };
     let currentTheme = localStorage.getItem("selectedTheme") || "neon-pulse";
@@ -474,8 +486,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function toggleTheme() {
       const themesOrder = [
-        "neon-pulse", "lime-surge", "flamingo-flash", "violet-vortex",
-        "aqua-glow", "cosmic-indigo", "mystic-jade", "aurora-haze",
+        "neon-pulse", "lime-surge", "flamingo-f", "violet-vortex",
+        "aqua-glow", "cosmic-indi", "mystic-j", "aurora-h",
         "starlit-amethyst", "lunar-frost"
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
@@ -500,15 +512,13 @@ document.addEventListener("DOMContentLoaded", () => {
             });
           }
         });
-      });
-
       navigator.serviceWorker.addEventListener("message", event => {
         if (event.data.type === "CACHE_UPDATED" && event.data.reload) {
           console.log('Оновлено кеш, виконую примусове перезавантаження...');
           window.location.reload(true);
         }
         if (event.data.type === "NETWORK_STATUS" && event.data.online && isPlaying && stationItems?.length && currentIndex < stationItems.length) {
-          console.log("Отримано повідомлення від Service Worker: мережа відновлена");
+          console.log("Отримано повідомлення від Service Worker: мережа відновлена');
           audio.pause();
           audio.src = "";
           audio.src = stationItems[currentIndex].dataset.value;
@@ -518,8 +528,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function tryAutoPlay() {
-      if (!navigator.onLine) {
-        console.log("Пристрій офлайн, пропускаємо відтворення");
+      if (!navigator.onLine()) {
+        console.log('Пристрій офлайн, пропускаємо відтворення');
         return;
       }
       if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length || !hasUserInteracted) {
@@ -612,7 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name;
         item.dataset.genre = shortenGenre(station.genre);
         item.dataset.country = station.country;
-        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
+        item.dataset.favicon = isValidUrl(station.favicon) ? station.favicon : "";
         console.log(`Рендеринг станції ${station.name}, favicon: ${station.favicon}`);
         const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.src='/icon-192.png'; console.log('Помилка favicon: ${station.favicon}');">` : "🎵 ";
         const deleteButton = ["techno", "trance", "ukraine", "pop"].includes(currentTab)

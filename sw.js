@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-pwa-cache-v100';
+const CACHE_NAME = 'radio-pwa-cache-v102';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -87,13 +87,14 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
         .then(networkResponse => {
+          console.log(`Завантажено favicon: ${requestUrl.href}`);
           return caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, networkResponse.clone());
             return networkResponse;
           });
         })
         .catch(() => {
-          console.log(`Помилка завантаження зображення: ${requestUrl.href}`);
+          console.log(`Помилка завантаження favicon: ${requestUrl.href}`);
           return caches.match('/icon-192.png') || new Response('Image not available', { status: 404 });
         })
     );
