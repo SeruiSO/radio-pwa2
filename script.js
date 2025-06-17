@@ -504,7 +504,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length || !hasUserInteracted) {
         console.log("Пропуск tryAutoPlay", { isPlaying, hasStationItems: !!stationItems?.length, isIndexValid: currentIndex < stationItems.length, hasUserInteracted });
-        document.querySelectorAll(".ring").forEach(bar => bar.classList.remove("playing"));
+        document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.remove("playing"));
+        if (!hasUserInteracted && isPlaying) {
+          alert("Будь ласка, взаємодійте зі сторінкою (наприклад, натисніть кнопку), щоб увімкнути відтворення аудіо.");
+        }
         return;
       }
       if (audio.src === stationItems[currentIndex].dataset.value && !audio.paused) {
@@ -517,7 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorCount >= ERROR_LIMIT) {
           console.error("Досягнуто ліміт помилок відтворення");
         }
-        document.querySelectorAll(".ring").forEach(bar => bar.classList.remove("playing"));
+        document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.remove("playing"));
         return;
       }
       audio.pause();
@@ -530,7 +533,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => {
           errorCount = 0;
           console.log("Відтворення розпочато успішно");
-          document.querySelectorAll(".ring").forEach(bar => bar.classList.add("playing"));
+          document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.add("playing"));
         })
         .catch(error => {
           console.error("Помилка відтворення:", error);
@@ -540,7 +543,7 @@ document.addEventListener("DOMContentLoaded", () => {
               console.error("Досягнуто ліміт помилок відтворення");
             }
           }
-          document.querySelectorAll(".ring").forEach(bar => bar.classList.remove("playing"));
+          document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.remove("playing"));
         });
     }
 
@@ -673,7 +676,7 @@ document.addEventListener("DOMContentLoaded", () => {
       item.classList.add("selected");
       currentIndex = index;
       updateCurrentStation(item);
-      localStorage.setProperty(`lastStation_${currentTab}`, index);
+      localStorage.setItem(`lastStation_${currentTab}`, index);
       tryAutoPlay();
     }
 
@@ -753,12 +756,12 @@ document.addEventListener("DOMContentLoaded", () => {
         isPlaying = true;
         tryAutoPlay();
         playPauseBtn.textContent = "⏸";
-        document.querySelectorAll(".ring").forEach(bar => bar.classList.add("playing"));
+        document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.add("playing"));
       } else {
         audio.pause();
         isPlaying = false;
         playPauseBtn.textContent = "▶";
-        document.querySelectorAll(".ring").forEach(bar => bar.classList.remove("playing"));
+        document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.remove("playing"));
       }
       localStorage.setItem("isPlaying", isPlaying);
     }
@@ -813,14 +816,14 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("playing", () => {
       isPlaying = true;
       playPauseBtn.textContent = "⏸";
-      document.querySelectorAll(".ring").forEach(bar => bar.classList.add("playing"));
+      document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.add("playing"));
       localStorage.setItem("isPlaying", isPlaying);
     });
 
     audio.addEventListener("pause", () => {
       isPlaying = false;
       playPauseBtn.textContent = "▶";
-      document.querySelectorAll(".ring").forEach(bar => bar.classList.remove("playing"));
+      document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.remove("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = null;
@@ -828,7 +831,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     audio.addEventListener("error", () => {
-      document.querySelectorAll(".ring").forEach(bar => bar.classList.remove("playing"));
+      document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.remove("playing"));
       console.error("Помилка аудіо:", audio.error?.message || "Невідома помилка", "для URL:", audio.src);
       if (isPlaying && errorCount < ERROR_LIMIT) {
         errorCount++;
