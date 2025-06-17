@@ -5,7 +5,6 @@
   --accent: #00F0FF;
   --text: #F0F0F0;
   --accent-gradient: #003C4B;
-  --transition: all 0.3s ease; /* Centralized transition */
 }
 
 body {
@@ -21,7 +20,7 @@ body {
   overflow-x: hidden;
   padding-top: 10px;
   box-sizing: border-box;
-  transition: var(--transition);
+  transition: background 0.4s ease, color 0.4s ease;
 }
 
 .container {
@@ -36,7 +35,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  transition: var(--transition);
+  transition: background 0.4s ease, border-color 0.4s ease;
 }
 
 h1 {
@@ -44,7 +43,7 @@ h1 {
   margin: 5px 0;
   text-align: center;
   color: var(--accent);
-  transition: var(--transition);
+  transition: color 0.4s ease;
 }
 
 .theme-toggle, .share-button {
@@ -60,7 +59,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
 .theme-toggle {
@@ -92,7 +91,7 @@ h1 {
   top: 0;
   z-index: 10;
   box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
-  transition: var(--transition);
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 #currentStationInfo:hover {
@@ -111,7 +110,7 @@ h1 {
   display: flex;
   flex-direction: column;
   flex: 1;
-  order: 2;
+  order: 2; /* Текст іде другим, щоб зображення було ліворуч */
 }
 
 #currentStationInfo .station-name {
@@ -141,43 +140,39 @@ h1 {
   width: 80px;
   height: 80px;
   object-fit: contain;
-  order: 1;
-  font-size: 60px;
+  order: 1; /* Зображення перше */
+  font-size: 60px; /* Для емодзі, якщо немає іконки */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.expanding-rings {
-  position: relative;
-  width: 20px;
-  height: 20px;
+.mini-equalizer {
+  display: flex;
+  gap: 4px;
   margin-left: auto;
-  order: 3;
+  order: 3; /* Еквалайзер останній */
 }
 
-.ring {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--accent);
-  border-radius: 50%;
-  opacity: 0.8;
-  animation: expand 2s infinite ease-out;
+.equalizer-bar {
+  width: 6px;
+  height: 20px;
+  background: var(--accent);
+  border-radius: 3px;
+  animation: equalizer 1.2s infinite ease-in-out;
   animation-play-state: paused;
 }
 
-.ring.playing {
+.equalizer-bar.playing {
   animation-play-state: running;
 }
 
-.ring:nth-child(2) {
-  animation-delay: 1s;
-}
+.equalizer-bar:nth-child(2) { animation-delay: 0.2s; }
+.equalizer-bar:nth-child(3) { animation-delay: 0.4s; }
 
-@keyframes expand {
-  0% { transform: scale(0.5); opacity: 0.8; }
-  100% { transform: scale(2); opacity: 0; }
+@keyframes equalizer {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
 }
 
 .station-list {
@@ -191,7 +186,7 @@ h1 {
   scrollbar-width: thin;
   scrollbar-color: var(--accent) var(--container-bg);
   flex-grow: 1;
-  transition: var(--transition);
+  transition: border-color 0.4s ease;
 }
 
 .station-list::-webkit-scrollbar {
@@ -212,14 +207,14 @@ h1 {
   cursor: pointer;
   border-radius: 8px;
   font-weight: 500;
-  border: 1px solid transparent;
+  border: 1px solid var(--text);
   margin: 5px 0;
   color: var(--text);
   background: var(--container-bg);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
 .station-item img {
@@ -230,18 +225,17 @@ h1 {
 }
 
 .station-item .station-name {
-  color: var(--text);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.2;
-  flex: 1;
+  flex: 1; /* Назва займає доступний простір */
 }
 
 .station-item:hover, .station-item.selected {
-  background: var(--text) !important;
+  background: var(--accent) !important;
   border: 2px solid var(--accent) !important;
   color: #0A0A0A;
   transform: translateY(-2px);
@@ -253,20 +247,20 @@ h1 {
   gap: 5px;
 }
 
-.station-item .favorite-btn, .station-item .delete-btn, .station-item .add-btn {
+.station-item .favorite-btn, .station-item .add-btn, .station-item .delete-btn {
   background: none;
   border: none;
   color: var(--text);
   font-size: 20px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: color 0.3s ease;
 }
 
 .station-item .favorite-btn.favorited {
   color: #FFD700;
 }
 
-.station-item .favorite-btn:hover, .station-item .delete-btn:hover, .station-item .add-btn:hover {
+.station-item .favorite-btn:hover, .station-item .add-btn:hover, .station-item .delete-btn:hover {
   color: #FFD700;
 }
 
@@ -301,26 +295,26 @@ h1 {
 .tabs {
   display: flex;
   justify-content: space-between;
-  margin: 5px;
+  margin: 5px 0;
   background: var(--container-bg);
   padding: 5px;
   border-radius: 10px;
   border: 1px solid var(--accent);
-  transition: var(--transition);
+  transition: background 0.4s ease, border-color 0.4s ease;
 }
 
 .tab-btn {
   flex: 1;
   padding: 12px;
   background: var(--container-bg);
-  border: 1px solid var(--accent);
+  border: 2px solid var(--accent);
   border-radius: 5px;
+  color: var(--text);
   cursor: pointer;
   margin: 0 2px;
-  color: var(--text);
   text-align: center;
   font-size: 14px;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
 .tab-btn:hover {
@@ -337,18 +331,20 @@ h1 {
 
 #searchInput {
   display: none;
-  margin: 10px 0;
-  padding: 5px;
+  margin: 5px 0;
+  padding: 10px;
   border-radius: 8px;
+  border: 2px solid var(--accent);
   background: var(--container-bg);
   color: var(--text);
   font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-wrap: wrap;
-  flex-direction: row;
   gap: 10px;
   align-items: center;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
 #searchInput:focus-within {
@@ -357,15 +353,14 @@ h1 {
 }
 
 #searchQuery, #searchCountry, #searchGenre {
-  flex: 1;
+  flex: 1 1 200px;
   min-width: 120px;
-  background: var(--container-bg);
-  padding: 8px;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
+  background: transparent;
+  border: none;
   color: var(--text);
   font-size: 16px;
-  transition: var(--transition);
+  outline: none;
+  padding: 8px;
 }
 
 #searchQuery::placeholder, #searchCountry::placeholder, #searchGenre::placeholder {
@@ -376,11 +371,11 @@ h1 {
 #searchInput button.search-btn {
   background: var(--container-bg);
   border: 2px solid var(--accent);
-  padding: 8px 12px;
   border-radius: 8px;
+  padding: 8px 12px;
   color: var(--text);
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
 #searchInput button.search-btn:hover {
@@ -393,37 +388,36 @@ h1 {
   position: sticky;
   bottom: 0;
   background: var(--container-bg);
-  border-top: 1px solid var(--accent);
+  border-top: 2px solid var(--accent);
+  padding: 15px;
   display: flex;
   align-items: center;
-  padding: 10px;
   justify-content: center;
-  gap: 10px;
+  gap: 20px;
   z-index: 10;
-  transition: var(--transition);
+  transition: background 0.4s ease, border-color 0.4s ease;
 }
 
 .controls {
   display: flex;
-  flex-direction: row;
   justify-content: center;
-  gap: 10px;
+  gap: 50px;
 }
 
 .wave-progress {
   display: flex;
   gap: 4px;
   height: 60px;
-  width: 100%;
+  width: 84px;
 }
 
-.progress-bar.wave {
+.wave-bar {
   width: 10px;
   background: var(--accent);
   border-radius: 5px;
-  animation: waveAnimation 1s ease-in-out infinite;
+  animation: waveAnimation 1.2s infinite ease-in-out;
   animation-play-state: paused;
-  transition: var(--transition);
+  transition: background 0.4s ease;
 }
 
 .wave-bar:nth-child(2) { animation-delay: 0.2s; }
@@ -440,17 +434,17 @@ h1 {
 
 .control-btn {
   width: 80px;
-  background: var(--container-bg);
-  padding: 10px;
-  border: 2px solid var(--accent);
-  border-radius: 10px;
+  height: 80px;
   font-size: 32px;
-  cursor: pointer;
+  background: var(--container-bg);
   color: var(--text);
+  border: 4px solid var(--accent);
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
-  justify-content: center;
   align-items: center;
-  transition: var(--transition);
+  justify-content: center;
 }
 
 .control-btn:hover {
@@ -470,9 +464,8 @@ h1 {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.6);
-  border-radius: 12px;
   z-index: 20;
-  transition: var(--transition);
+  transition: opacity 0.3s ease;
 }
 
 .modal {
@@ -482,16 +475,19 @@ h1 {
   transform: translate(-50%, -50%);
   background: var(--container-bg);
   border: 2px solid var(--accent);
-  padding: 20px;
   border-radius: 12px;
+  padding: 20px;
   z-index: 21;
-  transition: var(--transition);
+  width: 300px;
+  max-width: 90%;
+  box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
+  transition: all 0.3s ease;
 }
 
 .modal h2 {
   color: var(--accent);
-  font-size: 1.5rem;
-  margin: 0 0 20px;
+  font-size: 1.5em;
+  margin: 0 0 15px;
   text-align: center;
 }
 
@@ -502,16 +498,15 @@ h1 {
 }
 
 .modal-tab-btn, .modal-cancel-btn {
-  width: 100%;
   padding: 10px;
   background: var(--container-bg);
   border: 2px solid var(--accent);
   border-radius: 8px;
-  cursor: pointer;
   color: var(--text);
   font-size: 16px;
+  cursor: pointer;
   text-align: center;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
 .modal-tab-btn:hover, .modal-cancel-btn:hover {
@@ -522,13 +517,12 @@ h1 {
 
 .modal-cancel-btn {
   background: var(--body-bg);
-  border-color: var(--accent);
-  color: #FF3333;
+  border-color: var(--text);
 }
 
 .modal-cancel-btn:hover {
-  background: var(--accent);
-  color: #0A0A0A;
+  background: var(--text);
+  color: var(--body-bg);
 }
 
 /* Стилі для datalist */
@@ -541,19 +535,16 @@ input[list] {
 }
 
 datalist {
-  display: none;
+  display: none; /* datalist не відображається, але опції працюють */
 }
 
 #searchQuery[list], #searchCountry[list], #searchGenre[list] {
   background: var(--container-bg);
-  width: 100%;
   border: 1px solid var(--accent);
+  border-radius: 4px;
   padding: 8px;
-  border-radius: 8px;
-  margin: 4px 0;
   color: var(--text);
-  font-size: 16px;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
 #searchQuery[list]:focus, #searchCountry[list]:focus, #searchGenre[list]:focus {
@@ -567,22 +558,23 @@ datalist {
   }
 
   .container {
-    width: 100%;
+    padding: 10px;
     margin: 0 5px;
     min-height: 90vh;
-    padding: 10px;
   }
 
   .control-btn {
     width: 70px;
     height: 70px;
-    font-size: 28px;
+    font-size: 24px;
+    border-width: 2px;
     border-radius: 10px;
   }
 
   .station-list {
     max-height: 400px;
     margin: 8px 0;
+    padding: 8px;
   }
 
   .station-item {
@@ -597,7 +589,9 @@ datalist {
 
   .theme-toggle, .share-button {
     top: 5px;
-    padding: 6px;
+    padding: 4px;
+    height: 35px;
+    width: 35px;
   }
 
   .theme-toggle {
@@ -609,16 +603,20 @@ datalist {
   }
 
   #currentStationInfo {
-    padding: 15px;
+    padding: 12px;
+    height: auto;
   }
 
   #currentStationInfo .station-name {
     font-size: 20px;
   }
 
-  #currentStationInfo .station-genre, #currentStationInfo .station-country {
+  #currentStationInfo .station-genre {
     font-size: 16px;
-    margin-top: 4px;
+  }
+
+  #currentStationInfo .station-country {
+    font-size: 16px;
   }
 
   .station-info-content {
@@ -626,35 +624,39 @@ datalist {
   }
 
   .station-icon {
-    width: 60px;
-    height: 60px;
-    font-size: 40px;
+    width: 65px;
+    height: 65px;
+    font-size: 50px; /* Для емодзі на мобільних */
   }
 
-  .ring {
-    width: 12px;
-    height: 12px;
+  .equalizer-bar {
+    width: 5px;
+    height: 16px;
   }
 
   .tab-btn {
     padding: 10px;
     font-size: 12px;
-    margin: 0 1px;
+    border-width: 1px;
   }
 
   #searchInput {
-    margin: 8px 0;
+    padding: 8px;
+    font-size: 14px;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
   #searchQuery, #searchCountry, #searchGenre {
     font-size: 14px;
+    padding: 6px;
+    flex: 1 1 120px;
     min-width: 100px;
-    margin: 4px 0;
   }
 
   #searchInput button.search-btn {
-    padding: 8px;
+    padding: 6px 10px;
+    flex: 0 0 auto;
   }
 
   .modal {
@@ -663,8 +665,7 @@ datalist {
   }
 
   .modal h2 {
-    font-size: 1.2rem;
-    margin-bottom: 15px;
+    font-size: 1.3em;
   }
 
   .modal-tab-btn, .modal-cancel-btn {
@@ -673,12 +674,12 @@ datalist {
   }
 }
 
-@media (max-height: 600px) {
+@media (max-height: 1600px) {
   .container {
-    min-height: 100vh;
+    min-height: 85vh;
   }
 
   .station-list {
-    max-height: 300px;
+    max-height: 450px;
   }
 }
