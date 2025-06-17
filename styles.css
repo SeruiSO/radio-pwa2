@@ -114,10 +114,10 @@ h1 {
 }
 
 #currentStationInfo .station-name {
-  font-size: 24px; /* Зменшено шрифт назви станції */
+  font-size: 24px;
   font-weight: 700;
   display: -webkit-box;
-  -webkit-line-clamp: 3; /* Обмеження до 3 рядків */
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -137,31 +137,42 @@ h1 {
 }
 
 .station-icon {
-  width: 80px; /* Збільшено на ~33% з 60px */
+  width: 80px;
   height: 80px;
   object-fit: contain;
   order: 1; /* Зображення перше */
+  font-size: 60px; /* Для емодзі, якщо немає іконки */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.pulse-dot {
-  width: 16px; /* Збільшено на ~33% з 12px */
-  height: 16px;
+.mini-equalizer {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  order: 3; /* Еквалайзер останній */
+}
+
+.equalizer-bar {
+  width: 6px;
+  height: 20px;
   background: var(--accent);
-  border-radius: 50%;
-  animation: pulse 1.5s infinite ease-in-out;
-  animation-play-state: paused; /* За замовчуванням анімація зупинена */
-  margin-left: auto; /* Пульсуюча крапка праворуч */
-  order: 3; /* Крапка остання */
+  border-radius: 3px;
+  animation: equalizer 1.2s infinite ease-in-out;
+  animation-play-state: paused;
 }
 
-.pulse-dot.playing {
-  animation-play-state: running; /* Анімація активна при відтворенні */
+.equalizer-bar.playing {
+  animation-play-state: running;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(2); opacity: 0.6; } /* Збільшено масштаб для інтенсивнішої пульсації */
-  100% { transform: scale(1); opacity: 1; }
+.equalizer-bar:nth-child(2) { animation-delay: 0.2s; }
+.equalizer-bar:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes equalizer {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
 }
 
 .station-list {
@@ -211,6 +222,16 @@ h1 {
   height: 32px;
   object-fit: contain;
   margin-right: 10px;
+}
+
+.station-item .station-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  flex: 1; /* Назва займає доступний простір */
 }
 
 .station-item:hover, .station-item.selected {
@@ -274,7 +295,7 @@ h1 {
 .tabs {
   display: flex;
   justify-content: space-between;
-  margin: 5px 0; /* Зменшено відступи */
+  margin: 5px 0;
   background: var(--container-bg);
   padding: 5px;
   border-radius: 10px;
@@ -310,7 +331,7 @@ h1 {
 
 #searchInput {
   display: none;
-  margin: 5px 0; /* Зменшено відступи */
+  margin: 5px 0;
   padding: 10px;
   border-radius: 8px;
   border: 2px solid var(--accent);
@@ -587,7 +608,7 @@ datalist {
   }
 
   #currentStationInfo .station-name {
-    font-size: 20px; /* Ще менший шрифт для мобільних */
+    font-size: 20px;
   }
 
   #currentStationInfo .station-genre {
@@ -603,13 +624,14 @@ datalist {
   }
 
   .station-icon {
-    width: 65px; /* Збільшено на ~30% з 50px для мобільних */
+    width: 65px;
     height: 65px;
+    font-size: 50px; /* Для емодзі на мобільних */
   }
 
-  .pulse-dot {
-    width: 13px; /* Збільшено на ~30% з 10px для мобільних */
-    height: 13px;
+  .equalizer-bar {
+    width: 5px;
+    height: 16px;
   }
 
   .tab-btn {
