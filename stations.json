@@ -17,14 +17,6 @@
       "favicon": "https://sunshine-live.de/favicon.ico"
     },
     {
-      "value": "https://online.radiorecord.com.ua/techno",
-      "name": "Radio Record - Techno",
-      "genre": "Techno",
-      "emoji": "⚡",
-      "country": "Україна",
-      "favicon": "https://online.radiorecord.com.ua/favicon.ico"
-    },
-    {
       "value": "https://listen.181fm.com/181-technoclub_64k.aac",
       "name": "181.fm - Techno Club",
       "genre": "Techno",
@@ -453,14 +445,6 @@
     {
       "value": "https://streaming.playtrance.com/playtrance-main-low",
       "name": "Play Trance - Main Channel",
-      "genre": "Trance",
-      "emoji": "🎶",
-      "country": "Іспанія",
-      "favicon": "https://example.com/trance_logo.png"
-    },
-    {
-      "value": "https://live-ff.playtrance.com/playtrance-classics.mp3",
-      "name": "PlayTrance Radio (Classics Channel)",
       "genre": "Trance",
       "emoji": "🎶",
       "country": "Іспанія",
@@ -1005,14 +989,6 @@
       "favicon": "https://example.com/default_logo.png"
     },
     {
-      "value": "https://radio.mfm.ua/online128",
-      "name": "MFM STATION",
-      "genre": "Танцювальна/Поп/Електронна/Топ-40",
-      "emoji": "🎶",
-      "country": "Україна",
-      "favicon": "https://mfm.ua/apple-touch-icon.png"
-    },
-    {
       "value": "https://cast.mediaonline.net.ua/nrj320",
       "name": "NRJ Ukraine",
       "genre": "Танцювальна/Електронна/Поп/Топ-40",
@@ -1493,14 +1469,6 @@
       "emoji": "🎶",
       "country": "Болгарія",
       "favicon": "https://example.com/pop_logo.png"
-    },
-    {
-      "value": "https://kisskiss.fluidstream.eu/KKNapoli.mp3?FLID=8&type=.mp3",
-      "name": "Radio Kiss Kiss Napoli",
-      "genre": "Italo-Pop",
-      "emoji": "🎶",
-      "country": "Італія",
-      "favicon": "https://kisskiss.fluidstream.eu/favicon.ico"
     },
     {
       "value": "https://edge-audio-06-cr.sharp-stream.com/ssvcbfbs2.mp3",
