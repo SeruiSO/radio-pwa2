@@ -169,12 +169,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationNameElement = currentStationInfo.querySelector(".station-name");
       const stationGenreElement = currentStationInfo.querySelector(".station-genre");
       const stationCountryElement = currentStationInfo.querySelector(".station-country");
+      const stationIconElement = currentStationInfo.querySelector(".station-icon");
       if (stationNameElement) stationNameElement.textContent = "Обирайте станцію";
       else console.error("Елемент .station-name не знайдено");
       if (stationGenreElement) stationGenreElement.textContent = "жанр: -";
       else console.error("Елемент .station-genre не знайдено");
       if (stationCountryElement) stationCountryElement.textContent = "країна: -";
       else console.error("Елемент .station-country не знайдено");
+      if (stationIconElement) {
+        stationIconElement.src = "";
+        stationIconElement.style.display = "none";
+      } else console.error("Елемент .station-icon не знайдено");
     }
 
     async function loadStations() {
@@ -499,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length || !hasUserInteracted) {
         console.log("Пропуск tryAutoPlay", { isPlaying, hasStationItems: !!stationItems?.length, isIndexValid: currentIndex < stationItems.length, hasUserInteracted });
-        document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
+        document.querySelectorAll(".pulse-dot").forEach(dot => dot.classList.remove("playing"));
         if (!hasUserInteracted && isPlaying) {
           alert("Будь ласка, взаємодійте зі сторінкою (наприклад, натисніть кнопку), щоб увімкнути відтворення аудіо.");
         }
@@ -515,7 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorCount >= ERROR_LIMIT) {
           console.error("Досягнуто ліміт помилок відтворення");
         }
-        document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
+        document.querySelectorAll(".pulse-dot").forEach(dot => dot.classList.remove("playing"));
         return;
       }
       audio.pause();
@@ -528,7 +533,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => {
           errorCount = 0;
           console.log("Відтворення розпочато успішно");
-          document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+          document.querySelectorAll(".pulse-dot").forEach(dot => dot.classList.add("playing"));
         })
         .catch(error => {
           console.error("Помилка відтворення:", error);
@@ -538,7 +543,7 @@ document.addEventListener("DOMContentLoaded", () => {
               console.error("Досягнуто ліміт помилок відтворення");
             }
           }
-          document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
+          document.querySelectorAll(".pulse-dot").forEach(dot => dot.classList.remove("playing"));
         });
     }
 
@@ -683,6 +688,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationNameElement = currentStationInfo.querySelector(".station-name");
       const stationGenreElement = currentStationInfo.querySelector(".station-genre");
       const stationCountryElement = currentStationInfo.querySelector(".station-country");
+      const stationIconElement = currentStationInfo.querySelector(".station-icon");
 
       console.log("Оновлення currentStationInfo з даними:", item.dataset);
 
@@ -700,6 +706,17 @@ document.addEventListener("DOMContentLoaded", () => {
         stationCountryElement.textContent = `країна: ${item.dataset.country || ""}`;
       } else {
         console.error("Елемент .station-country не знайдено");
+      }
+      if (stationIconElement) {
+        if (item.dataset.favicon && isValidUrl(item.dataset.favicon)) {
+          stationIconElement.src = item.dataset.favicon;
+          stationIconElement.style.display = "block";
+        } else {
+          stationIconElement.src = "";
+          stationIconElement.style.display = "none";
+        }
+      } else {
+        console.error("Елемент .station-icon не знайдено");
       }
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -736,12 +753,12 @@ document.addEventListener("DOMContentLoaded", () => {
         isPlaying = true;
         tryAutoPlay();
         playPauseBtn.textContent = "⏸";
-        document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+        document.querySelectorAll(".pulse-dot").forEach(dot => dot.classList.add("playing"));
       } else {
         audio.pause();
         isPlaying = false;
         playPauseBtn.textContent = "▶";
-        document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
+        document.querySelectorAll(".pulse-dot").forEach(dot => dot.classList.remove("playing"));
       }
       localStorage.setItem("isPlaying", isPlaying);
     }
@@ -796,14 +813,14 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("playing", () => {
       isPlaying = true;
       playPauseBtn.textContent = "⏸";
-      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "running");
+      document.querySelectorAll(".pulse-dot").forEach(dot => dot.classList.add("playing"));
       localStorage.setItem("isPlaying", isPlaying);
     });
 
     audio.addEventListener("pause", () => {
       isPlaying = false;
       playPauseBtn.textContent = "▶";
-      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
+      document.querySelectorAll(".pulse-dot").forEach(dot => dot.classList.remove("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = null;
@@ -811,7 +828,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     audio.addEventListener("error", () => {
-      document.querySelectorAll(".wave-bar").forEach(bar => bar.style.animationPlayState = "paused");
+      document.querySelectorAll(".pulse-dot").forEach(dot => dot.classList.remove("playing"));
       console.error("Помилка аудіо:", audio.error?.message || "Невідома помилка", "для URL:", audio.src);
       if (isPlaying && errorCount < ERROR_LIMIT) {
         errorCount++;

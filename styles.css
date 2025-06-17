@@ -1,4 +1,4 @@
-/* Updated on June 16, 2025 */
+/* Updated on June 17, 2025 */
 :root {
   --body-bg: #0A0A0A;
   --container-bg: #121212;
@@ -110,13 +110,18 @@ h1 {
   display: flex;
   flex-direction: column;
   flex: 1;
+  order: 2; /* Текст іде другим, щоб зображення було ліворуч */
 }
 
 #currentStationInfo .station-name {
-  font-size: 28px;
+  font-size: 24px; /* Зменшено шрифт назви станції */
   font-weight: 700;
-  display: inline-flex;
-  align-items: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Обмеження до 3 рядків */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 #currentStationInfo .station-genre {
@@ -129,6 +134,34 @@ h1 {
   font-size: 18px;
   font-weight: 400;
   margin-top: 2px;
+}
+
+.station-icon {
+  width: 60px; /* Розмір зображення станції */
+  height: 60px;
+  object-fit: contain;
+  order: 1; /* Зображення перше */
+}
+
+.pulse-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite ease-in-out;
+  animation-play-state: paused; /* За замовчуванням анімація зупинена */
+  margin-left: auto; /* Пульсуюча крапка праворуч */
+  order: 3; /* Крапка остання */
+}
+
+.pulse-dot.playing {
+  animation-play-state: running; /* Анімація активна при відтворенні */
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .station-list {
@@ -554,7 +587,7 @@ datalist {
   }
 
   #currentStationInfo .station-name {
-    font-size: 24px;
+    font-size: 20px; /* Ще менший шрифт для мобільних */
   }
 
   #currentStationInfo .station-genre {
@@ -569,13 +602,14 @@ datalist {
     gap: 10px;
   }
 
-  .wave-progress {
-    width: 70px;
+  .station-icon {
+    width: 50px;
     height: 50px;
   }
 
-  .wave-bar {
-    width: 8px;
+  .pulse-dot {
+    width: 10px;
+    height: 10px;
   }
 
   .tab-btn {
