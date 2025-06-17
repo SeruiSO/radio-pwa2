@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-pwa-cache-v92';
+const CACHE_NAME = 'radio-pwa-cache-v93'; // Змінюємо версію кешу при кожному оновленні
 const urlsToCache = [
   '/',
   '/index.html',
@@ -6,6 +6,7 @@ const urlsToCache = [
   '/script.js',
   '/manifest.json',
   '/icon-192.png',
+  '/icon-512.png',
   '/stations.json'
 ];
 
@@ -17,6 +18,7 @@ self.addEventListener('install', event => {
         return cache.addAll(urlsToCache);
       })
       .then(() => self.skipWaiting())
+      .catch(error => console.error('Помилка при кешуванні:', error))
   );
 });
 
@@ -36,24 +38,43 @@ self.addEventListener('activate', event => {
       console.log('Активація нового Service Worker');
       return self.clients.claim();
     })
+    .then(() => {
+      // Повідомляємо клієнтам (відкритим вкладкам) про оновлення
+      self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: 'CACHE_UPDATED' });
+        });
+      });
+    })
   );
 });
 
 self.addEventListener('fetch', event => {
   const requestUrl = new URL(event.request.url);
-  console.log(`Обробка запиту: ${requestUrl.href}`); // Діагностичний лог
+  console.log(`Обробка запиту: ${requestUrl.href}`);
 
-  if (!requestUrl.origin.includes(self.location.origin)) {
+  // Якщо запит стосується stations.json, завжди намагаємося отримати нову версію
+  if (requestUrl.pathname.endsWith('stations.json')) {
     event.respondWith(
-      fetch(event.request)
-        .catch(error => {
-          console.error(`Помилка запиту до ${requestUrl.href}:`, error);
-          return new Response('Network error', { status: 503 });
+      fetch(event.request, { cache: 'no-store' }) // Обходимо кеш браузера
+        .then(networkResponse => {
+          // Оновлюємо кеш новою версією stations.json
+          return caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
+        })
+        .catch(() => {
+          // Якщо немає мережі, повертаємо кешовану версію
+          return caches.match(event.request).then(cachedResponse => {
+            return cachedResponse || new Response('Offline', { status: 503 });
+          });
         })
     );
     return;
   }
 
+  // Для всіх інших ресурсів використовуємо стратегію "спочатку мережа, потім кеш"
   event.respondWith(
     fetch(event.request)
       .then(networkResponse => {
