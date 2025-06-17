@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-pwa-cache-v98';
+const CACHE_NAME = 'radio-pwa-cache-v99';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -35,7 +35,6 @@ self.addEventListener('activate', event => {
       );
     })
     .then(() => caches.open(CACHE_NAME).then(cache => cache.keys().then(keys => {
-      // Видаляємо старі версії stations.json
       return Promise.all(keys.map(key => {
         if (key.url.endsWith('stations.json')) {
           console.log('Видалення старого stations.json з кешу');
@@ -50,6 +49,7 @@ self.addEventListener('activate', event => {
     .then(() => {
       self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then(clients => {
         clients.forEach(client => {
+          console.log('Сповіщення клієнта про оновлення кешу');
           client.postMessage({ type: 'CACHE_UPDATED', reload: true });
         });
       });
@@ -93,7 +93,8 @@ self.addEventListener('fetch', event => {
           });
         })
         .catch(() => {
-          return caches.match(event.request) || new Response('Image not available', { status: 404 });
+          console.log(`Помилка завантаження зображення: ${requestUrl.href}`);
+          return caches.match('/icon-192.png') || new Response('Image not available', { status: 404 });
         })
     );
     return;
