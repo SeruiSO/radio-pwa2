@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-pwa-cache-v93'; // Змінюємо версію кешу при кожному оновленні
+const CACHE_NAME = 'radio-pwa-cache-v97';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -34,15 +34,23 @@ self.addEventListener('activate', event => {
         })
       );
     })
+    .then(() => caches.open(CACHE_NAME).then(cache => cache.keys().then(keys => {
+      // Видаляємо старі версії stations.json
+      return Promise.all(keys.map(key => {
+        if (key.url.endsWith('stations.json')) {
+          console.log('Видалення старого stations.json з кешу');
+          return cache.delete(key);
+        }
+      }));
+    })))
     .then(() => {
       console.log('Активація нового Service Worker');
       return self.clients.claim();
     })
     .then(() => {
-      // Повідомляємо клієнтам (відкритим вкладкам) про оновлення
       self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then(clients => {
         clients.forEach(client => {
-          client.postMessage({ type: 'CACHE_UPDATED' });
+          client.postMessage({ type: 'CACHE_UPDATED', reload: true });
         });
       });
     })
@@ -53,19 +61,19 @@ self.addEventListener('fetch', event => {
   const requestUrl = new URL(event.request.url);
   console.log(`Обробка запиту: ${requestUrl.href}`);
 
-  // Якщо запит стосується stations.json, завжди намагаємося отримати нову версію
+  // Обробка stations.json
   if (requestUrl.pathname.endsWith('stations.json')) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-store' }) // Обходимо кеш браузера
+      fetch(event.request, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
         .then(networkResponse => {
-          // Оновлюємо кеш новою версією stations.json
+          console.log('Завантажено нову версію stations.json');
           return caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, networkResponse.clone());
             return networkResponse;
           });
         })
         .catch(() => {
-          // Якщо немає мережі, повертаємо кешовану версію
+          console.log('Повернення кешованої версії stations.json');
           return caches.match(event.request).then(cachedResponse => {
             return cachedResponse || new Response('Offline', { status: 503 });
           });
@@ -74,7 +82,36 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Для всіх інших ресурсів використовуємо стратегію "спочатку мережа, потім кеш"
+  // Обробка зображень (favicon)
+  if (requestUrl.pathname.match(/\.(png|jpg|jpeg|ico)$/)) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+        .then(networkResponse => {
+          return caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
+        })
+        .catch(() => {
+          return caches.match(event.request) || new Response('Image not available', { status: 404 });
+        })
+    );
+    return;
+  }
+
+  // Обробка зовнішніх ресурсів
+  if (!requestUrl.origin.includes(self.location.origin)) {
+    event.respondWith(
+      fetch(event.request)
+        .catch(error => {
+          console.error(`Помилка запиту до ${requestUrl.href}:`, error);
+          return new Response('Network error', { status: 503 });
+        })
+    );
+    return;
+  }
+
+  // Для інших ресурсів
   event.respondWith(
     fetch(event.request)
       .then(networkResponse => {

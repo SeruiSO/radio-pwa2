@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (stationCountryElement) stationCountryElement.textContent = "країна: -";
       else console.error("Елемент .station-country не знайдено");
       if (stationIconElement) {
-        stationIconElement.innerHTML = "📻";
+        stationIconElement.innerHTML = "🎵";
         stationIconElement.style.backgroundImage = "none";
       } else console.error("Елемент .station-icon не знайдено");
     }
@@ -200,14 +200,21 @@ document.addEventListener("DOMContentLoaded", () => {
           console.log("Використовується кешована версія stations.json");
         } else if (response.ok) {
           const newStations = await response.json();
+          console.log('Завантажені дані stations.json:', newStations);
+          // Перевірка структури
+          if (!newStations.techno || !newStations.trance || !newStations.ukraine || !newStations.pop) {
+            console.error('Некоректна структура stations.json, очищення localStorage');
+            localStorage.removeItem('stationLists');
+            stationLists = {};
+          }
           Object.keys(newStations).forEach(tab => {
             if (!stationLists[tab]) stationLists[tab] = [];
             const newStationsForTab = newStations[tab].filter(s => 
-              !stationLists[tab].some(existing => existing.name === s.name) &&
+              !stationLists[tab].some(existing => existing.value === s.value) &&
               !deletedStations.includes(s.name)
             );
             stationLists[tab] = [...stationLists[tab], ...newStationsForTab];
-            console.log(`Додано до ${tab}:`, newStationsForTab.map(s => s.name));
+            console.log(`Додано до ${tab}:`, newStationsForTab.length, 'станцій');
           });
           localStorage.setItem("stationsLastModified", response.headers.get("Last-Modified") || "");
           console.log("Новий stations.json успішно завантажено та об'єднано");
@@ -283,7 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
-        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='📻 '">` : "📻 ";
+        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.src='/icon-192.png'; console.log('Помилка favicon: ${station.favicon}');">` : "🎵 ";
         item.innerHTML = `${iconHtml}<span class="station-name">${station.name}</span><button class="add-btn">ADD</button>`;
         fragment.appendChild(item);
       });
@@ -477,9 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (newWorker) {
             newWorker.addEventListener("statechange", () => {
               if (newWorker.state === "activated" && navigator.serviceWorker.controller) {
-                if (window.confirm("Доступна нова версія радіо. Оновити?")) {
-                  window.location.reload();
-                }
+                console.log('Новий Service Worker активовано');
               }
             });
           }
@@ -487,6 +492,10 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       navigator.serviceWorker.addEventListener("message", event => {
+        if (event.data.type === "CACHE_UPDATED" && event.data.reload) {
+          console.log('Оновлено кеш, виконую примусове перезавантаження...');
+          window.location.reload(true);
+        }
         if (event.data.type === "NETWORK_STATUS" && event.data.online && isPlaying && stationItems?.length && currentIndex < stationItems.length) {
           console.log("Отримано повідомлення від Service Worker: мережа відновлена");
           audio.pause();
@@ -505,6 +514,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length || !hasUserInteracted) {
         console.log("Пропуск tryAutoPlay", { isPlaying, hasStationItems: !!stationItems?.length, isIndexValid: currentIndex < stationItems.length, hasUserInteracted });
         document.querySelectorAll(".equalizer-bar").forEach(bar => bar.classList.remove("playing"));
+        if (!hasUserInteracted && isPlaying) {
+          alert("Будь ласка, взаємодійте зі сторінкою (наприклад, натисніть кнопку), щоб увімкнути відтворення аудіо.");
+        }
         return;
       }
       if (audio.src === stationItems[currentIndex].dataset.value && !audio.paused) {
@@ -590,7 +602,8 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.genre = shortenGenre(station.genre);
         item.dataset.country = station.country;
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
-        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='📻 '">` : "📻 ";
+        console.log(`Рендеринг станції ${station.name}, favicon: ${station.favicon}`);
+        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.src='/icon-192.png'; console.log('Помилка favicon: ${station.favicon}');">` : "🎵 ";
         const deleteButton = ["techno", "trance", "ukraine", "pop"].includes(currentTab)
           ? `<button class="delete-btn">🗑</button>`
           : "";
@@ -706,13 +719,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (stationIconElement) {
         if (item.dataset.favicon && isValidUrl(item.dataset.favicon)) {
-          stationIconElement.innerHTML = "";
-          stationIconElement.style.backgroundImage = `url(${item.dataset.favicon})`;
-          stationIconElement.style.backgroundSize = "contain";
-          stationIconElement.style.backgroundRepeat = "no-repeat";
-          stationIconElement.style.backgroundPosition = "center";
+          stationIconElement.innerHTML = `<img src="${item.dataset.favicon}" alt="${item.dataset.name} icon" style="width: 32px; height: 32px; object-fit: contain;" onerror="this.src='/icon-192.png'; console.log('Помилка favicon: ${item.dataset.favicon}');">`;
+          stationIconElement.style.backgroundImage = "none";
         } else {
-          stationIconElement.innerHTML = "📻";
+          stationIconElement.innerHTML = "🎵";
           stationIconElement.style.backgroundImage = "none";
         }
       } else {
