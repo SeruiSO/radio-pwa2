@@ -168,8 +168,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function resetStationInfo() {
       const stationNameElement = currentStationInfo.querySelector(".station-name");
       const stationGenreElement = currentStationInfo.querySelector(".station-genre");
-      const stationCountryElement = document.querySelector(".station-country");
-      const stationIconElement = document.querySelector(".station-icon");
+      const stationCountryElement = currentStationInfo.querySelector(".station-country");
+      const stationIconElement = currentStationInfo.querySelector(".station-icon");
       if (stationNameElement) stationNameElement.textContent = "Обирайте станцію";
       else console.error("Елемент .station-name не знайдено");
       if (stationGenreElement) stationGenreElement.textContent = "жанр: -";
@@ -215,7 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
           Object.keys(newStations).forEach(tab => {
             if (!stationLists[tab]) stationLists[tab] = [];
             const newStationsForTab = newStations[tab].filter(
-              s => !stationLists[tab](existing => existing.value === s.value) &&
+              s => !stationLists[tab].some(existing => existing.value === s.value) &&
               !deletedStations.includes(s.value)
             );
             if (newStationsForTab.length > 0) {
@@ -226,12 +226,11 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           localStorage.setItem("stationsLastModified", response.headers.get("Last-Modified") || "");
           console.log("Новий stations.json успішно завантажено та оновлено");
-        }
         } else {
           throw new Error(`HTTP ${response.status}`);
         }
         favoriteStations = favoriteStations.filter(name => 
-          Object.values(stationLists).forEach().some(s => s.name === name)
+          Object.values(stationLists).flat().some(s => s.name === name)
         );
         localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
@@ -255,16 +254,16 @@ document.addEventListener("DOMContentLoaded", () => {
     async function searchStations(query, country, genre) {
       stationList.innerHTML = "<div class='station-item empty'>Пошук...</div>";
       try {
-        abortController.cancel();
+        abortController.abort();
         abortController = new AbortController();
         const params = new URLSearchParams();
-        if (query) params.append("name', query);
+        if (query) params.append("name", query);
         if (country) params.append("country", country);
         if (genre) params.append("tag", genre);
         params.append("order", "clickcount");
         params.append("reverse", "true");
-        params.append("pageSize", "1000");
-        const url = `https://de1.api.radio-browser.netlify.app/json/stations/search?${params.toString()}`;
+        params.append("limit", "1000");
+        const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
         console.log("Запит до API:", url);
         const response = await fetch(url, {
           signal: abortController.signal
@@ -273,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
           throw new Error(`HTTP ${response.status}`);
         }
         let stations = await response.json();
-        stations = stations.filter(station => station.value && isValidUrl(station.value));
+        stations = stations.filter(station => station.url_resolved && isValidUrl(station.url_resolved));
         console.log("Отримано станцій (після фільтрації HTTPS):", stations.length);
         renderSearchResults(stations);
       } catch (error) {
