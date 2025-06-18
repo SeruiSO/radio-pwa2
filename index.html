@@ -43,7 +43,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#00F0FF">
-  <title>Radio Music S O</title>
+  <title>Radio Music</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
@@ -56,24 +56,20 @@
     <h1>🎧 Radio Music</h1>
     <div id="currentStationInfo">
       <div class="station-info-content">
-        <div class="station-icon">📻</div>
+        <div class="station-icon">🎵</div>
         <div class="station-text">
           <div class="station-name">Обирайте станцію</div>
           <div class="station-genre">жанр: -</div>
           <div class="station-country">країна: -</div>
         </div>
-        <div class="mini-equalizer">
-          <div class="equalizer-bar"></div>
-          <div class="equalizer-bar"></div>
-          <div class="equalizer-bar"></div>
-          <div class="equalizer-bar"></div>
-          <div class="equalizer-bar"></div>
+        <div class="ring-visualizer">
+          <div class="ring"></div>
+          <div class="ring"></div>
         </div>
       </div>
     </div>
-    <div id="stationList" class="station-list"></div>
     <div class="tabs">
-      <button class="tab-btn active">Best</button>
+      <button class="tab-btn">Best</button>
       <button class="tab-btn">Techno</button>
       <button class="tab-btn">Trance</button>
       <button class="tab-btn">UA</button>
@@ -89,6 +85,7 @@
       <datalist id="suggestedCountries"></datalist>
       <datalist id="suggestedGenres"></datalist>
     </div>
+    <div id="stationList" class="station-list"></div>
     <div class="controls-container">
       <audio id="audioPlayer"></audio>
       <div class="controls">

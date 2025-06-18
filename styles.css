@@ -1,4 +1,4 @@
-/* Updated on June 17, 2025 */
+/* Updated on June 18, 2025 */
 :root {
   --body-bg: #0A0A0A;
   --container-bg: #121212;
@@ -102,7 +102,7 @@ h1 {
 .station-info-content {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
   width: 100%;
 }
 
@@ -147,35 +147,44 @@ h1 {
   justify-content: center;
 }
 
-.mini-equalizer {
+.ring-visualizer {
   display: flex;
-  gap: 4px;
-  margin-left: 5px; /* Minimal margin from text */
-  margin-right: 5px; /* Minimal margin from frame */
-  order: 3; /* Еквалайзер останній */
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  order: 3; /* Візуалізатор останній */
+  width: 40px;
+  height: 40px;
+  position: relative;
 }
 
-.equalizer-bar {
-  width: 6px;
-  height: 30px; /* Increased height */
-  background: var(--accent);
-  border-radius: 3px;
-  animation: equalizer 1.2s infinite ease-in-out;
+.ring {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  animation: pulse 2s infinite ease-in-out;
   animation-play-state: paused;
 }
 
-.equalizer-bar.playing {
+.ring:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.ring.playing {
   animation-play-state: running;
 }
 
-.equalizer-bar:nth-child(2) { animation-delay: 0.2s; }
-.equalizer-bar:nth-child(3) { animation-delay: 0.4s; }
-.equalizer-bar:nth-child(4) { animation-delay: 0.6s; }
-.equalizer-bar:nth-child(5) { animation-delay: 0.8s; }
-
-@keyframes equalizer {
-  0%, 100% { transform: scaleY(0.4); }
-  50% { transform: scaleY(1); }
+@keyframes pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
 }
 
 .station-list {
@@ -407,6 +416,34 @@ h1 {
   gap: 50px;
 }
 
+.wave-progress {
+  display: flex;
+  gap: 4px;
+  height: 60px;
+  width: 84px;
+}
+
+.wave-bar {
+  width: 10px;
+  background: var(--accent);
+  border-radius: 5px;
+  animation: waveAnimation 1.2s infinite ease-in-out;
+  animation-play-state: paused;
+  transition: background 0.4s ease;
+}
+
+.wave-bar:nth-child(2) { animation-delay: 0.2s; }
+.wave-bar:nth-child(3) { animation-delay: 0.3s; }
+.wave-bar:nth-child(4) { animation-delay: 0.4s; }
+.wave-bar:nth-child(5) { animation-delay: 0.5s; }
+.wave-bar:nth-child(6) { animation-delay: 0.6s; }
+.wave-bar:nth-child(7) { animation-delay: 0.7s; }
+
+@keyframes waveAnimation {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
 .control-btn {
   width: 80px;
   height: 80px;
@@ -604,9 +641,15 @@ datalist {
     font-size: 50px; /* Для емодзі на мобільних */
   }
 
-  .equalizer-bar {
-    width: 5px;
-    height: 24px; /* Adjusted for mobile */
+  .ring-visualizer {
+    width: 35px;
+    height: 35px;
+  }
+
+  .ring {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
   }
 
   .tab-btn {
