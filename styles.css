@@ -147,44 +147,41 @@ h1 {
   justify-content: center;
 }
 
-.ring-visualizer {
+.spectral-visualizer {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-left: auto;
   order: 3; /* Візуалізатор останній */
-  width: 40px;
-  height: 40px;
+  width: 100px;
+  height: 80px;
   position: relative;
+  overflow: hidden;
 }
 
-.ring {
+.spectral-bar {
   position: absolute;
-  width: 20px;
-  height: 20px;
-  border: 3px solid var(--accent);
-  border-radius: 50%;
-  animation: pulse 2s infinite ease-in-out;
+  width: 10px;
+  height: 70px;
+  background: var(--accent);
+  border-radius: 3px;
+  animation: spectralSlide 2s infinite linear;
   animation-play-state: paused;
 }
 
-.ring:nth-child(2) {
-  animation-delay: 0.5s;
-}
+.spectral-bar:nth-child(1) { left: -20px; animation-delay: 0s; }
+.spectral-bar:nth-child(2) { left: 0px; animation-delay: 0.4s; }
+.spectral-bar:nth-child(3) { left: 20px; animation-delay: 0.8s; }
+.spectral-bar:nth-child(4) { left: 40px; animation-delay: 1.2s; }
+.spectral-bar:nth-child(5) { left: 60px; animation-delay: 1.6s; }
 
-.ring.playing {
+.spectral-bar.playing {
   animation-play-state: running;
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(0.5);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
+@keyframes spectralSlide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(120px); }
 }
 
 .station-list {
@@ -312,6 +309,9 @@ h1 {
   padding: 5px;
   border-radius: 10px;
   border: 1px solid var(--accent);
+  position: sticky;
+  top: 100px; /* Нижче #currentStationInfo */
+  z-index: 9;
   transition: background 0.4s ease, border-color 0.4s ease;
 }
 
@@ -614,6 +614,10 @@ datalist {
     right: 5px;
   }
 
+  .tabs {
+    top: 80px; /* Нижче #currentStationInfo на мобільних */
+  }
+
   #currentStationInfo {
     padding: 12px;
     height: auto;
@@ -641,15 +645,14 @@ datalist {
     font-size: 50px; /* Для емодзі на мобільних */
   }
 
-  .ring-visualizer {
-    width: 35px;
-    height: 35px;
+  .spectral-visualizer {
+    width: 80px;
+    height: 65px;
   }
 
-  .ring {
-    width: 18px;
-    height: 18px;
-    border-width: 2px;
+  .spectral-bar {
+    width: 8px;
+    height: 55px;
   }
 
   .tab-btn {
