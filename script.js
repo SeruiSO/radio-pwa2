@@ -188,28 +188,20 @@ document.addEventListener("DOMContentLoaded", () => {
         abortController.abort();
         abortController = new AbortController();
         const response = await fetch(`stations.json?t=${Date.now()}`, {
-          cache: "no-cache",
-          headers: {
-            "If-Modified-Since": localStorage.getItem("stationsLastModified") || ""
-          },
+          cache: "no-store",
           signal: abortController.signal
         });
         console.log(`Статус відповіді: ${response.status}`);
-        if (response.status === 304) {
-          console.log("Використовується кешована версія stations.json");
-        } else if (response.ok) {
+        if (response.ok) {
           const newStations = await response.json();
+          stationLists = {}; // Очищаємо старі дані
           Object.keys(newStations).forEach(tab => {
-            if (!stationLists[tab]) stationLists[tab] = [];
-            const newStationsForTab = newStations[tab].filter(s => 
-              !stationLists[tab].some(existing => existing.name === s.name) &&
-              !deletedStations.includes(s.name)
+            stationLists[tab] = newStations[tab].filter(s => 
+              !Array.isArray(deletedStations) || !deletedStations.includes(s.name)
             );
-            stationLists[tab] = [...stationLists[tab], ...newStationsForTab];
-            console.log(`Додано до ${tab}:`, newStationsForTab.map(s => s.name));
+            console.log(`Додано до ${tab}:`, stationLists[tab].map(s => s.name));
           });
-          localStorage.setItem("stationsLastModified", response.headers.get("Last-Modified") || "");
-          console.log("Новий stations.json успішно завантажено та об'єднано");
+          localStorage.setItem("stationLists", JSON.stringify(stationLists));
         } else {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -217,7 +209,6 @@ document.addEventListener("DOMContentLoaded", () => {
           Object.values(stationLists).flat().some(s => s.name === name)
         );
         localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-        localStorage.setItem("stationLists", JSON.stringify(stationLists));
         const validTabs = [...Object.keys(stationLists), "best"];
         if (!validTabs.includes(currentTab)) {
           currentTab = validTabs[0] || "techno";
@@ -482,9 +473,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
 
-      navigator.serviceWorker.addEventListener("message", event => {
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data.type === "CACHE_UPDATED") {
+          console.log("Отримано оновлення кешу, оновлюємо localStorage");
+          const currentCacheVersion = localStorage.getItem("cacheVersion") || "0";
+          if (currentCacheVersion !== event.data.cacheVersion) {
+            favoriteStations = favoriteStations.filter((name) =>
+              Object.values(stationLists).flat().some((s) => s.name === name)
+            );
+            stationLists = {};
+            deletedStations = [];
+            localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+            localStorage.setItem("stationLists", JSON.stringify(stationLists));
+            localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
+            localStorage.setItem("cacheVersion", event.data.cacheVersion);
+            loadStations();
+          }
+        }
         if (event.data.type === "NETWORK_STATUS" && event.data.online && isPlaying && stationItems?.length && currentIndex < stationItems.length) {
-          console.log("Отримано повідомлення від Service Worker: мережа відновлена");
+          console.log("Мережа відновлена, пробуємо відтворити");
           audio.pause();
           audio.src = "";
           audio.src = stationItems[currentIndex].dataset.value;
@@ -644,8 +651,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function deleteStation(stationName) {
-      stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
+      if (Array.isArray(stationLists[currentTab])) {
+        stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
+      }
       favoriteStations = favoriteStations.filter(name => name !== stationName);
+      if (!Array.isArray(deletedStations)) deletedStations = [];
       deletedStations.push(stationName);
       localStorage.setItem("stationLists", JSON.stringify(stationLists));
       localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));

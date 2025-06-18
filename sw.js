@@ -1,80 +1,89 @@
-const CACHE_NAME = 'radio-pwa-cache-v107';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/script.js',
-  '/manifest.json',
-  '/icon-192.png',
-  '/stations.json'
-];
+const CACHE_NAME = 'radio-cache-v6.1.20250618';
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Кешування файлів:', urlsToCache);
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([
+        '/',
+        '/index.html',
+        '/styles.css',
+        '/script.js',
+        '/stations.json',
+        '/manifest.json'
+      ]).then(() => {
+        caches.keys().then((cacheNames) => {
+          return Promise.all(cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              return caches.delete(cacheName);
+            }
+          }));
+        });
+      });
+    })
   );
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      if (event.request.url.endsWith('stations.json')) {
+        return fetch(event.request, { cache: 'no-store', signal: new AbortController().signal }).then((networkResponse) => {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+          });
+          return networkResponse;
+        }).catch(() => caches.match('/index.html'));
+      }
+      return response || fetch(event.request).then((networkResponse) => {
+        return networkResponse;
+      }).catch(() => caches.match('/index.html'));
+    })
+  );
+});
+
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
-            console.log('Видалення старого кешу:', cache);
-            return caches.delete(cache);
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
           }
         })
       );
     })
+  );
+  self.clients.matchAll().then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({ type: 'CACHE_UPDATED', cacheVersion: CACHE_NAME });
+    });
+  });
+});
+
+// Моніторинг стану мережі
+let wasOnline = navigator.onLine;
+
+setInterval(() => {
+  fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
     .then(() => {
-      console.log('Активація нового Service Worker');
-      return self.clients.claim();
-    })
-  );
-});
-
-self.addEventListener('fetch', event => {
-  const requestUrl = new URL(event.request.url);
-  console.log(`Обробка запиту: ${requestUrl.href}`); // Діагностичний лог
-
-  if (!requestUrl.origin.includes(self.location.origin)) {
-    event.respondWith(
-      fetch(event.request)
-        .catch(error => {
-          console.error(`Помилка запиту до ${requestUrl.href}:`, error);
-          return new Response('Network error', { status: 503 });
-        })
-    );
-    return;
-  }
-
-  event.respondWith(
-    fetch(event.request)
-      .then(networkResponse => {
-        if (event.request.method === 'GET') {
-          return caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
+      if (!wasOnline) {
+        wasOnline = true;
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ type: "NETWORK_STATUS", online: true });
           });
-        }
-        return networkResponse;
-      })
-      .catch(() => {
-        return caches.match(event.request).then(cachedResponse => {
-          return cachedResponse || new Response('Offline', { status: 503 });
         });
-      })
-  );
-});
-
-self.addEventListener('message', event => {
-  if (event.data.type === 'NETWORK_STATUS') {
-    event.ports[0].postMessage({ online: navigator.onLine });
-  }
-});
+      }
+    })
+    .catch(error => {
+      console.error("Помилка перевірки мережі:", error);
+      if (wasOnline) {
+        wasOnline = false;
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ type: "NETWORK_STATUS", online: false });
+          });
+        });
+      }
+    });
+}, 1000);
