@@ -246,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (genre) params.append("tag", genre);
         params.append("order", "clickcount");
         params.append("reverse", "true");
-        params.append("limit", "1000");
+        params.append("limit", "2000");
         const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
         console.log("Запит до API:", url);
         const response = await fetch(url, {
@@ -500,7 +500,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length) {
         console.log("Пропуск tryAutoPlay", { isPlaying, hasStationItems: !!stationItems?.length, isIndexValid: currentIndex < stationItems.length });
-        document.querySelectorAll(".spectral-bar").forEach(bar => bar.classList.remove("playing"));
+        document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
         return;
       }
       if (audio.src === stationItems[currentIndex].dataset.value && !audio.paused) {
@@ -513,7 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorCount >= ERROR_LIMIT) {
           console.error("Досягнуто ліміт помилок відтворення");
         }
-        document.querySelectorAll(".spectral-bar").forEach(bar => bar.classList.remove("playing"));
+        document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
         return;
       }
       audio.pause();
@@ -526,7 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => {
           errorCount = 0;
           console.log("Відтворення розпочато успішно");
-          document.querySelectorAll(".spectral-bar").forEach(bar => bar.classList.add("playing"));
+          document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
         })
         .catch(error => {
           console.error("Помилка відтворення:", error);
@@ -536,7 +536,7 @@ document.addEventListener("DOMContentLoaded", () => {
               console.error("Досягнуто ліміт помилок відтворення");
             }
           }
-          document.querySelectorAll(".spectral-bar").forEach(bar => bar.classList.remove("playing"));
+          document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
         });
     }
 
@@ -743,12 +743,12 @@ document.addEventListener("DOMContentLoaded", () => {
         isPlaying = true;
         tryAutoPlay();
         playPauseBtn.textContent = "⏸";
-        document.querySelectorAll(".spectral-bar").forEach(bar => bar.classList.add("playing"));
+        document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       } else {
         audio.pause();
         isPlaying = false;
         playPauseBtn.textContent = "▶";
-        document.querySelectorAll(".spectral-bar").forEach(bar => bar.classList.remove("playing"));
+        document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       }
       localStorage.setItem("isPlaying", isPlaying);
     }
@@ -797,14 +797,14 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("playing", () => {
       isPlaying = true;
       playPauseBtn.textContent = "⏸";
-      document.querySelectorAll(".spectral-bar").forEach(bar => bar.classList.add("playing"));
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       localStorage.setItem("isPlaying", isPlaying);
     });
 
     audio.addEventListener("pause", () => {
       isPlaying = false;
       playPauseBtn.textContent = "▶";
-      document.querySelectorAll(".spectral-bar").forEach(bar => bar.classList.remove("playing"));
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = null;
@@ -812,7 +812,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     audio.addEventListener("error", () => {
-      document.querySelectorAll(".spectral-bar").forEach(bar => bar.classList.remove("playing"));
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       console.error("Помилка аудіо:", audio.error?.message || "Невідома помилка", "для URL:", audio.src);
       if (isPlaying && errorCount < ERROR_LIMIT) {
         errorCount++;
