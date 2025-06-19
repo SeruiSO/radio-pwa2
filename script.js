@@ -4,6 +4,7 @@ let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
 let stationLists = JSON.parse(localStorage.getItem("stationLists")) || {};
 let userAddedStations = JSON.parse(localStorage.getItem("userAddedStations")) || {};
+let customTabs = JSON.parse(localStorage.getItem("customTabs")) || [];
 let stationItems = [];
 let abortController = new AbortController();
 let errorCount = 0;
@@ -53,11 +54,50 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePastSearches();
     populateSearchSuggestions();
 
-    document.querySelectorAll(".tab-btn").forEach((btn, index) => {
-      const tabs = ["best", "techno", "trance", "ukraine", "pop", "search"];
-      const tab = tabs[index];
-      btn.addEventListener("click", () => switchTab(tab));
+    const defaultTabs = ["best", "techno", "trance", "ukraine", "pop", "search"];
+    const allTabs = [...defaultTabs, ...customTabs];
+    const tabsContainer = document.querySelector(".tabs");
+    tabsContainer.innerHTML = "";
+    allTabs.forEach((tab, index) => {
+      const btn = document.createElement("button");
+      btn.className = "tab-btn";
+      btn.textContent = tab === "best" ? "Best" : tab === "search" ? "Search" : tab === "ukraine" ? "UA" : tab.charAt(0).toUpperCase() + tab.slice(1);
+      btn.dataset.tab = tab;
+      tabsContainer.appendChild(btn);
     });
+    const addTabBtn = document.createElement("button");
+    addTabBtn.className = "tab-btn add-tab-btn";
+    addTabBtn.textContent = "+";
+    tabsContainer.appendChild(addTabBtn);
+
+    document.querySelectorAll(".tab-btn:not(.add-tab-btn)").forEach((btn, index) => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+      if (customTabs.includes(btn.dataset.tab)) {
+        let pressTimer;
+        btn.addEventListener("mousedown", startLongPress);
+        btn.addEventListener("touchstart", startLongPress);
+        btn.addEventListener("mouseup", clearLongPress);
+        btn.addEventListener("touchend", clearLongPress);
+        btn.addEventListener("mouseleave", clearLongPress);
+        btn.addEventListener("touchcancel", clearLongPress);
+
+        function startLongPress(e) {
+          e.preventDefault();
+          pressTimer = setTimeout(() => {
+            btn.classList.add("long-press");
+            showTabManageModal(btn.dataset.tab);
+            btn.classList.remove("long-press");
+          }, 700);
+        }
+
+        function clearLongPress() {
+          clearTimeout(pressTimer);
+          btn.classList.remove("long-press");
+        }
+      }
+    });
+
+    addTabBtn.addEventListener("click", showCreateTabModal);
 
     shareButton.addEventListener("click", () => {
       const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
@@ -203,6 +243,11 @@ document.addEventListener("DOMContentLoaded", () => {
             ];
             console.log(`Додано до ${tab}:`, mergedStationLists[tab].map(s => s.name));
           });
+          customTabs.forEach(tab => {
+            if (!mergedStationLists[tab]) {
+              mergedStationLists[tab] = userAddedStations[tab] || [];
+            }
+          });
           stationLists = mergedStationLists;
           localStorage.setItem("stationLists", JSON.stringify(stationLists));
         } else {
@@ -314,13 +359,11 @@ document.addEventListener("DOMContentLoaded", () => {
       overlay.className = "modal-overlay";
       const modal = document.createElement("div");
       modal.className = "modal";
+      const allTabs = ["techno", "trance", "ukraine", "pop", ...customTabs];
       modal.innerHTML = `
         <h2>Оберіть вкладку</h2>
         <div class="modal-tabs">
-          <button class="modal-tab-btn" data-tab="techno">TECHNO</button>
-          <button class="modal-tab-btn" data-tab="trance">Trance</button>
-          <button class="modal-tab-btn" data-tab="ukraine">UA</button>
-          <button class="modal-tab-btn" data-tab="pop">POP</button>
+          ${allTabs.map(tab => `<button class="modal-tab-btn" data-tab="${tab}">${tab === "ukraine" ? "UA" : tab.charAt(0).toUpperCase() + tab.slice(1)}</button>`).join("")}
           <button class="modal-cancel-btn">Відміна</button>
         </div>
       `;
@@ -363,6 +406,144 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         alert("Ця станція вже додана до обраної вкладки!");
       }
+    }
+
+    function showCreateTabModal() {
+      const overlay = document.createElement("div");
+      overlay.className = "modal-overlay";
+      const modal = document.createElement("div");
+      modal.className = "modal";
+      modal.innerHTML = `
+        <h2>Створити нову вкладку</h2>
+        <input type="text" class="modal-input" placeholder="Назва вкладки (макс. 10 символів)" maxlength="10">
+        <div class="modal-tabs">
+          <button class="modal-tab-btn create-tab-btn">Створити</button>
+          <button class="modal-cancel-btn">Відміна</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      document.body.appendChild(modal);
+      const input = modal.querySelector(".modal-input");
+      const createBtn = modal.querySelector(".create-tab-btn");
+      const closeModal = () => {
+        overlay.remove();
+        modal.remove();
+      };
+      overlay.addEventListener("click", closeModal);
+      createBtn.addEventListener("click", () => {
+        const tabName = input.value.trim().toLowerCase();
+        if (!tabName) {
+          alert("Назва вкладки не може бути порожньою!");
+          return;
+        }
+        if (tabName.length > 10) {
+          alert("Назва вкладки не може перевищувати 10 символів!");
+          return;
+        }
+        const reservedTabs = ["best", "techno", "trance", "ukraine", "pop", "search"];
+        if (reservedTabs.includes(tabName) || customTabs.includes(tabName)) {
+          alert("Ця назва вже використовується!");
+          return;
+        }
+        if (!/^[a-zA-Z0-9]+$/.test(tabName)) {
+          alert("Назва може містити лише літери та цифри!");
+          return;
+        }
+        customTabs.push(tabName);
+        localStorage.setItem("customTabs", JSON.stringify(customTabs));
+        stationLists[tabName] = stationLists[tabName] || [];
+        userAddedStations[tabName] = userAddedStations[tabName] || [];
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+        initializeApp();
+        closeModal();
+      });
+      modal.querySelector(".modal-cancel-btn").addEventListener("click", closeModal);
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") createBtn.click();
+      });
+    }
+
+    function showTabManageModal(tab) {
+      if (!customTabs.includes(tab)) return;
+      const overlay = document.createElement("div");
+      overlay.className = "modal-overlay";
+      const modal = document.createElement("div");
+      modal.className = "modal";
+      modal.innerHTML = `
+        <h2>Керування вкладкою</h2>
+        <input type="text" class="modal-input" placeholder="Нова назва" value="${tab}" maxlength="10">
+        <div class="modal-tabs">
+          <button class="modal-tab-btn rename-tab-btn">Перейменувати</button>
+          <button class="modal-tab-btn delete-tab-btn">Видалити</button>
+          <button class="modal-cancel-btn">Відміна</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      document.body.appendChild(modal);
+      const input = modal.querySelector(".modal-input");
+      const renameBtn = modal.querySelector(".rename-tab-btn");
+      const deleteBtn = modal.querySelector(".delete-tab-btn");
+      const closeModal = () => {
+        overlay.remove();
+        modal.remove();
+      };
+      overlay.addEventListener("click", closeModal);
+      renameBtn.addEventListener("click", () => {
+        const newName = input.value.trim().toLowerCase();
+        if (!newName) {
+          alert("Назва вкладки не може бути порожньою!");
+          return;
+        }
+        if (newName.length > 10) {
+          alert("Назва вкладки не може перевищувати 10 символів!");
+          return;
+        }
+        const reservedTabs = ["best", "techno", "trance", "ukraine", "pop", "search"];
+        if (reservedTabs.includes(newName) || customTabs.includes(newName)) {
+          alert("Ця назва вже використовується!");
+          return;
+        }
+        if (!/^[a-zA-Z0-9]+$/.test(newName)) {
+          alert("Назва може містити лише літери та цифри!");
+          return;
+        }
+        const index = customTabs.indexOf(tab);
+        customTabs[index] = newName;
+        stationLists[newName] = stationLists[tab] || [];
+        userAddedStations[newName] = userAddedStations[tab] || [];
+        delete stationLists[tab];
+        delete userAddedStations[tab];
+        localStorage.setItem("customTabs", JSON.stringify(customTabs));
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+        if (currentTab === tab) {
+          currentTab = newName;
+          localStorage.setItem("currentTab", currentTab);
+        }
+        initializeApp();
+        closeModal();
+      });
+      deleteBtn.addEventListener("click", () => {
+        if (confirm(`Ви впевнені, що хочете видалити вкладку "${tab}"?`)) {
+          customTabs = customTabs.filter(t => t !== tab);
+          delete stationLists[tab];
+          delete userAddedStations[tab];
+          localStorage.setItem("customTabs", JSON.stringify(customTabs));
+          localStorage.setItem("stationLists", JSON.stringify(stationLists));
+          localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+          if (currentTab === tab) {
+            currentTab = "techno";
+            localStorage.setItem("currentTab", currentTab);
+          }
+          initializeApp();
+          closeModal();
+        }
+      });
+      modal.querySelector(".modal-cancel-btn").addEventListener("click", closeModal);
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") renameBtn.click();
+      });
     }
 
     const themes = {
@@ -555,7 +736,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function switchTab(tab) {
-      if (!["techno", "trance", "ukraine", "pop", "best", "search"].includes(tab)) {
+      const validTabs = ["techno", "trance", "ukraine", "pop", "best", "search", ...customTabs];
+      if (!validTabs.includes(tab)) {
         tab = "techno";
       }
       currentTab = tab;
@@ -570,7 +752,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (tab === "search") populateSearchSuggestions();
       updateStationList();
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-      const activeBtn = document.querySelector(`.tab-btn:nth-child(${["best", "techno", "trance", "ukraine", "pop", "search"].indexOf(tab) + 1})`);
+      const activeBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
       if (activeBtn) activeBtn.classList.add("active");
       if (stationItems?.length && currentIndex < stationItems.length) {
         tryAutoPlay();
@@ -605,7 +787,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.country = station.country;
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
         const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '">` : "🎵 ";
-        const deleteButton = ["techno", "trance", "ukraine", "pop"].includes(currentTab)
+        const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
           ? `<button class="delete-btn">🗑</button>`
           : "";
         item.innerHTML = `
@@ -839,7 +1021,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Помилка аудіо:", audio.error?.message || "Невідома помилка", "для URL:", audio.src);
       if (isPlaying && errorCount < ERROR_LIMIT) {
         errorCount++;
-        setTimeout(nextStation, 1000);
       } else if (errorCount >= ERROR_LIMIT) {
         console.error("Досягнуто ліміт помилок відтворення");
       }
@@ -875,8 +1056,5 @@ document.addEventListener("DOMContentLoaded", () => {
       navigator.mediaSession.setActionHandler("previoustrack", prevStation);
       navigator.mediaSession.setActionHandler("nexttrack", nextStation);
     }
-
-    applyTheme(currentTheme);
-    loadStations();
   }
 });

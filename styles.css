@@ -1,4 +1,4 @@
-/* Updated on June 18, 2025 */
+/* Updated on June 19, 2025 */
 :root {
   --body-bg: #0A0A0A;
   --container-bg: #121212;
@@ -308,20 +308,20 @@ h1 {
 
 .tabs {
   display: flex;
-  justify-content: space-between;
+  overflow-x: auto;
+  white-space: nowrap;
   margin: 5px 0;
   background: var(--container-bg);
   padding: 5px;
   border-radius: 10px;
-  border: 1px solid var(--accent);
   position: sticky;
-  top: 100px; /* Нижче #currentStationInfo */
+  bottom: 110px; /* Над controls-container */
   z-index: 9;
-  transition: background 0.4s ease, border-color 0.4s ease;
+  transition: background 0.4s ease;
 }
 
 .tab-btn {
-  flex: 1;
+  flex: 0 0 auto;
   padding: 12px;
   background: var(--container-bg);
   border: 2px solid var(--accent);
@@ -344,6 +344,20 @@ h1 {
   background: var(--accent);
   border-color: var(--accent);
   color: #0A0A0A;
+}
+
+.tab-btn.add-tab-btn {
+  min-width: 40px;
+  font-size: 18px;
+}
+
+.tab-btn.long-press {
+  animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 
 #searchInput {
@@ -542,6 +556,24 @@ h1 {
   color: var(--body-bg);
 }
 
+.modal-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  background: var(--container-bg);
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.modal-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
+}
+
 /* Стилі для datalist */
 input[list]::-webkit-calendar-picker-indicator {
   display: none;
@@ -620,7 +652,7 @@ datalist {
   }
 
   .tabs {
-    top: 80px; /* Нижче #currentStationInfo на мобільних */
+    bottom: 100px; /* Над controls-container на мобільних */
   }
 
   #currentStationInfo {
@@ -696,6 +728,11 @@ datalist {
   .modal-tab-btn, .modal-cancel-btn {
     font-size: 14px;
     padding: 8px;
+  }
+
+  .modal-input {
+    font-size: 14px;
+    padding: 6px;
   }
 }
 
