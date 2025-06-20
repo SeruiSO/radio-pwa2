@@ -116,11 +116,11 @@ document.addEventListener("DOMContentLoaded", () => {
         "South Korea", "New Zealand"
       ];
       const suggestedGenres = [
-        "Pop", "Rock", "Dance", "Electronic", "Techno", "Trance", "House",
-        "EDM", "Hip-Hop", "Rap", "Jazz", "Classical", "Country", "Reggae",
-        "Blues", "Folk", "Metal", "R&B", "Soul", "Ambient"
+        "Pop", "Rock", "Japan",
+        "Electronic", "Jazz", "Classical", "Country", "Reggae",
+        "Blues", "Folk", "Metal", "R&B", "Soul", "Ambient",
+        "Techno", "Trance", "House", "EDM", "Hip-Hop", "Rap"
       ];
-
       const countryDatalist = document.getElementById("suggestedCountries");
       const genreDatalist = document.getElementById("suggestedGenres");
 
@@ -712,7 +712,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
 
-      navigator messaage
+      // Виправлено опечатку 'messaage' на 'message'
       navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "CACHE_UPDATED") {
           console.log("Отримано оновлення кешу, оновлюємо stationLists");
