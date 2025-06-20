@@ -6,8 +6,6 @@ let stationLists = JSON.parse(localStorage.getItem("stationLists")) || {};
 let userAddedStations = JSON.parse(localStorage.getItem("userAddedStations")) || {};
 let stationItems = [];
 let abortController = new AbortController();
-let errorCount = 0;
-const ERROR_LIMIT = 5;
 let pastSearches = JSON.parse(localStorage.getItem("pastSearches")) || [];
 let deletedStations = JSON.parse(localStorage.getItem("deletedStations")) || [];
 let customTabs = JSON.parse(localStorage.getItem("customTabs")) || [];
@@ -445,7 +443,8 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           btn.addEventListener("pointerup", () => clearTimeout(longPressTimer));
           btn.addEventListener("pointerleave", () => clearTimeout(longPressTimer));
-        }
+       
+        });
       });
 
       addBtn.addEventListener("click", showNewTabModal);
@@ -749,10 +748,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (!isValidUrl(stationItems[currentIndex].dataset.value)) {
         console.error("Невалідний URL:", stationItems[currentIndex].dataset.value);
-        errorCount++;
-        if (errorCount >= ERROR_LIMIT) {
-          console.error("Досягнуто ліміт помилок відтворення");
-        }
         document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
         return;
       }
@@ -764,18 +759,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       playPromise
         .then(() => {
-          errorCount = 0;
           console.log("Відтворення розпочато успішно");
           document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
         })
         .catch(error => {
           console.error("Помилка відтворення:", error);
-          if (error.name !== "AbortError") {
-            errorCount++;
-            if (errorCount >= ERROR_LIMIT) {
-              console.error("Досягнуто ліміт помилок відтворення");
-            }
-          }
           document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
         });
     }
@@ -1068,11 +1056,13 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("error", () => {
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       console.error("Помилка:", audio.error?.message || "Невідома помилка", "для URL:", audio.src);
-      if (isPlaying && errorCount < ERROR_LIMIT) {
-        errorCount++;
-        setTimeout(nextStation, 1000);
-      } else if (errorCount >= ERROR_LIMIT) {
-        console.error("Досягнуто ліміт помилок");
+      if (isPlaying) {
+        setTimeout(() => {
+          audio.pause();
+          audio.src = "";
+          audio.src = stationItems[currentIndex]?.dataset.value || "";
+          tryAutoPlay();
+        }, 1000);
       }
     });
 
