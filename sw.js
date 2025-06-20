@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'radio-cache-v41.1.20250618';
+const CACHE_NAME = 'radio-cache-v42.1.20250618';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -64,26 +64,32 @@ self.addEventListener('activate', (event) => {
 let wasOnline = navigator.onLine;
 
 setInterval(() => {
-  fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
-    .then(() => {
-      if (!wasOnline) {
-        wasOnline = true;
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({ type: "NETWORK_STATUS", online: true });
+  // Первинна перевірка через navigator.onLine
+  const isOnline = navigator.onLine;
+  if (isOnline !== wasOnline) {
+    // Якщо navigator.onLine змінився, проводимо вторинну перевірку
+    fetch('https://www.google.com/favicon.ico', { method: 'HEAD', cache: 'no-store' })
+      .then(() => {
+        if (!wasOnline) {
+          wasOnline = true;
+          console.log('Мережа відновлена (SW)');
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({ type: 'NETWORK_STATUS', online: true });
+            });
           });
-        });
-      }
-    })
-    .catch(error => {
-      console.error("Помилка перевірки мережі:", error);
-      if (wasOnline) {
-        wasOnline = false;
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({ type: "NETWORK_STATUS", online: false });
+        }
+      })
+      .catch(error => {
+        if (wasOnline) {
+          wasOnline = false;
+          console.error('Втрачено зв’язок (SW):', error);
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({ type: 'NETWORK_STATUS', online: false });
+            });
           });
-        });
-      }
-    });
-}, 1000);
+        }
+      });
+  }
+}, 2000); // Інтервал 2 секунди
