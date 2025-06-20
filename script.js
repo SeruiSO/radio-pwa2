@@ -443,8 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           btn.addEventListener("pointerup", () => clearTimeout(longPressTimer));
           btn.addEventListener("pointerleave", () => clearTimeout(longPressTimer));
-       
-        });
+        }
       });
 
       addBtn.addEventListener("click", showNewTabModal);
