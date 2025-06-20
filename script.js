@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.querySelector(".controls .control-btn:nth-child(1)").addEventListener("click", prevStation);
-    document.querySelector(".controls .control-btn:nth-child(2)").addEventListener("click", togglePlayPauseBeanstalk
+    document.querySelector(".controls .control-btn:nth-child(2)").addEventListener("click", togglePlayPause);
     document.querySelector(".controls .control-btn:nth-child(3)").addEventListener("click", nextStation);
 
     searchBtn.addEventListener("click", () => {
@@ -338,13 +338,12 @@ document.addEventListener("DOMContentLoaded", () => {
       stationList.onclick = e => {
         const item = e.target.closest(".station-item");
         const addBtn = e.target.closest(".add-btn");
-        if (item && !item.classList.contains("empty")) {
-          currentIndex = Array.from(stationItems).indexOf(item);
-          changeStation(currentIndex);
-        }
         if (addBtn) {
           e.stopPropagation();
           showTabModal(item);
+        } else if (item && !item.classList.contains("empty")) {
+          currentIndex = Array.from(stationItems).indexOf(item);
+          changeStation(currentIndex);
         }
       };
     }
@@ -389,10 +388,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function saveStation(item, targetTab) {
       const stationName = item.dataset.name;
-      // Initialize arrays if they don't exist
       if (!stationLists[targetTab]) stationLists[targetTab] = [];
       if (!userAddedStations[targetTab]) userAddedStations[targetTab] = [];
-      // Check if station already exists
       if (!stationLists[targetTab].some(s => s.name === stationName)) {
         const newStation = {
           value: item.dataset.value,
@@ -401,7 +398,6 @@ document.addEventListener("DOMContentLoaded", () => {
           country: item.dataset.country,
           favicon: item.dataset.favicon || ""
         };
-        // Add to both lists, ensuring no duplicates
         stationLists[targetTab].unshift(newStation);
         if (!userAddedStations[targetTab].some(s => s.name === stationName)) {
           userAddedStations[targetTab].unshift(newStation);
@@ -428,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tabsContainer.appendChild(btn);
       });
       customTabs.forEach(tab => {
-        if (typeof tab !== "string" || !tab.trim()) return; // Skip invalid tabs
+        if (typeof tab !== "string" || !tab.trim()) return;
         const btn = document.createElement("button");
         btn.className = `tab-btn ${currentTab === tab ? "active" : ""}`;
         btn.dataset.tab = tab;
@@ -489,7 +485,6 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
         customTabs.push(tabName);
-        // Initialize arrays for the new tab
         stationLists[tabName] = [];
         userAddedStations[tabName] = [];
         localStorage.setItem("customTabs", JSON.stringify(customTabs));
@@ -658,7 +653,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
     let currentTheme = localStorage.getItem("selectedTheme") || "neon-pulse";
-    // Validate currentTheme
     if (!themes[currentTheme]) {
       currentTheme = "neon-pulse";
       localStorage.setItem("selectedTheme", currentTheme);
@@ -737,19 +731,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getReconnectionDelay(attemptTime) {
-      const twoMinutes = 2 * 60 * 1000; // 2 хвилини
-      const fiveMinutes = 5 * 60 * 1000; // 5 хвилин
+      const twoMinutes = 2 * 60 * 1000;
+      const fiveMinutes = 5 * 60 * 1000;
       if (attemptTime < twoMinutes) {
-        return 1000; // 1 секунда для перших 2 хвилин
+        return 1000;
       } else if (attemptTime < fiveMinutes) {
-        return 2000; // 2 секунди для наступних 3 хвилин
+        return 2000;
       } else {
-        // Подвоєння затримки після 5 хвилин, максимум 32 секунди
         const elapsedAfterFive = attemptTime - fiveMinutes;
         const attemptsAfterFive = Math.floor(elapsedAfterFive / 1000);
-        let delay = 4000; // Починаємо з 4 секунд
+        let delay = 4000;
         for (let i = 0; i < attemptsAfterFive; i++) {
-          delay = Math.min(delay * 2, 32000); // Подвоюємо, але не більше 32 секунд
+          delay = Math.min(delay * 2, 32000);
         }
         return delay;
       }
@@ -783,7 +776,6 @@ document.addEventListener("DOMContentLoaded", () => {
       audio.src = stationItems[currentIndex].dataset.value;
       console.log("Спроба відтворення:", audio.src);
       const playPromise = audio.play();
-
       playPromise
         .then(() => {
           console.log("Відтворення розпочато успішно");
@@ -891,19 +883,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const item = e.target.closest(".station-item");
         const favoriteBtn = e.target.closest(".favorite-btn");
         const deleteBtn = e.target.closest(".delete-btn");
-        if (item && !item.classList.contains("empty")) {
-          currentIndex = Array.from(stationItems).indexOf(item);
-          changeStation(currentIndex);
-        }
         if (favoriteBtn) {
           e.stopPropagation();
           toggleFavorite(item.dataset.name);
-        }
-        if (deleteBtn) {
+        } else if (deleteBtn) {
           e.stopPropagation();
           if (confirm(`Ви дійсно хочете видалити станцію "${item.dataset.name}" зі списку?`)) {
             deleteStation(item.dataset.name);
           }
+        } else if (item && !item.classList.contains("empty")) {
+          currentIndex = Array.from(stationItems).indexOf(item);
+          changeStation(currentIndex);
         }
       };
 
@@ -1002,7 +992,7 @@ document.addEventListener("DOMContentLoaded", () => {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: item.dataset.name || "Unknown Station",
           artist: `${item.dataset.genre || ""} | ${item.dataset.country || ""}`,
-          album: "Radio Music S O"
+          album: "Radio S O"
         });
       }
     }
@@ -1027,7 +1017,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function togglePlayPause() {
       if (!playPauseBtn || !audio) {
-        console.error("playPauseBtn або аудіо не знайдено");
+        console.error("playPauseBtn або audio не знайдено");
         return;
       }
       if (audio.paused) {
