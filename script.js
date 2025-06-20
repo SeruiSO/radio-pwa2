@@ -7,8 +7,8 @@ let userAddedStations = JSON.parse(localStorage.getItem("userAddedStations")) ||
 let stationItems = [];
 let abortController = new AbortController();
 let retryTimeout = null;
-const RETRY_LIMIT_MINUTES = 60; // Збільшено до 60 хвилин
-const RETRY_INTERVAL_MS = 2000; // Retry every 2 seconds
+const RETRY_LIMIT_MINUTES = 60;
+const RETRY_INTERVAL_MS = 2000;
 let retryStartTime = null;
 
 let pastSearches = JSON.parse(localStorage.getItem("pastSearches")) || [];
@@ -729,32 +729,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function tryPlayback() {
       if (!isPlaying || !stationItems?.length || currentIndex >= stationItems.length) {
-        console.log("Пропуск tryPlayback", { isPlaying, hasStationItems: !!stationItems?.length, isIndexValid: currentIndex < stationItems.length });
+        console.log("Пропуск tryPlayback", {
+          isPlaying,
+          hasStationItems: !!stationItems?.length,
+          isIndexValid: currentIndex < stationItems.length
+        });
         document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
         return;
       }
+
       if (!isValidUrl(stationItems[currentIndex].dataset.value)) {
         console.error("Невалідний URL:", stationItems[currentIndex].dataset.value);
         scheduleRetry();
         return;
       }
+
       if (!navigator.onLine) {
         console.log("Пристрій офлайн, відтворюємо кеш");
-        if (audio.buffered.length > 0 && isPlaying && audio.currentTime < audio.buffered.end(audio.buffered.length - 1)) {
+        if (
+          audio.buffered.length > 0 &&
+          isPlaying &&
+          audio.currentTime < audio.buffered.end(audio.buffered.length - 1)
+        ) {
           console.log("Відтворюємо кеш з позиції", audio.currentTime);
-          audio.play().catch(error => {
-            console.error("Помилка відтворення кешу:", error);
-            scheduleRetry();
-          });
+          audio
+            .play()
+            .catch(error => {
+              console.error("Помилка відтворення кешу:", error);
+              scheduleRetry();
+            });
         } else {
           console.log("Кеш недоступний або закінчився");
           scheduleRetry();
         }
         return;
       }
+
       // При онлайн-з'єднанні ігноруємо кеш і підключаємо живий потік
-      audio.src = stationItems[currentIndex].dataset.value + "?t=" + Date.now(); // Додаємо таймстемп для обходу кешу
-      audio.currentTime = 0; // Скидаємо позицію для живого потоку
+      audio.src = stationItems[currentIndex].dataset.value + "?t=" + Date.now();
+      audio.currentTime = 0;
       console.log("Спроба відтворення живого потоку:", audio.src);
       const playPromise = audio.play();
 
@@ -1042,12 +1055,13 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       eventListeners.visibilitychange = () => {
         if (!document.hidden && isPlaying) {
-          console.log("Додаток повернено на передній план, підключаємо станцію");
+          console.log("Додаток повернено на передній план, підключення");
           tryPlayback();
         }
+      };
       eventListeners.resume = () => {
-        if (isPlaying && navigator.connection?.type !== "none") {
-          console.log("Додаток відновлено, підключаємо станцію");
+        if (isPlaying && navigator.connection?.state) {
+          console.log("Додаток відновлено, підключення");
           tryPlayback();
         }
       };
@@ -1059,7 +1073,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function removeEventListeners() {
       if (eventListeners.keydown) document.removeEventListener("keydown", eventListeners.keydown);
-      if (eventListeners.visibilitychange) document.removeEventListener("visibilitychange", eventListeners.visibilitychange);
+      if (eventListeners.visibility) document.removeEventListener("visibilitychange", eventListeners.visibilitychange);
       if (eventListeners.resume) document.removeEventListener("resume", eventListeners.resume);
     }
 
@@ -1084,7 +1098,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     audio.addEventListener("error", () => {
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      console.error("Помилка:", audio.error?.message || "Невідома помилка", "для URL:", audio.src);
+      console.error("Помилка:", audio.error?.message || "Невідома помилка");
       if (isPlaying) {
         if (audio.buffered.length > 0 && audio.currentTime < 5) {
           console.log("Помилка потоку, відтворюємо кеш");
@@ -1105,7 +1119,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("online", () => {
       console.log("Мережа відновлена");
       if (isPlaying && stationItems?.length && currentIndex < stationItems.length) {
-        console.log("Підключаємо живий потік");
+        console.log("Підключення до живого потоку");
         tryPlayback();
       }
     });
@@ -1114,9 +1128,9 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Втрачено зв’язок");
       if (isPlaying && stationItems?.length && currentIndex < stationItems.length) {
         if (audio.buffered.length > 0 && isPlaying && audio.currentTime < audio.buffered.end(audio.buffered.length - 1)) {
-          console.log("Відтворюємо кеш при офлайн");
+          console.log("Відтворення кешу при офлайн");
           audio.play().catch(error => {
-            console.error("Помилка відтворення кешу:", error);
+            console.error("Помилка відтворення:", error);
             scheduleRetry();
           });
         } else {
@@ -1139,6 +1153,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     applyTheme(currentTheme);
     loadStations();
-    addEventListener();
+    addEventListeners();
   }
 });
