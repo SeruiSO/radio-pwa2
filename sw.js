@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v21.1.20250618';
+const CACHE_NAME = 'radio-cache-v22.1.20250627';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -36,7 +36,9 @@ self.addEventListener('fetch', (event) => {
       }
       return response || fetch(event.request).then((networkResponse) => {
         return networkResponse;
-      }).catch(() => caches.match('/index.html'));
+      }).catch(() => {
+        return caches.match('/index.html');
+      });
     })
   );
 });
@@ -100,7 +102,7 @@ self.addEventListener('online', () => {
   if (networkCheckInterval) {
     clearInterval(networkCheckInterval);
     networkCheckInterval = null;
-    console.log("Мережа відновлена, припиняємо перевірку");
+    console.log("Мережа відновлена");
   }
   self.clients.matchAll().then(clients => {
     clients.forEach(client => {
@@ -112,4 +114,5 @@ self.addEventListener('online', () => {
 self.addEventListener('offline', () => {
   wasOnline = false;
   startNetworkCheck();
+  console.log("Втрачено з'єднання, запускаємо перевірку мережі");
 });
