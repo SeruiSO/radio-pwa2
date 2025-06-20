@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v45.1.20250618';
+const CACHE_NAME = 'radio-cache-v21.1.20250618';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -9,8 +9,7 @@ self.addEventListener('install', (event) => {
         '/styles.css',
         '/script.js',
         '/stations.json',
-        '/manifest.json',
-        '/ping.txt' // Додаємо ping.txt до кешу
+        '/manifest.json'
       ]).then(() => {
         caches.keys().then((cacheNames) => {
           return Promise.all(cacheNames.map((cacheName) => {
@@ -66,75 +65,51 @@ let wasOnline = navigator.onLine;
 let networkCheckInterval = null;
 
 function startNetworkCheck() {
-  if (networkCheckInterval) return; // Уникаємо дублювання інтервалу
+  if (networkCheckInterval) return; // Prevent multiple intervals
   networkCheckInterval = setInterval(() => {
-    const isOnline = navigator.onLine;
-    if (isOnline !== wasOnline) {
-      // Якщо navigator.onLine змінився, проводимо вторинну перевірку
-      fetch('/ping.txt', { method: 'HEAD', cache: 'no-store' })
-        .then(() => {
-          if (!wasOnline) {
-            wasOnline = true;
-            console.log('Мережа відновлена (SW)');
-            self.clients.matchAll().then(clients => {
-              clients.forEach(client => {
-                client.postMessage({ type: 'NETWORK_STATUS', online: true });
-              });
+    fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
+      .then(() => {
+        if (!wasOnline) {
+          wasOnline = true;
+          clearInterval(networkCheckInterval);
+          networkCheckInterval = null;
+          console.log("Мережа відновлена, припиняємо перевірку");
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({ type: "NETWORK_STATUS", online: true });
             });
-            clearInterval(networkCheckInterval); // Зупиняємо перевірку після відновлення
-            networkCheckInterval = null;
-          }
-        })
-        .catch(error => {
-          if (wasOnline) {
-            wasOnline = false;
-            console.error('Втрачено зв’язок (SW):', error);
-            self.clients.matchAll().then(clients => {
-              clients.forEach(client => {
-                client.postMessage({ type: 'NETWORK_STATUS', online: false });
-              });
+          });
+        }
+      })
+      .catch(error => {
+        console.error("Помилка перевірки мережі:", error);
+        if (wasOnline) {
+          wasOnline = false;
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({ type: "NETWORK_STATUS", online: false });
             });
-          }
-        });
-    }
-  }, 2000); // Інтервал 2 секунди
+          });
+        }
+      });
+  }, 2000); // Check every 2 seconds
 }
 
-function stopNetworkCheck() {
+self.addEventListener('online', () => {
+  wasOnline = true;
   if (networkCheckInterval) {
     clearInterval(networkCheckInterval);
     networkCheckInterval = null;
+    console.log("Мережа відновлена, припиняємо перевірку");
   }
-}
-
-// Запускаємо перевірку, якщо пристрій офлайн
-if (!navigator.onLine) {
-  startNetworkCheck();
-}
-
-// Слухаємо зміни статусу мережі
-self.addEventListener('online', () => {
-  if (!wasOnline) {
-    wasOnline = true;
-    console.log('Мережа відновлена (SW)');
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({ type: 'NETWORK_STATUS', online: true });
-      });
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({ type: "NETWORK_STATUS", online: true });
     });
-    stopNetworkCheck();
-  }
+  });
 });
 
 self.addEventListener('offline', () => {
-  if (wasOnline) {
-    wasOnline = false;
-    console.error('Втрачено зв’язок (SW)');
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({ type: 'NETWORK_STATUS', online: false });
-      });
-    });
-    startNetworkCheck();
-  }
+  wasOnline = false;
+  startNetworkCheck();
 });
