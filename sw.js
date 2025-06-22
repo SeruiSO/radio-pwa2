@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v20.1.20250618';
+const CACHE_NAME = 'radio-cache-v21.1.20250622';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -76,7 +76,6 @@ setInterval(() => {
       }
     })
     .catch(error => {
-      console.error("Помилка перевірки мережі:", error);
       if (wasOnline) {
         wasOnline = false;
         self.clients.matchAll().then(clients => {
