@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v25.2.20250625';
+const CACHE_NAME = 'radio-cache-v30.2.20250630';
 const RESOURCES_TO_CACHE = [
   '/',
   '/index.html',
