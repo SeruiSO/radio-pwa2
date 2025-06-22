@@ -8,13 +8,14 @@ let userAddedStations = JSON.parse(localStorage.getItem("userAddedStations")) ||
 let stationItems = [];
 let abortController = new AbortController();
 let errorCount = 0;
-const ERROR_LIMIT = 5;
+const ERROR_LIMIT = 15; // Збільшено для тривалих відключень
 let pastSearches = JSON.parse(localStorage.getItem("pastSearches")) || [];
 let deletedStations = JSON.parse(localStorage.getItem("deletedStations")) || [];
 let customTabs = JSON.parse(localStorage.getItem("customTabs")) || [];
 let isAutoPlayPending = false;
 let lastSuccessfulPlayTime = 0;
 let streamAbortController = null;
+let errorTimeout = null; // Додано для дебансингу помилок
 customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab === "string" && tab.trim()) : [];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -816,6 +817,9 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Відтворення розпочато успішно");
             document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
             localStorage.setItem("isPlaying", isPlaying);
+            if (stationItems[currentIndex]) {
+              updateCurrentStation(stationItems[currentIndex]); // Оновлюємо UI після успішного відтворення
+            }
           } catch (error) {
             if (error.name === 'AbortError') {
               console.log("Запит до потоку скасовано");
@@ -1166,9 +1170,12 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("error", () => {
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       console.error("Помилка аудіо:", audio.error?.message || "Невідома помилка", "для URL:", audio.src);
-      if (intendedPlaying && errorCount < ERROR_LIMIT) {
+      if (intendedPlaying && errorCount < ERROR_LIMIT && !errorTimeout) {
         errorCount++;
-        setTimeout(() => debouncedTryAutoPlay(), 1000);
+        errorTimeout = setTimeout(() => {
+          debouncedTryAutoPlay();
+          errorTimeout = null;
+        }, 1000);
       } else if (errorCount >= ERROR_LIMIT) {
         console.error("Досягнуто ліміт помилок відтворення");
         resetStationInfo();
@@ -1190,6 +1197,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("offline", () => {
       console.log("Втрачено з'єднання з мережею");
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+      errorCount = 0; // Скидаємо лічильник помилок при офлайн
     });
 
     addEventListeners();
