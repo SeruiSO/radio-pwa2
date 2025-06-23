@@ -1,52 +1,54 @@
 /* Updated on June 23, 2025 */
 :root {
-  --body-bg: transparent; /* Прибираємо фон сторінки */
   --container-bg: #121212;
-  --accent: #00F0FF;
-  --text: #F0F0F0;
-  --accent-gradient: #003C4B;
+  --accent: #00F0ff;
+  --text: #f0f0f0;
+  --accent-gradient: rgb(0, 123, 178);
+  --background-bg: transparent;
 }
 
 body {
-  font-family: 'Roboto', sans-serif;
-  background: var(--body-bg); /* Прозорий фон */
+  font-family: "Roboto", sans-serif;
+  background: var(--background-bg);
   color: var(--text);
   margin: 0;
   padding: 0;
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: start;
+  flex-direction: column;
   overflow-x: hidden;
-  padding-top: 5px; /* Зменшуємо відступ зверху для назви */
+  padding-top: 5px;
   box-sizing: border-box;
   transition: background 0.4s ease, color 0.4s ease;
 }
 
 .container {
-  max-width: 95%; /* Зменшуємо ширину додатку */
+  max-width: 95%;
   width: 100%;
   background: linear-gradient(180deg, var(--container-bg), var(--accent-gradient));
   padding: 15px;
   border-radius: 15px;
   border: 1px solid var(--accent);
-  margin: 0 2.5%; /* Додаємо відступи по боках */
+  margin: 0 2.5%;
   min-height: 80vh;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: start;
   transition: background 0.4s ease, border-color 0.4s ease;
 }
 
 h1 {
   font-size: 2.5em;
-  margin: 2px 0 5px; /* Зменшуємо відступ від верху та від #currentStationInfo */
+  margin: 2px 0 5px;
   text-align: center;
   color: var(--accent);
   transition: color 0.4s ease;
 }
 
-.theme-toggle, .share-button {
+.theme-toggle,
+.share-button {
   position: absolute;
   top: 10px;
   background: var(--container-bg);
@@ -70,9 +72,10 @@ h1 {
   right: 10px;
 }
 
-.theme-toggle:hover, .share-button:hover {
+.theme-toggle:hover,
+.share-button:hover {
   background: var(--accent);
-  color: #0A0A0A;
+  color: #0a0a0a;
   transform: scale(1.1);
 }
 
@@ -80,19 +83,20 @@ h1 {
   background: linear-gradient(45deg, var(--container-bg), var(--accent-gradient));
   padding: 8px;
   border-radius: 12px;
-  margin: 5px 0; /* Зменшуємо відступ від назви */
+  margin: 5px 0;
   color: var(--text);
   border: 2px solid var(--accent);
   text-align: left;
   height: auto;
-  min-height: 150px; /* Збільшуємо висоту */
+  min-height: 150px;
   display: flex;
   align-items: center;
   position: sticky;
   top: 0;
   z-index: 10;
   box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
-  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease,
+    transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 #currentStationInfo:hover {
@@ -138,11 +142,11 @@ h1 {
 }
 
 .station-icon {
-  width: 50px;
-  height: 50px;
+  width: 80px; /* Збільшуємо розмір іконки */
+  height: 80px;
   object-fit: contain;
   order: 1;
-  font-size: 40px;
+  font-size: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,7 +159,7 @@ h1 {
   margin-left: auto;
   order: 3;
   width: 100px;
-  height: 50px;
+  height: 134px; /* Розтягуємо на висоту #currentStationInfo (150px - 2*8px відступи) */
   position: relative;
   overflow: hidden;
 }
@@ -170,24 +174,66 @@ h1 {
   transform-origin: left;
 }
 
-.wave-line:nth-child(1) { top: 10%; width: 20%; animation-delay: 0s; }
-.wave-line:nth-child(2) { top: 20%; width: 30%; animation-delay: 0.2s; }
-.wave-line:nth-child(3) { top: 30%; width: 40%; animation-delay: 0.4s; }
-.wave-line:nth-child(4) { top: 40%; width: 50%; animation-delay: 0.6s; }
-.wave-line:nth-child(5) { top: 50%; width: 60%; animation-delay: 0.8s; }
-.wave-line:nth-child(6) { top: 60%; width: 50%; animation-delay: 0.6s; }
-.wave-line:nth-child(7) { top: 70%; width: 40%; animation-delay: 0.4s; }
-.wave-line:nth-child(8) { top: 80%; width: 30%; animation-delay: 0.2s; }
-.wave-line:nth-child(9) { top: 90%; width: 20%; animation-delay: 0s; }
+.wave-line:nth-child(1) {
+  top: 5%;
+  width: 20%;
+  animation-delay: 0s;
+}
+.wave-line:nth-child(2) {
+  top: 15%;
+  width: 30%;
+  animation-delay: 0.2s;
+}
+.wave-line:nth-child(3) {
+  top: 25%;
+  width: 40%;
+  animation-delay: 0.4s;
+}
+.wave-line:nth-child(4) {
+  top: 35%;
+  width: 50%;
+  animation-delay: 0.6s;
+}
+.wave-line:nth-child(5) {
+  top: 45%;
+  width: 60%;
+  animation-delay: 0.8s;
+}
+.wave-line:nth-child(6) {
+  top: 55%;
+  width: 50%;
+  animation-delay: 0.6s;
+}
+.wave-line:nth-child(7) {
+  top: 65%;
+  width: 40%;
+  animation-delay: 0.4s;
+}
+.wave-line:nth-child(8) {
+  top: 75%;
+  width: 30%;
+  animation-delay: 0.2s;
+}
+.wave-line:nth-child(9) {
+  top: 85%;
+  width: 20%;
+  animation-delay: 0s;
+}
 
 .wave-line.playing {
   animation-play-state: running;
 }
 
 @keyframes wavePulse {
-  0% { transform: scaleX(1); }
-  50% { transform: scaleX(1.5) translateX(20px); }
-  100% { transform: scaleX(1); }
+  0% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(1.5) translateX(20px);
+  }
+  100% {
+    transform: scaleX(1);
+  }
 }
 
 .station-list {
@@ -252,10 +298,11 @@ h1 {
   font-size: 14px;
 }
 
-.station-item:hover, .station-item.selected {
+.station-item:hover,
+.station-item.selected {
   background: var(--accent) !important;
   border: 2px solid var(--accent) !important;
-  color: #0A0A0A;
+  color: #0a0a0a;
   transform: translateY(-2px);
 }
 
@@ -265,7 +312,9 @@ h1 {
   gap: 5px;
 }
 
-.station-item .favorite-btn, .station-item .add-btn, .station-item .delete-btn {
+.station-item .favorite-btn,
+.station-item .add-btn,
+.station-item .delete-btn {
   background: none;
   border: none;
   color: var(--text);
@@ -275,15 +324,17 @@ h1 {
 }
 
 .station-item .favorite-btn.favorited {
-  color: #FFD700;
+  color: #ffd700;
 }
 
-.station-item .favorite-btn:hover, .station-item .add-btn:hover, .station-item .delete-btn:hover {
-  color: #FFD700;
+.station-item .favorite-btn:hover,
+.station-item .add-btn:hover,
+.station-item .delete-btn:hover {
+  color: #ffd700;
 }
 
 .station-item .delete-btn {
-  color: #FF4444;
+  color: #ff4444;
 }
 
 .station-item.empty {
@@ -306,18 +357,22 @@ h1 {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .tabs-wrapper {
   overflow-x: auto;
   scrollbar-width: none;
-  margin: 2px 0; /* Зменшуємо відступ від #currentStationInfo та .controls-container */
+  margin: 2px 0;
   position: sticky;
   top: 70px;
   z-index: 9;
-  background: var(--container-bg);
+  background: transparent; /* Прибираємо фон */
 }
 
 .tabs-wrapper::-webkit-scrollbar {
@@ -326,7 +381,7 @@ h1 {
 
 .tabs {
   display: flex;
-  justify-content: flex-start;
+  justify-content: start;
   background: var(--container-bg);
   padding: 5px;
   border-radius: 10px;
@@ -336,7 +391,8 @@ h1 {
   transition: background 0.4s ease;
 }
 
-.tab-btn, .add-tab-btn {
+.tab-btn,
+.add-tab-btn {
   flex: 0 0 auto;
   min-width: 60px;
   padding: 8px;
@@ -351,16 +407,17 @@ h1 {
   transition: all 0.3s ease;
 }
 
-.tab-btn:hover, .add-tab-btn:hover {
+.tab-btn:hover,
+.add-tab-btn:hover {
   background: var(--accent);
-  color: #0A0A0A;
+  color: #0a0a0a;
   transform: translateY(-2px);
 }
 
 .tab-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0A0A0A;
+  color: #0a0a0a;
 }
 
 .add-tab-btn {
@@ -391,7 +448,9 @@ h1 {
   box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
 }
 
-#searchQuery, #searchCountry, #searchGenre {
+#searchQuery,
+#searchCountry,
+#searchGenre {
   flex: 1;
   min-width: 100%;
   background: transparent;
@@ -402,7 +461,9 @@ h1 {
   padding: 6px;
 }
 
-#searchQuery::placeholder, #searchCountry::placeholder, #searchGenre::placeholder {
+#searchQuery::placeholder,
+#searchCountry::placeholder,
+#searchGenre::placeholder {
   color: var(--text);
   opacity: 0.6;
 }
@@ -415,7 +476,7 @@ h1 {
   color: var(--text);
   cursor: pointer;
   font-size: 14px;
-  width: 100%; /* Збільшуємо ширину до розміру полів */
+  width: 100%;
   box-sizing: border-box;
   align-self: stretch;
   transition: all 0.3s ease;
@@ -423,14 +484,14 @@ h1 {
 
 #searchInput button.search-btn:hover {
   background: var(--accent);
-  color: #0A0A0A;
+  color: #0a0a0a;
   transform: scale(1.05);
 }
 
 .controls-container {
   position: sticky;
   bottom: 0;
-  background: var(--container-bg);
+  background: transparent; /* Прибираємо фон */
   border-top: 2px solid var(--accent);
   padding: 15px;
   display: flex;
@@ -453,7 +514,7 @@ h1 {
   font-size: 32px;
   background: var(--container-bg);
   color: var(--text);
-  border: 4px solid var(--accent);
+  border: 2px solid var(--accent); /* Зменшуємо до 2px, як у #currentStationInfo */
   border-radius: 15px;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -465,7 +526,7 @@ h1 {
 
 .control-btn:hover {
   background: var(--accent);
-  color: #0A0A0A;
+  color: #0a0a0a;
   transform: scale(1.15);
 }
 
@@ -515,7 +576,8 @@ h1 {
   gap: 10px;
 }
 
-.modal-tab-btn, .modal-cancel-btn {
+.modal-tab-btn,
+.modal-cancel-btn {
   padding: 6px;
   background: var(--container-bg);
   border: 2px solid var(--accent);
@@ -527,23 +589,25 @@ h1 {
   transition: all 0.3s ease;
 }
 
-.modal-tab-btn:hover, .modal-cancel-btn:hover {
+.modal-tab-btn:hover,
+.modal-cancel-btn:hover {
   background: var(--accent);
-  color: #0A0A0A;
+  color: #0a0a0a;
   transform: translateY(-2px);
 }
 
 .modal-cancel-btn {
-  background: var(--body-bg);
+  background: var(--background-bg);
   border-color: var(--text);
 }
 
 .modal-cancel-btn:hover {
   background: var(--text);
-  color: var(--body-bg);
+  color: var(--background-bg);
 }
 
-.new-tab-modal input, .edit-tab-modal input {
+.new-tab-modal input,
+.edit-tab-modal input {
   width: 100%;
   padding: 6px;
   margin-bottom: 10px;
@@ -556,7 +620,8 @@ h1 {
   transition: all 0.3s ease;
 }
 
-.new-tab-modal input:focus, .edit-tab-modal input:focus {
+.new-tab-modal input:focus,
+.edit-tab-modal input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
   outline: none;
@@ -574,7 +639,9 @@ datalist {
   display: none;
 }
 
-#searchQuery[list], #searchCountry[list], #searchGenre[list] {
+#searchQuery[list],
+#searchCountry[list],
+#searchGenre[list] {
   background: var(--container-bg);
   border: 1px solid var(--accent);
   border-radius: 4px;
@@ -583,7 +650,9 @@ datalist {
   transition: all 0.3s ease;
 }
 
-#searchQuery[list]:focus, #searchCountry[list]:focus, #searchGenre[list]:focus {
+#searchQuery[list]:focus,
+#searchCountry[list]:focus,
+#searchGenre[list]:focus {
   border-color: var(--accent);
   box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
 }
@@ -592,12 +661,12 @@ datalist {
   h1 {
     font-size: 1.8em;
     line-height: 1.2;
-    margin: 2px 0 5px; /* Зменшуємо відступи */
+    margin: 2px 0 5px;
   }
 
   .container {
     padding: 10px;
-    margin: 0 2.5%; /* Адаптивні відступи */
+    margin: 0 2.5%;
     min-height: 80vh;
   }
 
@@ -606,7 +675,7 @@ datalist {
     height: 80px;
     font-size: 32px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    border: 4px solid var(--accent);
+    border: 2px solid var(--accent); /* Зменшуємо до 2px */
   }
 
   .station-list {
@@ -642,7 +711,8 @@ datalist {
     border-radius: 3px;
   }
 
-  .theme-toggle, .share-button {
+  .theme-toggle,
+  .share-button {
     top: 5px;
     padding: 4px;
     height: 35px;
@@ -659,11 +729,13 @@ datalist {
 
   .tabs-wrapper {
     top: 70px;
-    margin: 2px 0; /* Зменшуємо відступ від controls-container */
+    margin: 2px 0;
     padding: 0 5px;
+    background: transparent; /* Прибираємо фон */
   }
 
-  .tab-btn, .add-tab-btn {
+  .tab-btn,
+  .add-tab-btn {
     min-width: 60px;
     padding: 8px;
     font-size: 11px;
@@ -683,7 +755,7 @@ datalist {
 
   #currentStationInfo {
     padding: 8px;
-    min-height: 150px; /* Збільшуємо висоту */
+    min-height: 150px;
     max-height: 350px;
     align-items: center;
     gap: 8px;
@@ -706,14 +778,14 @@ datalist {
   }
 
   .station-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 40px;
+    width: 80px; /* Збільшуємо розмір іконки */
+    height: 80px;
+    font-size: 60px;
   }
 
   .wave-visualizer {
     width: 100px;
-    height: 50px;
+    height: 134px; /* Розтягуємо на висоту */
   }
 
   .wave-line {
@@ -728,7 +800,9 @@ datalist {
     max-height: none;
   }
 
-  #searchQuery, #searchCountry, #searchGenre {
+  #searchQuery,
+  #searchCountry,
+  #searchGenre {
     flex: 1;
     min-width: 100%;
     font-size: 14px;
@@ -738,7 +812,7 @@ datalist {
   #searchInput button.search-btn {
     padding: 8px 12px;
     font-size: 14px;
-    width: 100%; /* Збільшуємо ширину до розміру полів */
+    width: 100%;
     align-self: stretch;
   }
 
@@ -754,13 +828,15 @@ datalist {
     margin-bottom: 10px;
   }
 
-  .modal-tab-btn, .modal-cancel-btn {
+  .modal-tab-btn,
+  .modal-cancel-btn {
     font-size: 13px;
     padding: 6px;
     border-radius: 6px;
   }
 
-  .new-tab-modal input, .edit-tab-modal input {
+  .new-tab-modal input,
+  .edit-tab-modal input {
     font-size: 13px;
     padding: 6px;
     margin-bottom: 10px;
@@ -783,3 +859,4 @@ datalist {
     max-height: 450px;
   }
 }
+```
