@@ -809,13 +809,11 @@ document.addEventListener("DOMContentLoaded", () => {
           audio.pause();
           audio.src = null;
           audio.load();
-          // Видаляємо параметри ref і nocache з URL
           let cleanUrl = currentStationUrl.split('?')[0];
           audio.src = cleanUrl;
           console.log(`Playback attempt (${attemptsLeft} left):`, audio.src);
 
           try {
-            // Пропускаємо перевірку fetch і відтворюємо напряму через <audio>
             await audio.play();
             errorCount = 0;
             isPlaying = true;
@@ -824,7 +822,7 @@ document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
             localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
-              updateCurrentStation(stationItems[currentIndex]); // Update UI after successful playback
+              updateCurrentStation(stationItems[currentIndex]);
             }
           } catch (error) {
             console.error("Playback error:", error);
@@ -914,7 +912,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
         const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '; console.warn('Error loading favicon:', '${item.dataset.favicon}');">` : "🎵 ";
         const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
-          ? `<button class="button">`
+          ? `<button class="delete-btn">🗑️</button>`
           : ``;
         item.innerHTML = `
           ${iconHtml}
@@ -971,23 +969,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function deleteStation(stationName) {
       if (Array.isArray(stationLists[currentTab])) {
+        const isFromStationsJson = stationLists[currentTab].some(s => s.name === stationName && !userAddedStations[currentTab]?.some(u => u.name === stationName));
         stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
         userAddedStations[currentTab] = userAddedStations[currentTab]?.filter(s => s.name !== stationName) || [];
+        if (isFromStationsJson && !deletedStations.includes(stationName)) {
+          deletedStations.push(stationName);
+          localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
+          console.log(`Added ${stationName} to deletedStations:`, deletedStations);
+        }
+        favoriteStations = favoriteStations.filter(name => name !== stationName);
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+        console.log(`Deleted station ${stationName} from ${currentTab}`);
+        if (stationLists[currentTab].length === 0) {
+          currentIndex = 0;
+        } else if (currentIndex >= stationLists[currentTab].length) {
+          currentIndex = stationLists[currentTab].length - 1;
+        }
+        switchTab(currentTab);
       }
-      favoriteStations = favoriteStations.filter(name => name !== stationName);
-      if (!Array.isArray(deletedStations)) deletedStations = [];
-      deletedStations.push(stationName);
-      localStorage.setItem("stationLists", JSON.stringify(stationLists));
-      localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
-      localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-      localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
-      console.log(`Deleted station ${stationName} from ${currentTab}, added to deletedStations:`, deletedStations);
-      if (stationLists[currentTab].length === 0) {
-        currentIndex = 0;
-      } else if (currentIndex >= stationLists[currentTab].length) {
-        currentIndex = stationLists[currentTab].length - 1;
-      }
-      switchTab(currentTab);
     }
 
     function changeStation(index) {
