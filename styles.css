@@ -1,7 +1,7 @@
 /* Updated on June 23, 2025 */
 :root {
-  --body-bg: #0A0A0A; /* Темно-чорний фон для body */
-  --container-bg: #121212; /* Темно-сірий фон для контейнерів */
+  --body-bg: #0A0A0A;
+  --container-bg: #121212;
   --accent: #00F0FF;
   --text: #F0F0F0;
   --accent-gradient: rgb(0, 123, 255);
@@ -87,7 +87,7 @@ h1 {
   border: 2px solid var(--accent);
   text-align: left;
   height: auto;
-  min-height: auto; /* Висота залежить від вмісту */
+  min-height: 80px; /* Забезпечує мінімальну висоту для тексту та відступів */
   display: flex;
   align-items: center;
   position: sticky;
@@ -164,7 +164,7 @@ h1 {
 
 .wave-line {
   position: absolute;
-  height: 2px; /* Збільшено товщину полосок */
+  height: 1px; /* Повернуто до 1px для видимості */
   background: var(--accent);
   animation: wavePulse 1.5s infinite;
   animation-play-state: paused;
@@ -318,8 +318,9 @@ h1 {
 }
 
 .tabs-wrapper {
+  overflow-x: auto; /* Відновлено горизонтальну прокрутку */
   margin: 2px 0;
-  position: static; /* Статична позиція для фіксації над .controls-container */
+  position: static;
   z-index: 9;
   background: transparent;
 }
@@ -347,7 +348,7 @@ h1 {
   padding: 8px;
   background: var(--container-bg);
   border: 2px solid var(--accent);
-  border-radius: 4px;
+  border-radius: 12px; /* Збільшено заокруглення кутів */
   color: var(--text);
   cursor: pointer;
   margin: 0 2px;
@@ -440,7 +441,7 @@ h1 {
 .controls-container {
   position: sticky;
   bottom: 0;
-  background: var(--container-bg); /* Чорний фон, як у .container */
+  background: var(--container-bg);
   border-top: 2px solid var(--accent);
   padding: 15px;
   display: flex;
@@ -677,10 +678,11 @@ datalist {
   }
 
   .tabs-wrapper {
+    overflow-x: auto; /* Відновлено горизонтальну прокрутку */
     margin: 2px 0;
     padding: 0 5px;
     background: transparent;
-    position: static; /* Статична позиція */
+    position: static;
   }
 
   .tab-btn,
@@ -689,7 +691,7 @@ datalist {
     padding: 8px;
     font-size: 11px;
     border-width: 2px;
-    border-radius: 4px;
+    border-radius: 12px; /* Збільшено заокруглення кутів */
   }
 
   .add-tab-btn {
@@ -704,7 +706,7 @@ datalist {
 
   #currentStationInfo {
     padding: 8px;
-    min-height: auto;
+    min-height: 80px; /* Забезпечує видимість вмісту */
     max-height: 350px;
     align-items: center;
     gap: 8px;
@@ -738,7 +740,7 @@ datalist {
   }
 
   .wave-line {
-    height: 2px;
+    height: 1px; /* Повернуто до 1px */
   }
 
   #searchInput {
