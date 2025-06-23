@@ -1,23 +1,22 @@
 /* Updated on June 23, 2025 */
 :root {
-  --container-bg: #121212;
-  --accent: #00F0ff;
-  --text: #f0f0f0;
-  --accent-gradient: rgb(0, 123, 178);
-  --background-bg: transparent;
+  --body-bg: #0A0A0A; /* Темно-чорний фон для body */
+  --container-bg: #121212; /* Темно-сірий фон для контейнерів */
+  --accent: #00F0FF;
+  --text: #F0F0F0;
+  --accent-gradient: rgb(0, 123, 255);
 }
 
 body {
-  font-family: "Roboto", sans-serif;
-  background: var(--background-bg);
+  font-family: 'Roboto', sans-serif;
+  background: var(--body-bg); /* Суцільний темний фон */
   color: var(--text);
   margin: 0;
   padding: 0;
   min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: start;
-  flex-direction: column;
+  justify-content: center; /* Центрування по горизонталі */
+  align-items: flex-start;
   overflow-x: hidden;
   padding-top: 5px;
   box-sizing: border-box;
@@ -25,17 +24,17 @@ body {
 }
 
 .container {
-  max-width: 95%;
+  max-width: 95%; /* Обмежуємо ширину */
   width: 100%;
-  background: linear-gradient(180deg, var(--container-bg), var(--accent-gradient));
+  background: var(--container-bg); /* Суцільний фон */
   padding: 15px;
   border-radius: 15px;
   border: 1px solid var(--accent);
-  margin: 0 2.5%;
+  margin: 0 auto; /* Центрування по горизонталі */
   min-height: 80vh;
   display: flex;
   flex-direction: column;
-  justify-content: start;
+  justify-content: flex-start;
   transition: background 0.4s ease, border-color 0.4s ease;
 }
 
@@ -75,7 +74,7 @@ h1 {
 .theme-toggle:hover,
 .share-button:hover {
   background: var(--accent);
-  color: #0a0a0a;
+  color: #0A0A0A;
   transform: scale(1.1);
 }
 
@@ -95,8 +94,7 @@ h1 {
   top: 0;
   z-index: 10;
   box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
-  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease,
-    transform 0.3s ease, box-shadow 0.3s ease;
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 #currentStationInfo:hover {
@@ -142,7 +140,7 @@ h1 {
 }
 
 .station-icon {
-  width: 80px; /* Збільшуємо розмір іконки */
+  width: 80px;
   height: 80px;
   object-fit: contain;
   order: 1;
@@ -159,7 +157,7 @@ h1 {
   margin-left: auto;
   order: 3;
   width: 100px;
-  height: 134px; /* Розтягуємо на висоту #currentStationInfo (150px - 2*8px відступи) */
+  height: 134px;
   position: relative;
   overflow: hidden;
 }
@@ -174,66 +172,24 @@ h1 {
   transform-origin: left;
 }
 
-.wave-line:nth-child(1) {
-  top: 5%;
-  width: 20%;
-  animation-delay: 0s;
-}
-.wave-line:nth-child(2) {
-  top: 15%;
-  width: 30%;
-  animation-delay: 0.2s;
-}
-.wave-line:nth-child(3) {
-  top: 25%;
-  width: 40%;
-  animation-delay: 0.4s;
-}
-.wave-line:nth-child(4) {
-  top: 35%;
-  width: 50%;
-  animation-delay: 0.6s;
-}
-.wave-line:nth-child(5) {
-  top: 45%;
-  width: 60%;
-  animation-delay: 0.8s;
-}
-.wave-line:nth-child(6) {
-  top: 55%;
-  width: 50%;
-  animation-delay: 0.6s;
-}
-.wave-line:nth-child(7) {
-  top: 65%;
-  width: 40%;
-  animation-delay: 0.4s;
-}
-.wave-line:nth-child(8) {
-  top: 75%;
-  width: 30%;
-  animation-delay: 0.2s;
-}
-.wave-line:nth-child(9) {
-  top: 85%;
-  width: 20%;
-  animation-delay: 0s;
-}
+.wave-line:nth-child(1) { top: 5%; width: 20%; animation-delay: 0s; }
+.wave-line:nth-child(2) { top: 15%; width: 30%; animation-delay: 0.2s; }
+.wave-line:nth-child(3) { top: 25%; width: 40%; animation-delay: 0.4s; }
+.wave-line:nth-child(4) { top: 35%; width: 50%; animation-delay: 0.6s; }
+.wave-line:nth-child(5) { top: 45%; width: 60%; animation-delay: 0.8s; }
+.wave-line:nth-child(6) { top: 55%; width: 50%; animation-delay: 0.6s; }
+.wave-line:nth-child(7) { top: 65%; width: 40%; animation-delay: 0.4s; }
+.wave-line:nth-child(8) { top: 75%; width: 30%; animation-delay: 0.2s; }
+.wave-line:nth-child(9) { top: 85%; width: 20%; animation-delay: 0s; }
 
 .wave-line.playing {
   animation-play-state: running;
 }
 
 @keyframes wavePulse {
-  0% {
-    transform: scaleX(1);
-  }
-  50% {
-    transform: scaleX(1.5) translateX(20px);
-  }
-  100% {
-    transform: scaleX(1);
-  }
+  0% { transform: scaleX(1); }
+  50% { transform: scaleX(1.5) translateX(20px); }
+  100% { transform: scaleX(1); }
 }
 
 .station-list {
@@ -302,7 +258,7 @@ h1 {
 .station-item.selected {
   background: var(--accent) !important;
   border: 2px solid var(--accent) !important;
-  color: #0a0a0a;
+  color: #0A0A0A;
   transform: translateY(-2px);
 }
 
@@ -324,17 +280,17 @@ h1 {
 }
 
 .station-item .favorite-btn.favorited {
-  color: #ffd700;
+  color: #FFD700;
 }
 
 .station-item .favorite-btn:hover,
 .station-item .add-btn:hover,
 .station-item .delete-btn:hover {
-  color: #ffd700;
+  color: #FFD700;
 }
 
 .station-item .delete-btn {
-  color: #ff4444;
+  color: #FF4444;
 }
 
 .station-item.empty {
@@ -357,12 +313,8 @@ h1 {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .tabs-wrapper {
@@ -372,7 +324,7 @@ h1 {
   position: sticky;
   top: 70px;
   z-index: 9;
-  background: transparent; /* Прибираємо фон */
+  background: transparent;
 }
 
 .tabs-wrapper::-webkit-scrollbar {
@@ -381,7 +333,7 @@ h1 {
 
 .tabs {
   display: flex;
-  justify-content: start;
+  justify-content: flex-start;
   background: var(--container-bg);
   padding: 5px;
   border-radius: 10px;
@@ -410,14 +362,14 @@ h1 {
 .tab-btn:hover,
 .add-tab-btn:hover {
   background: var(--accent);
-  color: #0a0a0a;
+  color: #0A0A0A;
   transform: translateY(-2px);
 }
 
 .tab-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0a0a0a;
+  color: #0A0A0A;
 }
 
 .add-tab-btn {
@@ -484,14 +436,14 @@ h1 {
 
 #searchInput button.search-btn:hover {
   background: var(--accent);
-  color: #0a0a0a;
+  color: #0A0A0A;
   transform: scale(1.05);
 }
 
 .controls-container {
   position: sticky;
   bottom: 0;
-  background: transparent; /* Прибираємо фон */
+  background: transparent;
   border-top: 2px solid var(--accent);
   padding: 15px;
   display: flex;
@@ -514,7 +466,7 @@ h1 {
   font-size: 32px;
   background: var(--container-bg);
   color: var(--text);
-  border: 2px solid var(--accent); /* Зменшуємо до 2px, як у #currentStationInfo */
+  border: 2px solid var(--accent);
   border-radius: 15px;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -526,7 +478,7 @@ h1 {
 
 .control-btn:hover {
   background: var(--accent);
-  color: #0a0a0a;
+  color: #0A0A0A;
   transform: scale(1.15);
 }
 
@@ -592,18 +544,18 @@ h1 {
 .modal-tab-btn:hover,
 .modal-cancel-btn:hover {
   background: var(--accent);
-  color: #0a0a0a;
+  color: #0A0A0A;
   transform: translateY(-2px);
 }
 
 .modal-cancel-btn {
-  background: var(--background-bg);
+  background: var(--body-bg);
   border-color: var(--text);
 }
 
 .modal-cancel-btn:hover {
   background: var(--text);
-  color: var(--background-bg);
+  color: var(--body-bg);
 }
 
 .new-tab-modal input,
@@ -666,7 +618,7 @@ datalist {
 
   .container {
     padding: 10px;
-    margin: 0 2.5%;
+    margin: 0 auto; /* Центрування */
     min-height: 80vh;
   }
 
@@ -675,7 +627,7 @@ datalist {
     height: 80px;
     font-size: 32px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    border: 2px solid var(--accent); /* Зменшуємо до 2px */
+    border: 2px solid var(--accent);
   }
 
   .station-list {
@@ -731,7 +683,7 @@ datalist {
     top: 70px;
     margin: 2px 0;
     padding: 0 5px;
-    background: transparent; /* Прибираємо фон */
+    background: transparent;
   }
 
   .tab-btn,
@@ -778,14 +730,14 @@ datalist {
   }
 
   .station-icon {
-    width: 80px; /* Збільшуємо розмір іконки */
+    width: 80px;
     height: 80px;
     font-size: 60px;
   }
 
   .wave-visualizer {
     width: 100px;
-    height: 134px; /* Розтягуємо на висоту */
+    height: 134px;
   }
 
   .wave-line {
@@ -859,4 +811,3 @@ datalist {
     max-height: 450px;
   }
 }
-```
