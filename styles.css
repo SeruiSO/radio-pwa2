@@ -87,7 +87,7 @@ h1 {
   border: 2px solid var(--accent);
   text-align: left;
   height: auto;
-  min-height: 80px; /* Забезпечує мінімальну висоту для тексту та відступів */
+  min-height: 100px; /* Збільшено для видимості візуалізатора */
   display: flex;
   align-items: center;
   position: sticky;
@@ -156,7 +156,7 @@ h1 {
   justify-content: center;
   margin-left: auto;
   order: 3;
-  width: 100px;
+  width: 80px; /* Зменшено для уникнення переповнення */
   height: calc(100% - 16px); /* Висота відповідає #currentStationInfo мінус відступи */
   position: relative;
   overflow: hidden;
@@ -164,7 +164,7 @@ h1 {
 
 .wave-line {
   position: absolute;
-  height: 1px; /* Повернуто до 1px для видимості */
+  height: 1px;
   background: var(--accent);
   animation: wavePulse 1.5s infinite;
   animation-play-state: paused;
@@ -318,7 +318,7 @@ h1 {
 }
 
 .tabs-wrapper {
-  overflow-x: auto; /* Відновлено горизонтальну прокрутку */
+  overflow-x: auto;
   margin: 2px 0;
   position: static;
   z-index: 9;
@@ -348,7 +348,7 @@ h1 {
   padding: 8px;
   background: var(--container-bg);
   border: 2px solid var(--accent);
-  border-radius: 12px; /* Збільшено заокруглення кутів */
+  border-radius: 12px;
   color: var(--text);
   cursor: pointer;
   margin: 0 2px;
@@ -678,7 +678,7 @@ datalist {
   }
 
   .tabs-wrapper {
-    overflow-x: auto; /* Відновлено горизонтальну прокрутку */
+    overflow-x: auto;
     margin: 2px 0;
     padding: 0 5px;
     background: transparent;
@@ -691,7 +691,7 @@ datalist {
     padding: 8px;
     font-size: 11px;
     border-width: 2px;
-    border-radius: 12px; /* Збільшено заокруглення кутів */
+    border-radius: 12px;
   }
 
   .add-tab-btn {
@@ -706,7 +706,7 @@ datalist {
 
   #currentStationInfo {
     padding: 8px;
-    min-height: 80px; /* Забезпечує видимість вмісту */
+    min-height: 100px; /* Збільшено для видимості візуалізатора */
     max-height: 350px;
     align-items: center;
     gap: 8px;
@@ -735,12 +735,12 @@ datalist {
   }
 
   .wave-visualizer {
-    width: 100px;
+    width: 80px; /* Зменшено для уникнення переповнення */
     height: calc(100% - 16px);
   }
 
   .wave-line {
-    height: 1px; /* Повернуто до 1px */
+    height: 1px;
   }
 
   #searchInput {
