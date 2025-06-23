@@ -1,4 +1,4 @@
-/* Updated on June 23, 2025 */
+/* Updated on June 19, 2025 */
 :root {
   --body-bg: #0A0A0A;
   --container-bg: #121212;
@@ -46,7 +46,7 @@ h1 {
   transition: color 0.4s ease;
 }
 
-.theme-toggle, .share-button, #addTabBtn {
+.theme-toggle, .share-button {
   position: absolute;
   top: 10px;
   background: var(--container-bg);
@@ -70,7 +70,7 @@ h1 {
   right: 10px;
 }
 
-.theme-toggle:hover, .share-button:hover, #addTabBtn:hover {
+.theme-toggle:hover, .share-button:hover {
   background: var(--accent);
   color: #0A0A0A;
   transform: scale(1.1);
@@ -306,23 +306,33 @@ h1 {
   100% { transform: rotate(360deg); }
 }
 
-.tabs {
-  display: flex;
-  justify-content: flex-start;
+.tabs-wrapper {
+  overflow-x: auto;
+  scrollbar-width: none;
   margin: 5px 0;
-  background: var(--container-bg);
-  padding: 5px;
-  border-radius: 10px;
   position: sticky;
   top: 100px;
   z-index: 9;
-  transition: background 0.4s ease;
-  overflow-x: auto;
-  white-space: nowrap;
+  background: var(--container-bg);
 }
 
-.tab-btn, #addTabBtn {
+.tabs-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs {
+  display: flex;
+  justify-content: flex-start;
+  background: var(--container-bg);
+  padding: 5px;
+  border-radius: 10px;
+  white-space: nowrap;
+  transition: background 0.4s ease;
+}
+
+.tab-btn, .add-tab-btn {
   flex: 0 0 auto;
+  min-width: 80px;
   padding: 12px;
   background: var(--container-bg);
   border: 2px solid var(--accent);
@@ -335,7 +345,7 @@ h1 {
   transition: all 0.3s ease;
 }
 
-.tab-btn:hover, #addTabBtn:hover {
+.tab-btn:hover, .add-tab-btn:hover {
   background: var(--accent);
   color: #0A0A0A;
   transform: translateY(-2px);
@@ -345,6 +355,11 @@ h1 {
   background: var(--accent);
   border-color: var(--accent);
   color: #0A0A0A;
+}
+
+.add-tab-btn {
+  width: 50px;
+  font-size: 18px;
 }
 
 #searchInput {
@@ -420,34 +435,6 @@ h1 {
   display: flex;
   justify-content: center;
   gap: 50px;
-}
-
-.wave-progress {
-  display: flex;
-  gap: 4px;
-  height: 60px;
-  width: 84px;
-}
-
-.wave-bar {
-  width: 10px;
-  background: var(--accent);
-  border-radius: 5px;
-  animation: waveAnimation 1.2s infinite ease-in-out;
-  animation-play-state: paused;
-  transition: background 0.4s ease;
-}
-
-.wave-bar:nth-child(2) { animation-delay: 0.2s; }
-.wave-bar:nth-child(3) { animation-delay: 0.3s; }
-.wave-bar:nth-child(4) { animation-delay: 0.4s; }
-.wave-bar:nth-child(5) { animation-delay: 0.5s; }
-.wave-bar:nth-child(6) { animation-delay: 0.6s; }
-.wave-bar:nth-child(7) { animation-delay: 0.7s; }
-
-@keyframes waveAnimation {
-  0%, 100% { transform: scaleY(0.3); }
-  50% { transform: scaleY(1); }
 }
 
 .control-btn {
@@ -543,27 +530,23 @@ h1 {
   color: var(--body-bg);
 }
 
-#newTabName {
+.new-tab-modal input, .edit-tab-modal input {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
+  margin-bottom: 15px;
   background: var(--container-bg);
   border: 2px solid var(--accent);
   border-radius: 8px;
   color: var(--text);
   font-size: 16px;
-  margin-bottom: 10px;
   box-sizing: border-box;
   transition: all 0.3s ease;
 }
 
-#newTabName:focus {
+.new-tab-modal input:focus, .edit-tab-modal input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
-}
-
-#newTabName::placeholder {
-  color: var(--text);
-  opacity: 0.6;
+  outline: none;
 }
 
 input[list]::-webkit-calendar-picker-indicator {
@@ -627,7 +610,7 @@ datalist {
     height: 28px;
   }
 
-  .theme-toggle, .share-button, #addTabBtn {
+  .theme-toggle, .share-button {
     top: 5px;
     padding: 4px;
     height: 35px;
@@ -642,8 +625,19 @@ datalist {
     right: 5px;
   }
 
-  .tabs {
+  .tabs-wrapper {
     top: 80px;
+  }
+
+  .tab-btn, .add-tab-btn {
+    min-width: 70px;
+    padding: 10px;
+    font-size: 12px;
+    border-width: 1px;
+  }
+
+  .add-tab-btn {
+    width: 40px;
   }
 
   #currentStationInfo {
@@ -682,12 +676,6 @@ datalist {
     height: 1px;
   }
 
-  .tab-btn, #addTabBtn {
-    padding: 10px;
-    font-size: 12px;
-    border-width: 1px;
-  }
-
   #searchInput {
     padding: 8px;
     font-size: 14px;
@@ -698,17 +686,17 @@ datalist {
   #searchQuery, #searchCountry, #searchGenre {
     font-size: 14px;
     padding: 6px;
-    flex: 1 1 100px;
+    flex: 1 1 120px;
     min-width: 100px;
   }
 
   #searchInput button.search-btn {
     padding: 6px 10px;
-    font-size: 14px;
+    flex: 0 0 auto;
   }
 
   .modal {
-    width: 280px;
+    width: 80%;
     padding: 15px;
   }
 
@@ -721,119 +709,18 @@ datalist {
     padding: 8px;
   }
 
-  #newTabName {
+  .new-tab-modal input, .edit-tab-modal input {
     font-size: 14px;
-    padding: 6px;
+    padding: 8px;
   }
 }
 
-@media (max-width: 480px) {
-  h1 {
-    font-size: 1.8em;
-  }
-
+@media (max-height: 1600px) {
   .container {
-    padding: 8px;
-    margin: 0 3px;
-  }
-
-  .control-btn {
-    width: 60px;
-    height: 60px;
-    font-size: 20px;
+    min-height: 85vh;
   }
 
   .station-list {
-    max-height: 350px;
-    padding: 6px;
-  }
-
-  .station-item {
-    padding: 8px;
-    margin: 3px 0;
-  }
-
-  .station-item img {
-    width: 24px;
-    height: 24px;
-  }
-
-  .theme-toggle, .share-button, #addTabBtn {
-    height: 30px;
-    width: 30px;
-    padding: 3px;
-  }
-
-  #currentStationInfo {
-    padding: 10px;
-  }
-
-  #currentStationInfo .station-name {
-    font-size: 18px;
-  }
-
-  #currentStationInfo .station-genre {
-    font-size: 14px;
-  }
-
-  #currentStationInfo .station-country {
-    font-size: 14px;
-  }
-
-  .station-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 40px;
-  }
-
-  .wave-visualizer {
-    width: 100px;
-    height: 50px;
-  }
-
-  .tab-btn, #addTabBtn {
-    padding: 8px;
-    font-size: 11px;
-  }
-
-  #searchInput {
-    padding: 6px;
-    font-size: 12px;
-    gap: 6px;
-  }
-
-  #searchQuery, #searchCountry, #searchGenre {
-    font-size: 12px;
-    padding: 5px;
-    flex: 1 1 80px;
-    min-width: 80px;
-  }
-
-  #searchInput button.search-btn {
-    padding: 5px 8px;
-    font-size: 12px;
-  }
-
-  .modal {
-    width: 260px;
-    padding: 12px;
-  }
-
-  .modal h2 {
-    font-size: 1.2em;
-  }
-
-  .modal-tab-btn, .modal-cancel-btn {
-    font-size: 12px;
-    padding: 6px;
-  }
-
-  .modal-tabs {
-    gap: 8px;
-  }
-
-  #newTabName {
-    font-size: 12px;
-    padding: 5px;
+    max-height: 450px;
   }
 }
