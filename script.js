@@ -16,7 +16,6 @@ let isAutoPlayPending = false;
 let lastSuccessfulPlayTime = 0;
 let streamAbortController = null;
 let errorTimeout = null;
-let autoPlayRequestId = 0; // Unique ID for autoplay requests
 customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab === "string" && tab.trim()) : [];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -174,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!url) return "";
       try {
         const urlObj = new URL(url);
-        return urlObj.origin + urlObj.pathname;
+        return urlObj.origin + urlObj.pathname; // Видаляємо всі параметри запиту
       } catch {
         return url;
       }
@@ -401,8 +400,7 @@ document.addEventListener("DOMContentLoaded", () => {
           name: item.dataset.name,
           genre: item.dataset.genre,
           country: item.dataset.country,
-          favicon: item.dataset.favicon || "",
-          isFromSearch: currentTab === "search" // Mark station as from search
+          favicon: item.dataset.favicon || ""
         };
         stationLists[targetTab].unshift(newStation);
         if (!userAddedStations[targetTab].some(s => s.name === stationName)) {
@@ -727,7 +725,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const currentCacheVersion = localStorage.getItem("cacheVersion") || "0";
           if (currentCacheVersion !== event.data.cacheVersion) {
             favoriteStations = favoriteStations.filter((name) =>
-              Object.values(stationLists).flat().some((s) => s.name === name)
+              Object.values(stationLists).flat().some(s => s.name === name)
             );
             localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
             localStorage.setItem("cacheVersion", event.data.cacheVersion);
@@ -758,18 +756,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (autoPlayTimeout) {
         clearTimeout(autoPlayTimeout);
       }
-      autoPlayRequestId++; // Increment request ID
-      const currentRequestId = autoPlayRequestId;
-      autoPlayTimeout = setTimeout(() => tryAutoPlay(retryCount, delay, currentRequestId), 0);
+      autoPlayTimeout = setTimeout(() => tryAutoPlay(retryCount, delay), 0);
     }
 
-    async function tryAutoPlay(retryCount = 2, delay = 1000, requestId) {
+    async function tryAutoPlay(retryCount = 2, delay = 1000) {
       if (isAutoPlayPending) {
         console.log("tryAutoPlay: Skip, another tryAutoPlay active");
-        return;
-      }
-      if (requestId !== autoPlayRequestId) {
-        console.log("tryAutoPlay: Skip, outdated request ID", { requestId, current: autoPlayRequestId });
         return;
       }
       isAutoPlayPending = true;
@@ -806,29 +798,24 @@ document.addEventListener("DOMContentLoaded", () => {
           if (streamAbortController) {
             streamAbortController.abort();
             console.log("Previous audio stream canceled");
-            streamAbortController = null;
           }
+          streamAbortController = new AbortController();
+
           if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
             console.log("tryAutoPlay: Station changed, canceling playback for", initialStationUrl);
             return;
           }
-          if (requestId !== autoPlayRequestId) {
-            console.log("tryAutoPlay: Skip attempt, outdated request ID", { requestId, current: autoPlayRequestId });
-            return;
-          }
 
-          streamAbortController = new AbortController();
           audio.pause();
           audio.src = null;
           audio.load();
-          audio.src = currentStationUrl + "?nocache=" + Date.now();
+          // Видаляємо параметри ref і nocache з URL
+          let cleanUrl = currentStationUrl.split('?')[0];
+          audio.src = cleanUrl;
           console.log(`Playback attempt (${attemptsLeft} left):`, audio.src);
 
           try {
-            const response = await fetch(audio.src, { signal: streamAbortController.signal });
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}`);
-            }
+            // Пропускаємо перевірку fetch і відтворюємо напряму через <audio>
             await audio.play();
             errorCount = 0;
             isPlaying = true;
@@ -837,22 +824,14 @@ document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
             localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
-              updateCurrentStation(stationItems[currentIndex]);
+              updateCurrentStation(stationItems[currentIndex]); // Update UI after successful playback
             }
           } catch (error) {
-            if (error.name === 'AbortError') {
-              console.log("Stream request canceled");
-              return;
-            }
             console.error("Playback error:", error);
             document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
             if (attemptsLeft > 1) {
               if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
                 console.log("tryAutoPlay: Station changed during retry, canceling");
-                return;
-              }
-              if (requestId !== autoPlayRequestId) {
-                console.log("tryAutoPlay: Skip retry, outdated request ID", { requestId, current: autoPlayRequestId });
                 return;
               }
               console.log(`Retrying in ${delay}ms`);
@@ -865,15 +844,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 resetStationInfo();
               }
             }
-          } finally {
-            streamAbortController = null;
           }
         };
 
         await attemptPlay(retryCount);
       } finally {
         isAutoPlayPending = false;
-        streamAbortController = null;
       }
     }
 
@@ -938,8 +914,8 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
         const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '; console.warn('Error loading favicon:', '${item.dataset.favicon}');">` : "🎵 ";
         const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
-          ? `<button class="delete-btn">🗑</button>`
-          : "";
+          ? `<button class="button">`
+          : ``;
         item.innerHTML = `
           ${iconHtml}
           <span class="station-name">${station.name}</span>
@@ -951,7 +927,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       stationList.innerHTML = "";
       stationList.appendChild(fragment);
-      stationItems = stationList.querySelectorAll(".station-item");
+      stationItems = document.querySelectorAll(".station-item");
 
       if (stationItems.length && stationItems[currentIndex] && !stationItems[currentIndex].classList.contains("empty")) {
         stationItems[currentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
@@ -995,27 +971,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function deleteStation(stationName) {
       if (Array.isArray(stationLists[currentTab])) {
-        const station = stationLists[currentTab].find(s => s.name === stationName);
         stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
         userAddedStations[currentTab] = userAddedStations[currentTab]?.filter(s => s.name !== stationName) || [];
-        // Only add to deletedStations if the station is not from search
-        if (station && !station.isFromSearch) {
-          if (!Array.isArray(deletedStations)) deletedStations = [];
-          deletedStations.push(stationName);
-          localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
-        }
-        localStorage.setItem("stationLists", JSON.stringify(stationLists));
-        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
-        favoriteStations = favoriteStations.filter(name => name !== stationName);
-        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-        console.log(`Deleted station ${stationName} from ${currentTab}, added to deletedStations:`, deletedStations);
-        if (stationLists[currentTab].length === 0) {
-          currentIndex = 0;
-        } else if (currentIndex >= stationLists[currentTab].length) {
-          currentIndex = stationLists[currentTab].length - 1;
-        }
-        switchTab(currentTab);
       }
+      favoriteStations = favoriteStations.filter(name => name !== stationName);
+      if (!Array.isArray(deletedStations)) deletedStations = [];
+      deletedStations.push(stationName);
+      localStorage.setItem("stationLists", JSON.stringify(stationLists));
+      localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+      localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+      localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
+      console.log(`Deleted station ${stationName} from ${currentTab}, added to deletedStations:`, deletedStations);
+      if (stationLists[currentTab].length === 0) {
+        currentIndex = 0;
+      } else if (currentIndex >= stationLists[currentTab].length) {
+        currentIndex = stationLists[currentTab].length - 1;
+      }
+      switchTab(currentTab);
     }
 
     function changeStation(index) {
@@ -1042,9 +1014,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateCurrentStation(item) {
-      if (!currentStationInfo || !item.dataset) {
-        console.error("currentStationInfo or item.dataset not found");
-        resetStationInfo();
+      if (!currentStationInfo) {
+        console.error("currentStationInfo not found");
         return;
       }
       const stationNameElement = currentStationInfo.querySelector(".station-name");
@@ -1087,15 +1058,7 @@ document.addEventListener("DOMContentLoaded", () => {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: item.dataset.name || "Unknown Station",
           artist: `${item.dataset.genre || ""} | ${item.dataset.country || ""}`,
-          album: "Radio Music S O",
-          artwork: item.dataset.favicon && isValidUrl(item.dataset.favicon) ? [
-            { src: item.dataset.favicon, sizes: "96x96", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "128x128", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "192x192", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "256x256", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "384x384", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "512x512", type: "image/png" }
-          ] : []
+          album: "Radio Music S O"
         });
       }
     }
@@ -1194,10 +1157,6 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.textContent = "⏸";
       document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       localStorage.setItem("isPlaying", isPlaying);
-      if (errorTimeout) {
-        clearTimeout(errorTimeout);
-        errorTimeout = null;
-      }
     });
 
     audio.addEventListener("pause", () => {
@@ -1240,7 +1199,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("offline", () => {
       console.log("Network connection lost");
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      errorCount = 0;
+      errorCount = 0; // Reset error counter when offline
     });
 
     addEventListeners();
