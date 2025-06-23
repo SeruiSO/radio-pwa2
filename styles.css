@@ -26,7 +26,7 @@ body {
 .container {
   width: 100vw; /* Повна ширина вьюпорту */
   background: var(--container-bg);
-  padding: 15px; /* Збільшено відступи */
+  padding: 15px 20px 15px 15px; /* Збільшено правий відступ для видимості рамки */
   border-radius: 15px;
   border: 1px solid var(--accent);
   min-height: 100vh; /* Повна висота вьюпорту */
@@ -34,7 +34,7 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   transition: background 0.4s ease, border-color 0.4s ease;
-  overflow-x: hidden; /* Додано для уникнення горизонтальної прокрутки */
+  overflow-x: hidden; /* Для уникнення горизонтальної прокрутки */
 }
 
 h1 {
@@ -66,7 +66,7 @@ h1 {
 }
 
 .share-button {
-  right: 10px;
+  right: 15px; /* Збільшено відступ від правого краю */
 }
 
 .theme-toggle:hover, .share-button:hover {
@@ -79,7 +79,7 @@ h1 {
   background: linear-gradient(45deg, var(--container-bg), var(--container-bg), var(--accent-gradient));
   padding: 20px;
   border-radius: 12px;
-  margin: 10px 0;
+  margin: 10px 5px 10px 0; /* Додано правий відступ для видимості рамки контейнера */
   color: var(--text);
   border: 2px solid var(--accent);
   text-align: left;
@@ -194,7 +194,7 @@ h1 {
   background: var(--container-bg);
   border: 2px solid var(--accent);
   border-radius: 10px;
-  margin: 10px 0;
+  margin: 10px 5px 10px 0; /* Додано правий відступ для видимості рамки контейнера */
   padding: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) var(--container-bg);
@@ -519,7 +519,7 @@ h1 {
 }
 
 .modal-cancel-btn {
-  background: var(--body-bg);
+  background: none;
   border-color: var(--text);
 }
 
@@ -532,7 +532,7 @@ h1 {
   width: 100%;
   padding: 10px;
   margin-bottom: 15px;
-  background: var(--container-bg);
+  background: none;
   border: 2px solid var(--accent);
   border-radius: 8px;
   color: var(--text);
@@ -548,7 +548,7 @@ h1 {
   outline: none;
 }
 
-input HIDESelector {
+input[list]::-webkit-calendar-picker-indicator {
   display: none;
 }
 
@@ -581,22 +581,22 @@ datalist {
 
   .container {
     width: 100vw; /* Повна ширина вьюпорту */
-    padding: 15px; /* Збільшено відступи */
+    padding: 15px 20px 15px 15px; /* Збільшено правий відступ */
     min-height: 100vh;
-    overflow-x: hidden; /* Додано для уникнення горизонтальної прокрутки */
+    overflow-x: hidden;
   }
 
   .control-btn {
     width: 70px;
     height: 70px;
     font-size: 24px;
-    border-width: 2px;
+    border: 2px solid var(--accent);
     border-radius: 10px;
   }
 
   .station-list {
     max-height: 400px;
-    margin: 8px 0;
+    margin: 8px 5px 8px 0; /* Додано правий відступ */
     padding: 8px;
   }
 
@@ -622,7 +622,7 @@ datalist {
   }
 
   .share-button {
-    right: 5px;
+    right: 10px; /* Зменшено для менших екранів */
   }
 
   .tabs-wrapper {
@@ -642,6 +642,7 @@ datalist {
 
   #currentStationInfo {
     padding: 12px;
+    margin: 8px 5px 8px 0; /* Додано правий відступ */
     height: auto;
   }
 
@@ -718,9 +719,9 @@ datalist {
 @media (max-width: 360px) { /* For iPhone 12 Mini and similar small screens */
   .container {
     width: 100vw; /* Повна ширина вьюпорту */
-    padding: 15px; /* Збільшено відступи */
+    padding: 15px 20px 15px 15px; /* Збільшено правий відступ */
     min-height: 100vh;
-    overflow-x: hidden; /* Додано для уникнення горизонтальної прокрутки */
+    overflow-x: hidden;
   }
 
   h1 {
@@ -735,6 +736,7 @@ datalist {
 
   .station-list {
     max-height: 350px;
+    margin: 8px 5px 8px 0; /* Додано правий відступ */
     padding: 6px;
   }
 
@@ -754,8 +756,17 @@ datalist {
     padding: 3px;
   }
 
+  .theme-toggle {
+    left: 5px;
+  }
+
+  .share-button {
+    right: 10px; /* Зменшено для дуже малих екранів */
+  }
+
   #currentStationInfo {
     padding: 10px;
+    margin: 8px 5px 8px 0; /* Додано правий відступ */
   }
 
   #currentStationInfo .station-name {
@@ -818,5 +829,6 @@ datalist {
 
   .station-list {
     max-height: 450px;
+    margin: 10px 5px 10px 0; /* Додано правий відступ */
   }
 }
