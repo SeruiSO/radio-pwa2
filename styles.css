@@ -1,4 +1,4 @@
-/* Updated on June 22, 2025 */
+/* Updated on June 23, 2025 */
 :root {
   --body-bg: #0A0A0A;
   --container-bg: #121212;
@@ -24,14 +24,12 @@ body {
 }
 
 .container {
-  max-width: 98vw; /* Changed to viewport width for adaptability */
-  width: min(600px, 98vw); /* Max 600px or 95% of viewport */
+  width: 100vw; /* Повна ширина вьюпорту */
   background: var(--container-bg);
-  padding: 15px;
+  padding: 5px; /* Мінімальні внутрішні відступи */
   border-radius: 15px;
   border: 1px solid var(--accent);
-  margin: 0 auto; /* Center with auto margins */
-  min-height: 90vh;
+  min-height: 100vh; /* Повна висота вьюпорту */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -581,10 +579,9 @@ datalist {
   }
 
   .container {
-    padding: 10px;
-    margin: 0 auto; /* Center with auto margins */
-    min-height: 90vh;
-    width: min(95vw, 360px); /* Adjusted for smaller screens */
+    width: 100vw; /* Повна ширина вьюпорту */
+    padding: 5px; /* Зменшені відступи */
+    min-height: 100vh;
   }
 
   .control-btn {
@@ -718,8 +715,9 @@ datalist {
 
 @media (max-width: 360px) { /* For iPhone 12 Mini and similar small screens */
   .container {
-    width: min(95vw, 320px); /* Further reduced for very small screens */
-    padding: 8px;
+    width: 100vw; /* Повна ширина вьюпорту */
+    padding: 5px; /* Зменшені відступи */
+    min-height: 100vh;
   }
 
   h1 {
