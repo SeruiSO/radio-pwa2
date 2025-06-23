@@ -821,14 +821,11 @@ document.addEventListener("DOMContentLoaded", () => {
           audio.pause();
           audio.src = null;
           audio.load();
-          audio.src = currentStationUrl + "?nocache=" + Date.now();
+          const cleanUrl = currentStationUrl.split('?')[0];
+          audio.src = cleanUrl;
           console.log(`Playback attempt (${attemptsLeft} left):`, audio.src);
 
           try {
-            const response = await fetch(audio.src, { signal: streamAbortController.signal });
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}`);
-            }
             await audio.play();
             errorCount = 0;
             isPlaying = true;
@@ -996,19 +993,24 @@ document.addEventListener("DOMContentLoaded", () => {
     function deleteStation(stationName) {
       if (Array.isArray(stationLists[currentTab])) {
         const station = stationLists[currentTab].find(s => s.name === stationName);
+        if (!station) {
+          console.warn(`Station ${stationName} not found in ${currentTab}`);
+          return;
+        }
         stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
         userAddedStations[currentTab] = userAddedStations[currentTab]?.filter(s => s.name !== stationName) || [];
-        // Only add to deletedStations if the station is not from search
-        if (station && !station.isFromSearch) {
+        // Only add to deletedStations if the station is not from search (i.e., from stations.json)
+        if (!station.isFromSearch && !deletedStations.includes(stationName)) {
           if (!Array.isArray(deletedStations)) deletedStations = [];
           deletedStations.push(stationName);
           localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
+          console.log(`Added ${stationName} to deletedStations:`, deletedStations);
         }
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
         localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
         favoriteStations = favoriteStations.filter(name => name !== stationName);
         localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-        console.log(`Deleted station ${stationName} from ${currentTab}, added to deletedStations:`, deletedStations);
+        console.log(`Deleted station ${stationName} from ${currentTab}`);
         if (stationLists[currentTab].length === 0) {
           currentIndex = 0;
         } else if (currentIndex >= stationLists[currentTab].length) {
