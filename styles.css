@@ -24,17 +24,17 @@ body {
 }
 
 .container {
-  width: 100vw; /* Повна ширина вьюпорту */
+  width: 100vw;
   background: var(--container-bg);
-  padding: 15px 25px 15px 15px; /* Збільшено правий відступ для видимості рамки */
+  padding: 15px 25px 15px 15px;
   border-radius: 15px;
   border: 1px solid var(--accent);
-  min-height: 100vh; /* Повна висота вьюпорту */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   transition: background 0.4s ease, border-color 0.4s ease;
-  overflow-x: hidden; /* Для уникнення горизонтальної прокрутки */
+  overflow-x: hidden;
   box-sizing: border-box;
 }
 
@@ -67,7 +67,7 @@ h1 {
 }
 
 .share-button {
-  right: 15px; /* Відступ від правого краю для видимості рамки */
+  right: 15px;
 }
 
 .theme-toggle:hover, .share-button:hover {
@@ -80,7 +80,7 @@ h1 {
   background: linear-gradient(45deg, var(--container-bg), var(--container-bg), var(--accent-gradient));
   padding: 20px;
   border-radius: 12px;
-  margin: 5px 5px 5px 0; /* Зменшено відступи для компактності */
+  margin: 2px 2px 2px 0;
   color: var(--text);
   border: 2px solid var(--accent);
   text-align: left;
@@ -93,6 +93,7 @@ h1 {
   box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
   transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
   box-sizing: border-box;
+  max-width: 100%;
 }
 
 #currentStationInfo:hover {
@@ -106,6 +107,7 @@ h1 {
   gap: 15px;
   width: 100%;
   box-sizing: border-box;
+  max-width: 100%;
 }
 
 .station-text {
@@ -113,6 +115,7 @@ h1 {
   flex-direction: column;
   flex: 1;
   order: 2;
+  overflow: hidden; /* Додано для обрізання тексту */
 }
 
 #currentStationInfo .station-name {
@@ -130,12 +133,18 @@ h1 {
   font-size: 18px;
   font-weight: 400;
   margin-top: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #currentStationInfo .station-country {
   font-size: 18px;
   font-weight: 400;
   margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .station-icon {
@@ -155,7 +164,7 @@ h1 {
   justify-content: center;
   margin-left: auto;
   order: 3;
-  width: 150px;
+  width: 100px;
   height: 80px;
   position: relative;
   overflow: hidden;
@@ -197,13 +206,14 @@ h1 {
   background: var(--container-bg);
   border: 2px solid var(--accent);
   border-radius: 10px;
-  margin: 5px 5px 5px 0; /* Зменшено відступи для компактності */
-  padding: 5px; /* Зменшено внутрішні відступи */
+  margin: 2px 2px 2px 0;
+  padding: 2px;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) var(--container-bg);
   flex-grow: 1;
   transition: border-color 0.4s ease;
   box-sizing: border-box;
+  max-width: 100%;
 }
 
 .station-list::-webkit-scrollbar {
@@ -232,6 +242,7 @@ h1 {
   justify-content: space-between;
   align-items: center;
   transition: all 0.3s ease;
+  max-width: calc(100% - 4px); /* Обмеження ширини */
 }
 
 .station-item img {
@@ -313,14 +324,15 @@ h1 {
   overflow-x: auto;
   scrollbar-width: none;
   margin: 5px 0;
-  position: fixed; /* Закріплено в нижній частині екрана */
-  bottom: 100px; /* Вище кнопок навігації */
+  position: fixed;
+  bottom: 100px;
   left: 0;
-  width: 100vw; /* Повна ширина вьюпорту */
+  width: 100vw;
   z-index: 9;
   background: var(--container-bg);
-  padding: 0 15px 0 15px; /* Відповідність відступам контейнера */
+  padding: 0 15px 0 15px;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .tabs-wrapper::-webkit-scrollbar {
@@ -335,6 +347,7 @@ h1 {
   border-radius: 10px;
   white-space: nowrap;
   transition: background 0.4s ease;
+  max-width: 100%;
 }
 
 .tab-btn, .add-tab-btn {
@@ -380,10 +393,9 @@ h1 {
   font-size: 16px;
   width: 100%;
   box-sizing: border-box;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
+  overflow-y: auto;
+  max-height: 200px;
+  display: block;
   transition: all 0.3s ease;
 }
 
@@ -392,8 +404,14 @@ h1 {
   box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
 }
 
+#searchInput .search-results {
+  margin-top: 10px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
 #searchQuery, #searchCountry, #searchGenre {
-  flex: 1 1 200px;
+  width: calc(100% - 16px);
   min-width: 120px;
   background: transparent;
   border: none;
@@ -401,6 +419,8 @@ h1 {
   font-size: 16px;
   outline: none;
   padding: 8px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
 }
 
 #searchQuery::placeholder, #searchCountry::placeholder, #searchGenre::placeholder {
@@ -416,6 +436,8 @@ h1 {
   color: var(--text);
   cursor: pointer;
   transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 #searchInput button.search-btn:hover {
@@ -425,13 +447,13 @@ h1 {
 }
 
 .controls-container {
-  position: fixed; /* Закріплено в нижній частині екрана */
+  position: fixed;
   bottom: 0;
   left: 0;
-  width: 100vw; /* Повна ширина вьюпорту */
+  width: 100vw;
   background: var(--container-bg);
   border-top: 2px solid var(--accent);
-  padding: 15px 15px 15px 15px; /* Відповідність відступам контейнера */
+  padding: 15px 25px 15px 15px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -439,6 +461,7 @@ h1 {
   z-index: 10;
   transition: background 0.4s ease, border-color 0.4s ease;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .controls {
@@ -493,7 +516,7 @@ h1 {
   border-radius: 12px;
   padding: 20px;
   z-index: 21;
-  width: min(300px, 90vw); /* Ensure modal fits within viewport */
+  width: min(300px, 90vw);
   box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
   transition: all 0.3s ease;
 }
@@ -592,7 +615,7 @@ datalist {
 
   .container {
     width: 100vw;
-    padding: 15px 25px 15px 15px; /* Збільшено правий відступ */
+    padding: 15px 25px 15px 15px;
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -607,8 +630,8 @@ datalist {
 
   .station-list {
     max-height: 400px;
-    margin: 5px 5px 5px 0; /* Зменшено відступи */
-    padding: 5px; /* Зменшено внутрішні відступи */
+    margin: 2px 2px 2px 0;
+    padding: 2px;
   }
 
   .station-item {
@@ -633,11 +656,11 @@ datalist {
   }
 
   .share-button {
-    right: 10px; /* Зменшено для менших екранів */
+    right: 10px;
   }
 
   .tabs-wrapper {
-    bottom: 90px; /* Адаптовано для менших екранів */
+    bottom: 90px;
     padding: 0 10px 0 10px;
   }
 
@@ -654,7 +677,7 @@ datalist {
 
   #currentStationInfo {
     padding: 12px;
-    margin: 5px 5px 5px 0; /* Зменшено відступи */
+    margin: 2px 2px 2px 0;
   }
 
   #currentStationInfo .station-name {
@@ -680,7 +703,7 @@ datalist {
   }
 
   .wave-visualizer {
-    width: 120px;
+    width: 80px;
     height: 65px;
   }
 
@@ -691,20 +714,18 @@ datalist {
   #searchInput {
     padding: 8px;
     font-size: 14px;
-    flex-wrap: wrap;
-    gap: 8px;
+    max-height: 180px;
   }
 
   #searchQuery, #searchCountry, #searchGenre {
     font-size: 14px;
     padding: 6px;
-    flex: 1 1 120px;
+    width: calc(100% - 12px);
     min-width: 100px;
   }
 
   #searchInput button.search-btn {
     padding: 6px 10px;
-    flex: 0 0 auto;
   }
 
   .modal {
@@ -730,7 +751,7 @@ datalist {
 @media (max-width: 360px) {
   .container {
     width: 100vw;
-    padding: 15px 25px 15px 15px; /* Збільшено правий відступ */
+    padding: 15px 25px 15px 15px;
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -747,8 +768,8 @@ datalist {
 
   .station-list {
     max-height: 350px;
-    margin: 5px 5px 5px 0; /* Зменшено відступи */
-    padding: 5px; /* Зменшено внутрішні відступи */
+    margin: 2px 2px 2px 0;
+    padding: 2px;
   }
 
   .station-item {
@@ -772,11 +793,11 @@ datalist {
   }
 
   .share-button {
-    right: 10px; /* Зменшено для дуже малих екранів */
+    right: 10px;
   }
 
   .tabs-wrapper {
-    bottom: 80px; /* Адаптовано для дуже малих екранів */
+    bottom: 80px;
     padding: 0 10px 0 10px;
   }
 
@@ -792,7 +813,7 @@ datalist {
 
   #currentStationInfo {
     padding: 10px;
-    margin: 5px 5px 5px 0; /* Зменшено відступи */
+    margin: 2px 2px 2px 0;
   }
 
   #currentStationInfo .station-name {
@@ -814,17 +835,18 @@ datalist {
   }
 
   .wave-visualizer {
-    width: 100px;
+    width: 60px;
     height: 50px;
   }
 
   #searchInput {
     padding: 6px;
-    gap: 6px;
+    max-height: 160px;
   }
 
   #searchQuery, #searchCountry, #searchGenre {
     font-size: 12px;
+    width: calc(100% - 12px);
     min-width: 90px;
   }
 
@@ -845,6 +867,6 @@ datalist {
 
   .station-list {
     max-height: 450px;
-    margin: 5px 5px 5px 0; /* Зменшено відступи */
+    margin: 2px 2px 2px 0;
   }
 }
