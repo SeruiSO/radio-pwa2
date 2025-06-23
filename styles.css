@@ -26,7 +26,7 @@ body {
 .container {
   width: 100vw; /* Повна ширина вьюпорту */
   background: var(--container-bg);
-  padding: 15px 20px 15px 15px; /* Збільшено правий відступ для видимості рамки */
+  padding: 15px 25px 15px 15px; /* Збільшено правий відступ для видимості рамки */
   border-radius: 15px;
   border: 1px solid var(--accent);
   min-height: 100vh; /* Повна висота вьюпорту */
@@ -35,6 +35,7 @@ body {
   justify-content: flex-start;
   transition: background 0.4s ease, border-color 0.4s ease;
   overflow-x: hidden; /* Для уникнення горизонтальної прокрутки */
+  box-sizing: border-box;
 }
 
 h1 {
@@ -66,7 +67,7 @@ h1 {
 }
 
 .share-button {
-  right: 15px; /* Збільшено відступ від правого краю */
+  right: 15px; /* Відступ від правого краю для видимості рамки */
 }
 
 .theme-toggle:hover, .share-button:hover {
@@ -79,7 +80,7 @@ h1 {
   background: linear-gradient(45deg, var(--container-bg), var(--container-bg), var(--accent-gradient));
   padding: 20px;
   border-radius: 12px;
-  margin: 10px 5px 10px 0; /* Додано правий відступ для видимості рамки контейнера */
+  margin: 5px 5px 5px 0; /* Зменшено відступи для компактності */
   color: var(--text);
   border: 2px solid var(--accent);
   text-align: left;
@@ -91,6 +92,7 @@ h1 {
   z-index: 10;
   box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
   transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  box-sizing: border-box;
 }
 
 #currentStationInfo:hover {
@@ -103,6 +105,7 @@ h1 {
   align-items: center;
   gap: 15px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .station-text {
@@ -194,12 +197,13 @@ h1 {
   background: var(--container-bg);
   border: 2px solid var(--accent);
   border-radius: 10px;
-  margin: 10px 5px 10px 0; /* Додано правий відступ для видимості рамки контейнера */
-  padding: 10px;
+  margin: 5px 5px 5px 0; /* Зменшено відступи для компактності */
+  padding: 5px; /* Зменшено внутрішні відступи */
   scrollbar-width: thin;
   scrollbar-color: var(--accent) var(--container-bg);
   flex-grow: 1;
   transition: border-color 0.4s ease;
+  box-sizing: border-box;
 }
 
 .station-list::-webkit-scrollbar {
@@ -309,10 +313,14 @@ h1 {
   overflow-x: auto;
   scrollbar-width: none;
   margin: 5px 0;
-  position: sticky;
-  top: 100px;
+  position: fixed; /* Закріплено в нижній частині екрана */
+  bottom: 100px; /* Вище кнопок навігації */
+  left: 0;
+  width: 100vw; /* Повна ширина вьюпорту */
   z-index: 9;
   background: var(--container-bg);
+  padding: 0 15px 0 15px; /* Відповідність відступам контейнера */
+  box-sizing: border-box;
 }
 
 .tabs-wrapper::-webkit-scrollbar {
@@ -417,17 +425,20 @@ h1 {
 }
 
 .controls-container {
-  position: sticky;
+  position: fixed; /* Закріплено в нижній частині екрана */
   bottom: 0;
+  left: 0;
+  width: 100vw; /* Повна ширина вьюпорту */
   background: var(--container-bg);
   border-top: 2px solid var(--accent);
-  padding: 15px;
+  padding: 15px 15px 15px 15px; /* Відповідність відступам контейнера */
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 20px;
   z-index: 10;
   transition: background 0.4s ease, border-color 0.4s ease;
+  box-sizing: border-box;
 }
 
 .controls {
@@ -519,7 +530,7 @@ h1 {
 }
 
 .modal-cancel-btn {
-  background: none;
+  background: var(--body-bg);
   border-color: var(--text);
 }
 
@@ -532,7 +543,7 @@ h1 {
   width: 100%;
   padding: 10px;
   margin-bottom: 15px;
-  background: none;
+  background: var(--container-bg);
   border: 2px solid var(--accent);
   border-radius: 8px;
   color: var(--text);
@@ -580,8 +591,8 @@ datalist {
   }
 
   .container {
-    width: 100vw; /* Повна ширина вьюпорту */
-    padding: 15px 20px 15px 15px; /* Збільшено правий відступ */
+    width: 100vw;
+    padding: 15px 25px 15px 15px; /* Збільшено правий відступ */
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -590,14 +601,14 @@ datalist {
     width: 70px;
     height: 70px;
     font-size: 24px;
-    border: 2px solid var(--accent);
+    border-width: 2px;
     border-radius: 10px;
   }
 
   .station-list {
     max-height: 400px;
-    margin: 8px 5px 8px 0; /* Додано правий відступ */
-    padding: 8px;
+    margin: 5px 5px 5px 0; /* Зменшено відступи */
+    padding: 5px; /* Зменшено внутрішні відступи */
   }
 
   .station-item {
@@ -626,7 +637,8 @@ datalist {
   }
 
   .tabs-wrapper {
-    top: 80px;
+    bottom: 90px; /* Адаптовано для менших екранів */
+    padding: 0 10px 0 10px;
   }
 
   .tab-btn, .add-tab-btn {
@@ -642,8 +654,7 @@ datalist {
 
   #currentStationInfo {
     padding: 12px;
-    margin: 8px 5px 8px 0; /* Додано правий відступ */
-    height: auto;
+    margin: 5px 5px 5px 0; /* Зменшено відступи */
   }
 
   #currentStationInfo .station-name {
@@ -697,7 +708,7 @@ datalist {
   }
 
   .modal {
-    width: min(80vw, 320px); /* Adjusted for smaller screens */
+    width: min(80vw, 320px);
     padding: 15px;
   }
 
@@ -716,10 +727,10 @@ datalist {
   }
 }
 
-@media (max-width: 360px) { /* For iPhone 12 Mini and similar small screens */
+@media (max-width: 360px) {
   .container {
-    width: 100vw; /* Повна ширина вьюпорту */
-    padding: 15px 20px 15px 15px; /* Збільшено правий відступ */
+    width: 100vw;
+    padding: 15px 25px 15px 15px; /* Збільшено правий відступ */
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -736,8 +747,8 @@ datalist {
 
   .station-list {
     max-height: 350px;
-    margin: 8px 5px 8px 0; /* Додано правий відступ */
-    padding: 6px;
+    margin: 5px 5px 5px 0; /* Зменшено відступи */
+    padding: 5px; /* Зменшено внутрішні відступи */
   }
 
   .station-item {
@@ -764,9 +775,24 @@ datalist {
     right: 10px; /* Зменшено для дуже малих екранів */
   }
 
+  .tabs-wrapper {
+    bottom: 80px; /* Адаптовано для дуже малих екранів */
+    padding: 0 10px 0 10px;
+  }
+
+  .tab-btn, .add-tab-btn {
+    min-width: 60px;
+    padding: 8px;
+    font-size: 11px;
+  }
+
+  .add-tab-btn {
+    width: 35px;
+  }
+
   #currentStationInfo {
     padding: 10px;
-    margin: 8px 5px 8px 0; /* Додано правий відступ */
+    margin: 5px 5px 5px 0; /* Зменшено відступи */
   }
 
   #currentStationInfo .station-name {
@@ -790,16 +816,6 @@ datalist {
   .wave-visualizer {
     width: 100px;
     height: 50px;
-  }
-
-  .tab-btn, .add-tab-btn {
-    min-width: 60px;
-    padding: 8px;
-    font-size: 11px;
-  }
-
-  .add-tab-btn {
-    width: 35px;
   }
 
   #searchInput {
@@ -829,6 +845,6 @@ datalist {
 
   .station-list {
     max-height: 450px;
-    margin: 10px 5px 10px 0; /* Додано правий відступ */
+    margin: 5px 5px 5px 0; /* Зменшено відступи */
   }
 }
