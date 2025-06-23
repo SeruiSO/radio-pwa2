@@ -9,13 +9,13 @@
 
 body {
   font-family: 'Roboto', sans-serif;
-  background: var(--body-bg); /* Суцільний темний фон */
+  background: var(--body-bg);
   color: var(--text);
   margin: 0;
   padding: 0;
   min-height: 100vh;
   display: flex;
-  justify-content: center; /* Центрування по горизонталі */
+  justify-content: center;
   align-items: flex-start;
   overflow-x: hidden;
   padding-top: 5px;
@@ -24,13 +24,13 @@ body {
 }
 
 .container {
-  max-width: 95%; /* Обмежуємо ширину */
+  max-width: 95%;
   width: 100%;
-  background: var(--container-bg); /* Суцільний фон */
+  background: var(--container-bg);
   padding: 15px;
   border-radius: 15px;
   border: 1px solid var(--accent);
-  margin: 0 auto; /* Центрування по горизонталі */
+  margin: 0 auto;
   min-height: 80vh;
   display: flex;
   flex-direction: column;
@@ -87,7 +87,7 @@ h1 {
   border: 2px solid var(--accent);
   text-align: left;
   height: auto;
-  min-height: 150px;
+  min-height: auto; /* Висота залежить від вмісту */
   display: flex;
   align-items: center;
   position: sticky;
@@ -157,14 +157,14 @@ h1 {
   margin-left: auto;
   order: 3;
   width: 100px;
-  height: 134px;
+  height: calc(100% - 16px); /* Висота відповідає #currentStationInfo мінус відступи */
   position: relative;
   overflow: hidden;
 }
 
 .wave-line {
   position: absolute;
-  height: 1px;
+  height: 2px; /* Збільшено товщину полосок */
   background: var(--accent);
   animation: wavePulse 1.5s infinite;
   animation-play-state: paused;
@@ -318,11 +318,8 @@ h1 {
 }
 
 .tabs-wrapper {
-  overflow-x: auto;
-  scrollbar-width: none;
   margin: 2px 0;
-  position: sticky;
-  top: 70px;
+  position: static; /* Статична позиція для фіксації над .controls-container */
   z-index: 9;
   background: transparent;
 }
@@ -443,7 +440,7 @@ h1 {
 .controls-container {
   position: sticky;
   bottom: 0;
-  background: transparent;
+  background: var(--container-bg); /* Чорний фон, як у .container */
   border-top: 2px solid var(--accent);
   padding: 15px;
   display: flex;
@@ -618,7 +615,7 @@ datalist {
 
   .container {
     padding: 10px;
-    margin: 0 auto; /* Центрування */
+    margin: 0 auto;
     min-height: 80vh;
   }
 
@@ -680,10 +677,10 @@ datalist {
   }
 
   .tabs-wrapper {
-    top: 70px;
     margin: 2px 0;
     padding: 0 5px;
     background: transparent;
+    position: static; /* Статична позиція */
   }
 
   .tab-btn,
@@ -707,7 +704,7 @@ datalist {
 
   #currentStationInfo {
     padding: 8px;
-    min-height: 150px;
+    min-height: auto;
     max-height: 350px;
     align-items: center;
     gap: 8px;
@@ -737,11 +734,11 @@ datalist {
 
   .wave-visualizer {
     width: 100px;
-    height: 134px;
+    height: calc(100% - 16px);
   }
 
   .wave-line {
-    height: 1px;
+    height: 2px;
   }
 
   #searchInput {
