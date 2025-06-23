@@ -838,7 +838,7 @@ document.addEventListener("DOMContentLoaded", () => {
           audio.src = null;
           audio.load();
           audio.src = currentStationUrl + "?nocache=" + Date.now();
-          console.log(`Playback attempt (${attemptsLeft} left):`, audio.src);
+          console.log(`Playback attempt (${attemptsLeft} left): ${audio.src}`);
 
           try {
             const response = await fetch(audio.src, { signal: streamAbortController.signal });
@@ -851,7 +851,6 @@ document.addEventListener("DOMContentLoaded", () => {
             lastSuccessfulPlayTime = Date.now();
             console.log("Playback started successfully");
             document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
-            localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
               updateCurrentStation(stationItems[currentIndex]);
             }
@@ -860,7 +859,7 @@ document.addEventListener("DOMContentLoaded", () => {
               console.log("Stream request canceled");
               return;
             }
-            console.error("Playback error:", error);
+            console.error("Playback error:", error.stack || error.message);
             document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
             if (attemptsLeft > 1) {
               if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
@@ -912,12 +911,12 @@ document.addEventListener("DOMContentLoaded", () => {
       renderTabs();
       // Adjust tabs position
       adjustTabsPosition();
-      
+
       if (stationItems?.length && currentIndex < stationItems.length && intendedPlaying) {
         const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
         const normalizedAudioSrc = normalizeUrl(audio.src);
         if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
-          console.log("switchTab: ReceivedStarting playback after tab change");
+          console.log("switchTab: Starting playback after tab change");
           isAutoPlayPending = false;
           debouncedTryAutoPlay();
         } else {
@@ -934,10 +933,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!tabsWrapper || !controlsContainer) return;
 
       const controlsRect = controlsContainer.getBoundingClientRect();
-      const tabsHeight = tabsWrapper.offsetHeight;
-      // Ensure tabs are above controls with minimal gap
       tabsWrapper.style.setProperty("--controls-height", `${controlsRect.height}px`);
-      tabsWrapper.style.top = `calc(100% - ${controlsRect.height}px - ${tabsHeight}px - 10px)`; // 10px gap
+      tabsWrapper.style.bottom = `calc(${controlsRect.height}px + 10px)`; // 10px gap
     }
 
     function updateStationList() {
@@ -947,14 +944,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       let stations = currentTab === "best"
         ? favoriteStations
-            .map(name => Object.values(stationLists).flatMap(s => s).find(s => s.name === name))
+            .map(name => Object.values(stationLists).flat().find(s => s.name === name))
             .filter(s => s)
         : stationLists[currentTab] || [];
 
       if (!stations.length) {
         currentIndex = null;
         stationItems = [];
-        stationList.setItem("<div class='station-item empty'>${currentTab === 'best' ? 'No favorite stations' : 'No stations in this category'}</div>");
+        stationList.innerHTML = `<div class="station-item empty">${currentTab === 'best' ? 'No favorite stations' : 'No stations in this category'}</div>`;
         return;
       }
 
@@ -964,7 +961,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
         item.dataset.value = station.value;
         item.dataset.name = station.name || "Unknown Station";
-        item.dataset.genre = shortenGenre(station.genre || "Unknown");
+        item.dataset.genre = shortenGenre(station.genre || "");
         item.dataset.country = station.country || "Unknown";
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
         const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: auto; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '; console.warn('Failed to load favicon:', '${item.dataset.favicon}');">` : `🎵 `;
@@ -1060,7 +1057,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (intendedPlaying) {
         const normalizedCurrentUrl = normalizeUrl(item.dataset.value);
         const normalizedAudioSrc = normalizeUrl(audio.src);
-        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime > 0) {
+        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
           console.log("changeStation: Starting playback after station change");
           isAutoPlayPending = false;
           debouncedTryAutoPlay();
@@ -1088,44 +1085,45 @@ document.addEventListener("DOMContentLoaded", () => {
       if (stationNameElement) {
         stationNameElement.textContent = item.dataset.name || "";
       } else {
-        console.error("station-name .element not found");
+        console.error(".station-name element not found");
       }
       if (stationGenreElement) {
         stationGenreElement.textContent = `genre: ${item.dataset.genre || ""}`;
       } else {
-        console.error("station-genre .element not found");
+        console.error(".station-genre element not found");
       }
       if (stationCountryElement) {
         stationCountryElement.textContent = `country: ${item.dataset.country || ""}`;
       } else {
-        console.error("station-country .element not found");
+        console.error(".station-country element not found");
       }
       if (stationIconElement) {
         if (item.dataset.favicon && isValidUrl(item.dataset.favicon)) {
           stationIconElement.innerHTML = "";
           stationIconElement.style.backgroundImage = `url(${item.dataset.favicon})`;
-          stationIconElement.style.backgroundSize = "contain";
-          stationIconElement.style.backgroundRepeat = "no-repeat";
-          stationIconElement.style.backgroundPosition = "center";
+          stationIconElement.style.setProperty("background-size", "contain");
+          stationIconElement.style.setProperty("background-repeat", "no-repeat");
+          stationIconElement.style.setProperty("background-position", "center");
         } else {
           stationIconElement.innerHTML = "🎵";
-          stationIconElement.style.backgroundImage = "none";
+          stationIconElement.style.backgroundImage = "";
         }
       } else {
-        console.error("station-icon .element not found");
+        console.error(".station-icon element not found");
       }
       if ("mediaSession" in navigator) {
+        const favicon = item.dataset.favicon && isValidUrl(item.dataset.favicon) ? item.dataset.favicon : null;
         navigator.mediaSession.metadata = new MediaMetadata({
           title: item.dataset.name || "Unknown Station",
           artist: `${item.dataset.genre || ""} | ${item.dataset.country || ""}`,
-          album: "Radio Music S O",
-          artwork: item.dataset.favicon && isValidUrl(item.dataset.favicon) ? [
-            { src: item.dataset.favicon, sizes: "96x96", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "128x128", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "192x192", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "256x256", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "384x384", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "512x512", type: "image/png" }
+          album: "Radio S O",
+          artwork: favicon ? [
+            { src: favicon, sizes: "96x96", type: "image/png" },
+            { src: favicon, sizes: "128x128", type: "image/png" },
+            { src: favicon, sizes: "192x192", type: "image/png" },
+            { src: favicon, sizes: "256x256", type: "image/png" },
+            { src: favicon, sizes: "384x384", type: "image/png" },
+            { src: favicon, sizes: "512x512", type: "image/png" }
           ] : []
         });
       }
@@ -1156,14 +1154,12 @@ document.addEventListener("DOMContentLoaded", () => {
         debouncedTryAutoPlay();
         playPauseBtn.textContent = "⏸";
         document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
-        line.classList.add("playing"));
       } else {
         audio.pause();
         isPlaying = false;
         intendedPlaying = false;
         playPauseBtn.textContent = "▶";
         document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-        line.classList.remove("playing");
       }
       localStorage.setItem("isPlaying", JSON.stringify(isPlaying));
       localStorage.setItem("intendedPlaying", JSON.stringify(intendedPlaying));
@@ -1230,7 +1226,7 @@ document.addEventListener("DOMContentLoaded", () => {
       isPlaying = true;
       playPauseBtn.textContent = "⏸";
       document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
-      localStorage.setItem("isPlaying", JSON.stringify(isPlaying));
+      localStorage.setItem("isPlaying", true);
       if (errorTimeout) {
         clearTimeout(errorTimeout);
         errorTimeout = null;
@@ -1241,7 +1237,7 @@ document.addEventListener("DOMContentLoaded", () => {
       isPlaying = false;
       playPauseBtn.textContent = "▶";
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      localStorage.setItem("isPlaying", JSON.stringify(isPlaying));
+      localStorage.setItem("isPlaying", false);
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = null;
       }
@@ -1249,7 +1245,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     audio.addEventListener("error", () => {
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      console.error("Audio error:", audio.error?.message || "Unknown error", "for URL:", audio.src);
+      console.error("Audio error:", audio.error?.message || "Unknown error", "URL:", audio.src);
       if (intendedPlaying && errorCount < ERROR_LIMIT && !errorTimeout) {
         errorCount++;
         errorTimeout = setTimeout(() => {
@@ -1304,12 +1300,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
       const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
       const normalizedAudioSrc = normalizeUrl(audio.src);
-      if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime > 0) {
+      if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
         console.log("initializeApp: Starting playback after initialization");
         isAutoPlayPending = false;
         debouncedTryAutoPlay();
       } else {
-        console.log("initializeApp: Skip playback, station already playing");
+        console.log("initializeApp: Skip playback, initial state valid");
       }
     } else {
       console.log("initializeApp: Skip playback, invalid state");
