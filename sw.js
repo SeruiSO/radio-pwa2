@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v287.4-20250624';
+const CACHE_NAME = 'radio-cache-v387.4-20250624';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
