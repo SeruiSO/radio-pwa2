@@ -26,7 +26,7 @@ body {
 .container {
   width: 100vw; /* Повна ширина вьюпорту */
   background: var(--container-bg);
-  padding: 5px; /* Мінімальні внутрішні відступи */
+  padding: 15px; /* Збільшено відступи */
   border-radius: 15px;
   border: 1px solid var(--accent);
   min-height: 100vh; /* Повна висота вьюпорту */
@@ -34,6 +34,7 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   transition: background 0.4s ease, border-color 0.4s ease;
+  overflow-x: hidden; /* Додано для уникнення горизонтальної прокрутки */
 }
 
 h1 {
@@ -547,7 +548,7 @@ h1 {
   outline: none;
 }
 
-input[list]::-webkit-calendar-picker-indicator {
+input HIDESelector {
   display: none;
 }
 
@@ -580,8 +581,9 @@ datalist {
 
   .container {
     width: 100vw; /* Повна ширина вьюпорту */
-    padding: 5px; /* Зменшені відступи */
+    padding: 15px; /* Збільшено відступи */
     min-height: 100vh;
+    overflow-x: hidden; /* Додано для уникнення горизонтальної прокрутки */
   }
 
   .control-btn {
@@ -716,8 +718,9 @@ datalist {
 @media (max-width: 360px) { /* For iPhone 12 Mini and similar small screens */
   .container {
     width: 100vw; /* Повна ширина вьюпорту */
-    padding: 5px; /* Зменшені відступи */
+    padding: 15px; /* Збільшено відступи */
     min-height: 100vh;
+    overflow-x: hidden; /* Додано для уникнення горизонтальної прокрутки */
   }
 
   h1 {
