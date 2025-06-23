@@ -1,144 +1,88 @@
-const CACHE_NAME = 'radio-cache-v387.4-20250624';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/script.js',
-  '/stations.json',
-  '/manifest.json'
-];
+const CACHE_NAME = 'radio-cache-v744.1.20250674';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).then(() => {
-        return caches.keys().then((cacheNames) => {
-          return Promise.all(
-            cacheNames.map((cacheName) => {
-              if (cacheName !== CACHE_NAME) {
-                console.log(`Deleting old cache: ${cacheName}`);
-                return caches.delete(cacheName);
-              }
-            })
-          );
+      return cache.addAll([
+        '/',
+        '/index.html',
+        '/styles.css',
+        '/script.js',
+        '/stations.json',
+        '/manifest.json'
+      ]).then(() => {
+        caches.keys().then((cacheNames) => {
+          return Promise.all(cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              return caches.delete(cacheName);
+            }
+          }));
         });
       });
-    }).then(() => self.skipWaiting())
+    })
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      if (event.request.url.endsWith('stations.json')) {
+        return fetch(event.request, { cache: 'no-store', signal: new AbortController().signal }).then((networkResponse) => {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+          });
+          return networkResponse;
+        }).catch(() => caches.match('/index.html'));
+      }
+      return response || fetch(event.request).then((networkResponse) => {
+        return networkResponse;
+      }).catch(() => caches.match('/index.html'));
+    })
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    Promise.all([
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
-              console.log(`Deleting old cache during activation: ${cacheName}`);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      }),
-      self.clients.claim().then(() => {
-        return self.clients.matchAll({ type: 'window' }).then((clients) => {
-          clients.forEach((client) => {
-            client.postMessage({ type: 'CACHE_UPDATED', cacheVersion: CACHE_NAME });
-          });
-        });
-      })
-    ])
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  const requestUrl = new URL(event.request.url);
-
-  if (!requestUrl.origin.includes(self.location.origin)) {
-    event.respondWith(fetch(event.request, { cache: 'no-store' }));
-    return;
-  }
-
-  if (requestUrl.pathname.endsWith('stations.json')) {
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store', signal: new AbortController().signal })
-        .then((networkResponse) => {
-          if (networkResponse.ok) {
-            return caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse.clone());
-              return networkResponse;
-            });
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
           }
-          return caches.match(event.request).then((cachedResponse) => cachedResponse || new Response('Offline', { status: 503 }));
         })
-        .catch(() => {
-          return caches.match(event.request).then((cachedResponse) => cachedResponse || caches.match('/index.html'));
-        })
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request, { cache: 'no-store' }).then((networkResponse) => {
-        if (networkResponse.ok && STATIC_ASSETS.includes(requestUrl.pathname)) {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          });
-        }
-        return networkResponse;
-      }).catch(() => {
-        return cachedResponse || caches.match('/index.html');
-      });
-      return cachedResponse || fetchPromise;
+      );
     })
   );
+  self.clients.matchAll().then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({ type: 'CACHE_UPDATED', cacheVersion: CACHE_NAME });
+    });
+  });
 });
 
+// Моніторинг стану мережі
 let wasOnline = navigator.onLine;
-let networkCheckTimeout = null;
 
-function checkNetworkStatus() {
-  fetch('https://www.google.com/favicon.ico', { method: 'HEAD', mode: 'no-cors', cache: 'no-store' })
+setInterval(() => {
+  fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
     .then(() => {
       if (!wasOnline) {
         wasOnline = true;
-        console.log('SW: Network restored');
-        notifyClients({ type: 'NETWORK_STATUS', online: true });
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ type: "NETWORK_STATUS", online: true });
+          });
+        });
       }
     })
-    .catch(() => {
+    .catch(error => {
       if (wasOnline) {
         wasOnline = false;
-        console.log('SW: Network lost');
-        notifyClients({ type: 'NETWORK_STATUS', online: false });
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ type: "NETWORK_STATUS", online: false });
+          });
+        });
       }
-    })
-    .finally(() => {
-      networkCheckTimeout = setTimeout(checkNetworkStatus, 1000);
     });
-}
-
-function notifyClients(message) {
-  self.clients.matchAll({ type: 'window' }).then((clients) => {
-    clients.forEach((client) => {
-      client.postMessage(message);
-    });
-  });
-}
-
-checkNetworkStatus();
-
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-playback') {
-    event.waitUntil(checkNetworkStatus());
-  }
-});
-
-self.addEventListener('deactivate', () => {
-  if (networkCheckTimeout) {
-    clearTimeout(networkCheckTimeout);
-    networkCheckTimeout = null;
-  }
-});
+}, 2000); // Збільшено інтервал до 2 секунд
