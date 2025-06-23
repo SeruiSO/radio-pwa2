@@ -802,22 +802,6 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        // Pre-check URL availability
-        try {
-          const checkResponse = await fetch(currentStationUrl, { method: 'HEAD', signal: streamAbortController?.signal });
-          if (!checkResponse.ok) {
-            throw new Error(`URL check failed: HTTP ${checkResponse.status}`);
-          }
-        } catch (error) {
-          console.warn("Station URL check failed:", error.message);
-          errorCount++;
-          if (errorCount >= ERROR_LIMIT) {
-            console.error("Reached playback error limit");
-            resetStationInfo();
-          }
-          return;
-        }
-
         const attemptPlay = async (attemptsLeft) => {
           if (streamAbortController) {
             streamAbortController.abort();
@@ -838,7 +822,7 @@ document.addEventListener("DOMContentLoaded", () => {
           audio.src = null;
           audio.load();
           audio.src = currentStationUrl + "?nocache=" + Date.now();
-          console.log(`Playback attempt (${attemptsLeft} left): ${audio.src}`);
+          console.log(`Playback attempt (${attemptsLeft} left):`, audio.src);
 
           try {
             const response = await fetch(audio.src, { signal: streamAbortController.signal });
@@ -851,6 +835,7 @@ document.addEventListener("DOMContentLoaded", () => {
             lastSuccessfulPlayTime = Date.now();
             console.log("Playback started successfully");
             document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
+            localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
               updateCurrentStation(stationItems[currentIndex]);
             }
@@ -859,7 +844,7 @@ document.addEventListener("DOMContentLoaded", () => {
               console.log("Stream request canceled");
               return;
             }
-            console.error("Playback error:", error.stack || error.message);
+            console.error("Playback error:", error);
             document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
             if (attemptsLeft > 1) {
               if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
@@ -902,16 +887,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
       const maxIndex = tab === "best" ? favoriteStations.length - 1 : tab === "search" ? 0 : stationLists[tab]?.length - 1 || 0;
       currentIndex = savedIndex <= maxIndex && savedIndex >= 0 ? savedIndex : 0;
-      searchInput.classList.toggle("displayed", tab === "search");
+      searchInput.style.display = tab === "search" ? "flex" : "none";
       searchQuery.value = "";
       searchCountry.value = "";
       searchGenre.value = "";
       if (tab === "search") populateSearchSuggestions();
       updateStationList();
       renderTabs();
-      // Adjust tabs position
-      adjustTabsPosition();
-
       if (stationItems?.length && currentIndex < stationItems.length && intendedPlaying) {
         const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
         const normalizedAudioSrc = normalizeUrl(audio.src);
@@ -927,19 +909,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    function adjustTabsPosition() {
-      const tabsWrapper = document.querySelector(".tabs-wrapper");
-      const controlsContainer = document.querySelector(".controls-container");
-      if (!tabsWrapper || !controlsContainer) return;
-
-      const controlsRect = controlsContainer.getBoundingClientRect();
-      tabsWrapper.style.setProperty("--controls-height", `${controlsRect.height}px`);
-      tabsWrapper.style.bottom = `calc(${controlsRect.height}px + 10px)`; // 10px gap
-    }
-
     function updateStationList() {
       if (!stationList) {
-        console.error("stationList element not found");
+        console.error("stationList not found");
         return;
       }
       let stations = currentTab === "best"
@@ -949,9 +921,9 @@ document.addEventListener("DOMContentLoaded", () => {
         : stationLists[currentTab] || [];
 
       if (!stations.length) {
-        currentIndex = null;
+        currentIndex = 0;
         stationItems = [];
-        stationList.innerHTML = `<div class="station-item empty">${currentTab === 'best' ? 'No favorite stations' : 'No stations in this category'}</div>`;
+        stationList.innerHTML = `<div class="station-item empty">${currentTab === "best" ? "No favorite stations" : "No stations in this category"}</div>`;
         return;
       }
 
@@ -960,11 +932,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const item = document.createElement("div");
         item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
         item.dataset.value = station.value;
-        item.dataset.name = station.name || "Unknown Station";
-        item.dataset.genre = shortenGenre(station.genre || "");
-        item.dataset.country = station.country || "Unknown";
+        item.dataset.name = station.name;
+        item.dataset.genre = shortenGenre(station.genre);
+        item.dataset.country = station.country;
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
-        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: auto; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '; console.warn('Failed to load favicon:', '${item.dataset.favicon}');">` : `🎵 `;
+        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '; console.warn('Error loading favicon:', '${item.dataset.favicon}');">` : "🎵 ";
         const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
           ? `<button class="delete-btn">🗑</button>`
           : "";
@@ -1101,29 +1073,28 @@ document.addEventListener("DOMContentLoaded", () => {
         if (item.dataset.favicon && isValidUrl(item.dataset.favicon)) {
           stationIconElement.innerHTML = "";
           stationIconElement.style.backgroundImage = `url(${item.dataset.favicon})`;
-          stationIconElement.style.setProperty("background-size", "contain");
-          stationIconElement.style.setProperty("background-repeat", "no-repeat");
-          stationIconElement.style.setProperty("background-position", "center");
+          stationIconElement.style.backgroundSize = "contain";
+          stationIconElement.style.backgroundRepeat = "no-repeat";
+          stationIconElement.style.backgroundPosition = "center";
         } else {
           stationIconElement.innerHTML = "🎵";
-          stationIconElement.style.backgroundImage = "";
+          stationIconElement.style.backgroundImage = "none";
         }
       } else {
         console.error(".station-icon element not found");
       }
       if ("mediaSession" in navigator) {
-        const favicon = item.dataset.favicon && isValidUrl(item.dataset.favicon) ? item.dataset.favicon : null;
         navigator.mediaSession.metadata = new MediaMetadata({
           title: item.dataset.name || "Unknown Station",
           artist: `${item.dataset.genre || ""} | ${item.dataset.country || ""}`,
-          album: "Radio S O",
-          artwork: favicon ? [
-            { src: favicon, sizes: "96x96", type: "image/png" },
-            { src: favicon, sizes: "128x128", type: "image/png" },
-            { src: favicon, sizes: "192x192", type: "image/png" },
-            { src: favicon, sizes: "256x256", type: "image/png" },
-            { src: favicon, sizes: "384x384", type: "image/png" },
-            { src: favicon, sizes: "512x512", type: "image/png" }
+          album: "Radio Music S O",
+          artwork: item.dataset.favicon && isValidUrl(item.dataset.favicon) ? [
+            { src: item.dataset.favicon, sizes: "96x96", type: "image/png" },
+            { src: item.dataset.favicon, sizes: "128x128", type: "image/png" },
+            { src: item.dataset.favicon, sizes: "192x192", type: "image/png" },
+            { src: item.dataset.favicon, sizes: "256x256", type: "image/png" },
+            { src: item.dataset.favicon, sizes: "384x384", type: "image/png" },
+            { src: item.dataset.favicon, sizes: "512x512", type: "image/png" }
           ] : []
         });
       }
@@ -1145,7 +1116,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function togglePlayPause() {
       if (!playPauseBtn || !audio) {
-        console.error("playPauseBtn or audio element not found");
+        console.error("playPauseBtn or audio not found");
         return;
       }
       if (audio.paused) {
@@ -1161,8 +1132,8 @@ document.addEventListener("DOMContentLoaded", () => {
         playPauseBtn.textContent = "▶";
         document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       }
-      localStorage.setItem("isPlaying", JSON.stringify(isPlaying));
-      localStorage.setItem("intendedPlaying", JSON.stringify(intendedPlaying));
+      localStorage.setItem("isPlaying", isPlaying);
+      localStorage.setItem("intendedPlaying", intendedPlaying);
     }
 
     const eventListeners = {
@@ -1176,7 +1147,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       visibilitychange: () => {
         if (document.hidden || !intendedPlaying || !navigator.onLine || !stationItems?.length || currentIndex >= stationItems.length) {
-          console.log("visibilitychange: Skip, document hidden or invalid state");
+          console.log("visibilitychange: Skip, tab hidden or invalid state");
           return;
         }
         const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
@@ -1210,23 +1181,19 @@ document.addEventListener("DOMContentLoaded", () => {
       document.addEventListener("keydown", eventListeners.keydown);
       document.addEventListener("visibilitychange", eventListeners.visibilitychange);
       document.addEventListener("resume", eventListeners.resume);
-      window.addEventListener("resize", adjustTabsPosition);
-      window.addEventListener("scroll", adjustTabsPosition);
     }
 
     function removeEventListeners() {
       document.removeEventListener("keydown", eventListeners.keydown);
       document.removeEventListener("visibilitychange", eventListeners.visibilitychange);
       document.removeEventListener("resume", eventListeners.resume);
-      window.removeEventListener("resize", adjustTabsPosition);
-      window.removeEventListener("scroll", adjustTabsPosition);
     }
 
     audio.addEventListener("playing", () => {
       isPlaying = true;
       playPauseBtn.textContent = "⏸";
       document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
-      localStorage.setItem("isPlaying", true);
+      localStorage.setItem("isPlaying", isPlaying);
       if (errorTimeout) {
         clearTimeout(errorTimeout);
         errorTimeout = null;
@@ -1237,7 +1204,7 @@ document.addEventListener("DOMContentLoaded", () => {
       isPlaying = false;
       playPauseBtn.textContent = "▶";
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      localStorage.setItem("isPlaying", false);
+      localStorage.setItem("isPlaying", isPlaying);
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = null;
       }
@@ -1245,7 +1212,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     audio.addEventListener("error", () => {
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      console.error("Audio error:", audio.error?.message || "Unknown error", "URL:", audio.src);
+      console.error("Audio error:", audio.error?.message || "Unknown error", "for URL:", audio.src);
       if (intendedPlaying && errorCount < ERROR_LIMIT && !errorTimeout) {
         errorCount++;
         errorTimeout = setTimeout(() => {
@@ -1259,7 +1226,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     audio.addEventListener("volumechange", () => {
-      localStorage.setItem("volume", JSON.stringify(audio.volume));
+      localStorage.setItem("volume", audio.volume);
     });
 
     window.addEventListener("online", () => {
@@ -1305,7 +1272,7 @@ document.addEventListener("DOMContentLoaded", () => {
         isAutoPlayPending = false;
         debouncedTryAutoPlay();
       } else {
-        console.log("initializeApp: Skip playback, initial state valid");
+        console.log("initializeApp: Skip playback, station already playing");
       }
     } else {
       console.log("initializeApp: Skip playback, invalid state");
