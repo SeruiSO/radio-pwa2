@@ -24,8 +24,8 @@ body {
 }
 
 .container {
-  max-width: 95vw; /* Changed to viewport width for adaptability */
-  width: min(600px, 95vw); /* Max 600px or 95% of viewport */
+  max-width: 98vw; /* Changed to viewport width for adaptability */
+  width: min(600px, 98vw); /* Max 600px or 95% of viewport */
   background: var(--container-bg);
   padding: 15px;
   border-radius: 15px;
