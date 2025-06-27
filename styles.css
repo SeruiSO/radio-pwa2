@@ -244,6 +244,12 @@ h1 {
     transition: all 0.3s ease;
 }
 
+.station-list.search-tab .station-item {
+    padding: 12px;
+    margin: 5px 0;
+    font-size: 16px;
+}
+
 .station-item img {
     width: 28px;
     height: 28px;
@@ -260,6 +266,11 @@ h1 {
     line-height: 1.3;
     flex: 1;
     font-size: 14px;
+}
+
+.station-list.search-tab .station-item .station-name {
+    font-size: 16px;
+    -webkit-line-clamp: 2;
 }
 
 .station-item:hover,
@@ -412,6 +423,7 @@ h1 {
 #searchGenre {
     flex: 1;
     min-width: 100%;
+    max-width: 150px;
     background: transparent;
     border: none;
     color: var(--text);
@@ -653,9 +665,20 @@ datalist {
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
     }
 
+    .station-list.search-tab .station-item {
+        padding: 10px;
+        margin: 4px 0;
+        font-size: 15px;
+    }
+
     .station-item .station-name {
         font-size: 14px;
         line-height: 1.3;
+    }
+
+    .station-list.search-tab .station-item .station-name {
+        font-size: 15px;
+        -webkit-line-clamp: 2;
     }
 
     .station-item img {
@@ -767,6 +790,7 @@ datalist {
     #searchGenre {
         flex: 1;
         min-width: 100%;
+        max-width: 120px;
         font-size: 14px;
         padding: 6px;
     }
@@ -821,7 +845,7 @@ datalist {
     }
 }
 
-@media (orientation: landscape) and (max-width: 1024px) {
+@media (orientation: landscape) and (max-width: 1280px) {
     .container {
         max-width: 100%;
         padding: 0;
@@ -916,12 +940,22 @@ datalist {
         box-sizing: border-box;
     }
 
+    .station-list.search-tab .station-item {
+        padding: clamp(8px, 1.5vw, 12px);
+        font-size: clamp(12px, 2.2vw, 14px);
+    }
+
     .station-item {
         padding: clamp(4px, 1vw, 6px);
     }
 
     .station-item .station-name {
         font-size: clamp(10px, 2vw, 12px);
+    }
+
+    .station-list.search-tab .station-item .station-name {
+        font-size: clamp(12px, 2.2vw, 14px);
+        -webkit-line-clamp: 2;
     }
 
     .station-item img {
@@ -1018,6 +1052,7 @@ datalist {
     #searchGenre {
         font-size: clamp(10px, 1.8vw, 12px);
         padding: clamp(3px, 1vw, 5px);
+        max-width: 150px;
     }
 
     #searchInput button.search-btn {
