@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const tabsContainer = document.getElementById("tabs");
 
   if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !layoutToggle || !shareButton || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
-    console.error("One of required DOM elements not found", {
+    console.error("One or more required DOM elements not found", {
       audio: !!audio,
       stationList: !!stationList,
       playPauseBtn: !!playPauseBtn,
@@ -230,7 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
           cache: "no-store",
           signal: abortController.signal
         });
-        console.log(`Response status: ${response.status^}`);
+        console.log(`Response status: ${response.status}`);
         const mergedStationLists = {};
         if (response.ok) {
           const newStations = await response.json();
@@ -337,7 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    function renderSearch marbles(stations) {
+    function renderSearchResults(stations) {
       if (!stations.length) {
         stationList.innerHTML = "<div class='station-item empty'>Nothing found</div>";
         stationItems = [];
