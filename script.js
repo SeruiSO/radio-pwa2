@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
   const currentStationInfo = document.getElementById("currentStationInfo");
   const themeToggle = document.querySelector(".theme-toggle");
+  const layoutToggle = document.querySelector(".layout-toggle");
   const shareButton = document.querySelector(".share-button");
   const searchInput = document.getElementById("searchInput");
   const searchQuery = document.getElementById("searchQuery");
@@ -34,13 +35,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const pastSearchesList = document.getElementById("pastSearches");
   const tabsContainer = document.getElementById("tabs");
 
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !layoutToggle || !shareButton || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
     console.error("One of required DOM elements not found", {
       audio: !!audio,
       stationList: !!stationList,
       playPauseBtn: !!playPauseBtn,
       currentStationInfo: !!currentStationInfo,
       themeToggle: !!themeToggle,
+      layoutToggle: !!layoutToggle,
       shareButton: !!shareButton,
       searchInput: !!searchInput,
       searchQuery: !!searchQuery,
@@ -79,6 +81,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
+    layoutToggle.addEventListener("click", toggleLayout);
+
     document.querySelector(".controls .control-btn:nth-child(1)").addEventListener("click", prevStation);
     document.querySelector(".controls .control-btn:nth-child(2)").addEventListener("click", togglePlayPause);
     document.querySelector(".controls .control-btn:nth-child(3)").addEventListener("click", nextStation);
@@ -113,6 +117,25 @@ document.addEventListener("DOMContentLoaded", () => {
     searchGenre.addEventListener("keypress", (e) => {
       if (e.key === "Enter") searchBtn.click();
     });
+
+    function toggleLayout() {
+      const isForcedLandscape = document.body.classList.contains("force-landscape");
+      if (isForcedLandscape) {
+        document.body.classList.remove("force-landscape");
+        layoutToggle.textContent = "↔";
+        localStorage.setItem("forceLandscape", "false");
+      } else {
+        document.body.classList.add("force-landscape");
+        layoutToggle.textContent = "↕";
+        localStorage.setItem("forceLandscape", "true");
+      }
+    }
+
+    // Apply saved layout state
+    if (localStorage.getItem("forceLandscape") === "true") {
+      document.body.classList.add("force-landscape");
+      layoutToggle.textContent = "↕";
+    }
 
     function populateSearchSuggestions() {
       const suggestedCountries = [
@@ -207,7 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
           cache: "no-store",
           signal: abortController.signal
         });
-        console.log(`Response status: ${response.status}`);
+        console.log(`Response status: ${response.status^}`);
         const mergedStationLists = {};
         if (response.ok) {
           const newStations = await response.json();
@@ -314,7 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    function renderSearchResults(stations) {
+    function renderSearch marbles(stations) {
       if (!stations.length) {
         stationList.innerHTML = "<div class='station-item empty'>Nothing found</div>";
         stationItems = [];
