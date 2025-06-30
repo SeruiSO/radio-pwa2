@@ -594,73 +594,73 @@ document.addEventListener("DOMContentLoaded", () => {
     const themes = {
       "dark-black": {
         bodyBg: "#0D0D0D", // Fixed pure black background
-        containerBg: "#1C1C1C", // Muted dark gray for containers
-        accent: "#D9D9D9", // Soft white for high contrast
+        containerBg: "#1C1C1C", // Pure dark gray for containers
+        accent: "#FFFFFF", // Pure white for maximum contrast
         text: "#E5E5E5", // Light gray for readability
-        accentGradient: "#A8A8A8" // Muted gray gradient
+        accentGradient: "#A8A8A8" // Pure gray gradient
       },
-      "muted-lavender": {
+      "vivid-red": {
         bodyBg: "#0D0D0D", // Fixed pure black background
-        containerBg: "#24202B", // Deep muted purple
-        accent: "#A8A2D9", // Muted lavender for subtle elegance
-        text: "#E8E6F0", // Pale lavender for readability
-        accentGradient: "#B0A4E0" // Soft orchid gradient
+        containerBg: "#3C0000", // Deep pure red for containers
+        accent: "#FF0000", // Pure vibrant red
+        text: "#FF9999", // Light red for readability
+        accentGradient: "#CC0000" // Darker red gradient
       },
-      "dusty-mint": {
+      "bright-orange": {
         bodyBg: "#0D0D0D", // Fixed pure black background
-        containerBg: "#1F2B27", // Deep muted green
-        accent: "#87C4B8", // Dusty mint for a soft, modern vibe
-        text: "#E6F0EA", // Pale mint for readability
-        accentGradient: "#A0D8C8" // Muted teal gradient
+        containerBg: "#3C1F00", // Deep pure orange for containers
+        accent: "#FF6200", // Pure vibrant orange
+        text: "#FFCC99", // Light orange for readability
+        accentGradient: "#CC4E00" // Darker orange gradient
       },
-      "smoky-rose": {
+      "sunny-yellow": {
         bodyBg: "#0D0D0D", // Fixed pure black background
-        containerBg: "#2B2020", // Deep muted red
-        accent: "#D998A0", // Muted dusty rose for warmth
-        text: "#F0E6E6", // Pale rose for readability
-        accentGradient: "#E0A8B0" // Soft coral gradient
+        containerBg: "#3C3C00", // Deep pure yellow for containers
+        accent: "#FFFF00", // Pure vibrant yellow
+        text: "#FFFF99", // Light yellow for readability
+        accentGradient: "#CCCC00" // Darker yellow gradient
       },
-      "slate-blue": {
+      "lime-green": {
         bodyBg: "#0D0D0D", // Fixed pure black background
-        containerBg: "#20252B", // Deep muted navy
-        accent: "#81A1C1", // Muted slate blue for a cool tone
-        text: "#E6ECF0", // Pale blue for readability
-        accentGradient: "#95B4D1" // Soft nordic blue gradient
+        containerBg: "#1F3C00", // Deep pure green for containers
+        accent: "#00FF00", // Pure vibrant lime green
+        text: "#99FF99", // Light green for readability
+        accentGradient: "#00CC00" // Darker green gradient
       },
-      "sage-dusk": {
+      "cyan-sea": {
         bodyBg: "#0D0D0D", // Fixed pure black background
-        containerBg: "#212B24", // Deep muted olive
-        accent: "#97B398", // Muted sage for an earthy feel
-        text: "#E8F0E8", // Pale sage for readability
-        accentGradient: "#A8C4A8" // Soft green gradient
+        containerBg: "#003C3C", // Deep pure cyan for containers
+        accent: "#00FFFF", // Pure vibrant cyan
+        text: "#99FFFF", // Light cyan for readability
+        accentGradient: "#00CCCC" // Darker cyan gradient
       },
-      "ashen-mauve": {
+      "ocean-blue": {
         bodyBg: "#0D0D0D", // Fixed pure black background
-        containerBg: "#2B2026", // Deep muted mauve
-        accent: "#B89FB8", // Muted mauve for a sophisticated touch
-        text: "#F0E6ED", // Pale mauve for readability
-        accentGradient: "#C8A8C8" // Soft lilac gradient
+        containerBg: "#001F3C", // Deep pure blue for containers
+        accent: "#0000FF", // Pure vibrant blue
+        text: "#9999FF", // Light blue for readability
+        accentGradient: "#0000CC" // Darker blue gradient
       },
-      "charcoal-amber": {
+      "indigo-night": {
         bodyBg: "#0D0D0D", // Fixed pure black background
-        containerBg: "#2B241F", // Deep muted bronze
-        accent: "#D1A873", // Muted amber for warmth
-        text: "#F0E8D9", // Pale cream for readability
-        accentGradient: "#E0B488" // Soft golden gradient
+        containerBg: "#1F003C", // Deep pure indigo for containers
+        accent: "#4B0082", // Pure vibrant indigo
+        text: "#B266FF", // Light indigo for readability
+        accentGradient: "#3C0066" // Darker indigo gradient
       },
-      "foggy-teal": {
+      "violet-dream": {
         bodyBg: "#0D0D0D", // Fixed pure black background
-        containerBg: "#1F2B2A", // Deep muted teal
-        accent: "#80C7C0", // Muted foggy teal for a fresh look
-        text: "#E6F0EE", // Pale teal for readability
-        accentGradient: "#96D8D0" // Soft aqua gradient
+        containerBg: "#2B003C", // Deep pure violet for containers
+        accent: "#9400D3", // Pure vibrant violet
+        text: "#CC99FF", // Light violet for readability
+        accentGradient: "#7600A8" // Darker violet gradient
       },
-      "dusky-violet": {
+      "magenta-burst": {
         bodyBg: "#0D0D0D", // Fixed pure black background
-        containerBg: "#25202B", // Deep muted violet
-        accent: "#A68FB8", // Muted dusky violet for elegance
-        text: "#EDE6F0", // Pale violet for readability
-        accentGradient: "#B8A0C8" // Soft purple gradient
+        containerBg: "#3C002B", // Deep pure magenta for containers
+        accent: "#FF00FF", // Pure vibrant magenta
+        text: "#FF99FF", // Light magenta for readability
+        accentGradient: "#CC00CC" // Darker magenta gradient
       }
     };
     let currentTheme = localStorage.getItem("selectedTheme") || "dark-black";
@@ -692,8 +692,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function toggleTheme() {
       const themesOrder = [
-        "dark-black", "muted-lavender", "dusty-mint", "smoky-rose", "slate-blue",
-        "sage-dusk", "ashen-mauve", "charcoal-amber", "foggy-teal", "dusky-violet"
+        "dark-black", "vivid-red", "bright-orange", "sunny-yellow", "lime-green",
+        "cyan-sea", "ocean-blue", "indigo-night", "violet-dream", "magenta-burst"
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
       applyTheme(nextTheme);
