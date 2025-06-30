@@ -592,87 +592,122 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const themes = {
-      "dark-black": {
+      "neon-pulse": {
         bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#0A0A0A", // Fixed dark black for all containers
-        accent: "#D8D8D8", // Soft silver-gray for subtle contrast
-        text: "#ECECEC", // Light gray for readability
-        accentGradient: "#B8B8B8" // Slightly darker silver-gray gradient
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#00F0FF", // Vibrant neon cyan
+        text: "#F0F0F0", // Light gray for readability
+        accentGradient: "#003C4B" // Dark cyan gradient
       },
-      "dusky-lilac": {
+      "lime-surge": {
         bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#0A0A0A", // Fixed dark black for all containers
-        accent: "#D7B9D5", // Soft dusky lilac
-        text: "#EAD9EA", // Lighter lilac for readability
-        accentGradient: "#C7A8C5" // Slightly darker lilac gradient
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#B2FF59", // Bright lime green
+        text: "#E8F5E9", // Pale green for readability
+        accentGradient: "#2E4B2F" // Dark green gradient
       },
-      "seafoam": {
+      "flamingo-flash": {
         bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#0A0A0A", // Fixed dark black for all containers
-        accent: "#A0D6B4", // Gentle seafoam green
-        text: "#D9E8DF", // Lighter seafoam for readability
-        accentGradient: "#90C6A4" // Slightly darker seafoam gradient
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#FF4081", // Vivid flamingo pink
+        text: "#FCE4EC", // Pale pink for readability
+        accentGradient: "#4B1A2E" // Dark pink gradient
       },
-      "apricot-glow": {
+      "violet-vibe": {
         bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#0A0A0A", // Fixed dark black for all containers
-        accent: "#F4C7A0", // Warm apricot
-        text: "#FFE6CC", // Lighter apricot for readability
-        accentGradient: "#E4B790" // Slightly darker apricot gradient
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#E040FB", // Bright violet
+        text: "#F4E6FF", // Light violet for readability
+        accentGradient: "#3C1A4B" // Dark violet gradient
       },
-      "powder-blue": {
+      "amber-rush": {
         bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#0A0A0A", // Fixed dark black for all containers
-        accent: "#AEC6CF", // Soft powder blue
-        text: "#D9E6F0", // Lighter powder blue for readability
-        accentGradient: "#9EB6BF" // Slightly darker powder blue gradient
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#FFAB00", // Vibrant amber
+        text: "#FFF3CC", // Light amber for readability
+        accentGradient: "#4B2E00" // Dark amber gradient
       },
-      "olive-haze": {
+      "aqua-burst": {
         bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#0A0A0A", // Fixed dark black for all containers
-        accent: "#B0C4A0", // Subtle olive green
-        text: "#D9E6CC", // Lighter olive for readability
-        accentGradient: "#A0B490" // Slightly darker olive gradient
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#26A69A", // Bright aqua
+        text: "#E6F5F3", // Pale aqua for readability
+        accentGradient: "#1A3C36" // Dark aqua gradient
       },
-      "blush-pink": {
+      "ruby-glow": {
         bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#0A0A0A", // Fixed dark black for all containers
-        accent: "#F7C1CC", // Delicate blush pink
-        text: "#FFE6EB", // Lighter blush pink for readability
-        accentGradient: "#E7B1BC" // Slightly darker blush pink gradient
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#D81B60", // Rich ruby red
+        text: "#F7D9E3", // Light ruby for readability
+        accentGradient: "#3C0F1F" // Dark ruby gradient
       },
-      "golden-sand": {
+      "emerald-spark": {
         bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#0A0A0A", // Fixed dark black for all containers
-        accent: "#E6C78A", // Warm golden sand
-        text: "#F0E6CC", // Lighter golden sand for readability
-        accentGradient: "#D6B77A" // Slightly darker golden sand gradient
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#00E676", // Vivid emerald green
+        text: "#E6FFE6", // Light emerald for readability
+        accentGradient: "#004B2E" // Dark emerald gradient
       },
-      "aqua-mist": {
+      "sapphire-shine": {
         bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#0A0A0A", // Fixed dark black for all containers
-        accent: "#A0D6D9", // Soft aqua mist
-        text: "#D9F0F2", // Lighter aqua for readability
-        accentGradient: "#90C6C9" // Slightly darker aqua gradient
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#0288D1", // Bright sapphire blue
+        text: "#E6F3FA", // Light sapphire for readability
+        accentGradient: "#0A2E4B" // Dark sapphire gradient
       },
-      "plum-dusk": {
+      "coral-blast": {
         bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#0A0A0A", // Fixed dark black for all containers
-        accent: "#C4A0C4", // Deep plum purple
-        text: "#E6D9E6", // Lighter plum for readability
-        accentGradient: "#B490B4" // Slightly darker plum gradient
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#FF7F50", // Vibrant coral
+        text: "#FFE6D9", // Light coral for readability
+        accentGradient: "#4B231A" // Dark coral gradient
+      },
+      "lemon-zest": {
+        bodyBg: "#0A0A0A", // Fixed dark black background
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#FFEE58", // Bright lemon yellow
+        text: "#FFF9CC", // Light lemon for readability
+        accentGradient: "#4B3C00" // Dark lemon gradient
+      },
+      "orchid-flare": {
+        bodyBg: "#0A0A0A", // Fixed dark black background
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#BA68C8", // Vivid orchid purple
+        text: "#F4E6F7", // Light orchid for readability
+        accentGradient: "#3C1A3C" // Dark orchid gradient
+      },
+      "tangerine-tide": {
+        bodyBg: "#0A0A0A", // Fixed dark black background
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#FF7043", // Bright tangerine
+        text: "#FFE6D6", // Light tangerine for readability
+        accentGradient: "#4B210F" // Dark tangerine gradient
+      },
+      "mint-sparkle": {
+        bodyBg: "#0A0A0A", // Fixed dark black background
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#26C6DA", // Vibrant mint
+        text: "#E6F7FA", // Light mint for readability
+        accentGradient: "#1A3C4B" // Dark mint gradient
+      },
+      "magenta-rush": {
+        bodyBg: "#0A0A0A", // Fixed dark black background
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#F50057", // Bright magenta
+        text: "#FCE4EC", // Light magenta for readability
+        accentGradient: "#4B0F2E" // Dark magenta gradient
       }
     };
-    let currentTheme = localStorage.getItem("selectedTheme") || "dark-black";
+    let currentTheme = localStorage.getItem("selectedTheme") || "neon-pulse";
     if (!themes[currentTheme]) {
-      currentTheme = "dark-black";
+      currentTheme = "neon-pulse";
       localStorage.setItem("selectedTheme", currentTheme);
     }
 
     function applyTheme(theme) {
       if (!themes[theme]) {
-        console.warn(`Theme ${theme} not found, using 'dark-black'`);
-        theme = "dark-black";
+        console.warn(`Theme ${theme} not found, using 'neon-pulse'`);
+        theme = "neon-pulse";
         localStorage.setItem("selectedTheme", theme);
       }
       const root = document.documentElement;
@@ -692,8 +727,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function toggleTheme() {
       const themesOrder = [
-        "dark-black", "dusky-lilac", "seafoam", "apricot-glow", "powder-blue",
-        "olive-haze", "blush-pink", "golden-sand", "aqua-mist", "plum-dusk"
+        "neon-pulse", "lime-surge", "flamingo-flash", "violet-vibe", "amber-rush",
+        "aqua-burst", "ruby-glow", "emerald-spark", "sapphire-shine", "coral-blast",
+        "lemon-zest", "orchid-flare", "tangerine-tide", "mint-sparkle", "magenta-rush"
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
       applyTheme(nextTheme);
