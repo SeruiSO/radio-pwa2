@@ -592,87 +592,89 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const themes = {
-      "neon-pulse": {
-        bodyBg: "#0D1B2A",
-        containerBg: "#1B263B",
-        accent: "#00D4FF",
-        text: "#E0E1DD",
-        accentGradient: "#2A4B6B"
+      // Feminine Themes
+      "sakura-blossom": {
+        bodyBg: "#FFF0F5", // Soft lavender pink
+        containerBg: "#FFE4E1", // Muted rose
+        accent: "#FF69B4", // Hot pink
+        text: "#4B0082", // Indigo
+        accentGradient: "#DB7093" // Pale violet red
       },
-      "lime-surge": {
-        bodyBg: "#1A2C1A",
-        containerBg: "#2A3C2A",
-        accent: "#A1FF6B",
-        text: "#E8F5E9",
-        accentGradient: "#3B5B3A"
+      "lavender-dream": {
+        bodyBg: "#E6E6FA", // Light lavender
+        containerBg: "#F0E6FF", // Pale lilac
+        accent: "#9370DB", // Medium purple
+        text: "#2F2F4F", // Dark slate
+        accentGradient: "#BA55D3" // Medium orchid
       },
-      "flamingo-flash": {
-        bodyBg: "#2A0F1A",
-        containerBg: "#3B1F2A",
-        accent: "#FF5C8D",
-        text: "#FCE4EC",
-        accentGradient: "#5B2A3B"
+      "coral-charm": {
+        bodyBg: "#FFF5EE", // Seashell
+        containerBg: "#FFEFD5", // Papaya whip
+        accent: "#FF6F61", // Coral
+        text: "#5C4033", // Dark brown
+        accentGradient: "#FF8C69" // Salmon
       },
-      "violet-vortex": {
-        bodyBg: "#1A0F2A",
-        containerBg: "#2A1F3B",
-        accent: "#8E2DE2",
-        text: "#E6E0FA",
-        accentGradient: "#3B2A5B"
+      "mint-breeze": {
+        bodyBg: "#F5FFFA", // Mint cream
+        containerBg: "#E0FFFF", // Light cyan
+        accent: "#48D1CC", // Medium turquoise
+        text: "#2F4F4F", // Dark slate gray
+        accentGradient: "#40E0D0" // Turquoise
       },
-      "aqua-glow": {
-        bodyBg: "#0F2A2A",
-        containerBg: "#1F3B3B",
-        accent: "#2EC4B6",
-        text: "#D6F0FA",
-        accentGradient: "#2A5B5B"
+      "rose-quartz": {
+        bodyBg: "#F8E8EE", // Pale pink
+        containerBg: "#F4C4C4", // Light pink
+        accent: "#F08080", // Light coral
+        text: "#4A2F2F", // Dark reddish brown
+        accentGradient: "#DB7093" // Pale violet red
       },
-      "cosmic-indigo": {
-        bodyBg: "#1A1F3B",
-        containerBg: "#2A2F5B",
-        accent: "#4B5EAA",
-        text: "#DCE2F0",
-        accentGradient: "#3B4B7B"
+      // Masculine Themes
+      "midnight-blue": {
+        bodyBg: "#1C2526", // Dark slate blue
+        containerBg: "#2E3B4E", // Dark grayish blue
+        accent: "#4682B4", // Steel blue
+        text: "#E6E8FA", // Light grayish blue
+        accentGradient: "#5F9EA0" // Cadet blue
       },
-      "mystic-jade": {
-        bodyBg: "#0F2A1F",
-        containerBg: "#1F3B2F",
-        accent: "#1F998A",
-        text: "#D0F0E8",
-        accentGradient: "#2A5B4B"
+      "forest-shadow": {
+        bodyBg: "#1A2F2A", // Dark green
+        containerBg: "#2F4F4F", // Dark slate gray
+        accent: "#3CB371", // Medium sea green
+        text: "#F0FFF0", // Honeydew
+        accentGradient: "#228B22" // Forest green
       },
-      "aurora-haze": {
-        bodyBg: "#1A2F3B",
-        containerBg: "#2A3F5B",
-        accent: "#48CFAE",
-        text: "#E0F7FA",
-        accentGradient: "#3B5B6B"
+      "urban-slate": {
+        bodyBg: "#2F2F2F", // Dark gray
+        containerBg: "#4A4A4A", // Medium gray
+        accent: "#708090", // Slate gray
+        text: "#DCDCDC", // Gainsboro
+        accentGradient: "#778899" // Light slate gray
       },
-      "starlit-amethyst": {
-        bodyBg: "#1A0F2A",
-        containerBg: "#2A1F3B",
-        accent: "#A76CFF",
-        text: "#EDE4FF",
-        accentGradient: "#3B2A5B"
+      "desert-dusk": {
+        bodyBg: "#3C2F2F", // Dark reddish gray
+        containerBg: "#5C4033", // Dark brown
+        accent: "#DAA520", // Goldenrod
+        text: "#FFF8DC", // Cornsilk
+        accentGradient: "#B8860B" // Dark goldenrod
       },
-      "lunar-frost": {
-        bodyBg: "#F0F4F8",
-        containerBg: "#FFFFFF",
-        accent: "#4FC3F7",
-        text: "#263238",
-        accentGradient: "#B0E3FA"
+      "charcoal-storm": {
+        bodyBg: "#1C1C1C", // Very dark gray
+        containerBg: "#2F2F2F", // Dark gray
+        accent: "#4169E1", // Royal blue
+        text: "#F5F5F5", // White smoke
+        accentGradient: "#483D8B" // Dark slate blue
       }
     };
-    let currentTheme = localStorage.getItem("selectedTheme") || "neon-pulse";
+    let currentTheme = localStorage.getItem("selectedTheme") || "sakura-blossom";
     if (!themes[currentTheme]) {
-      currentTheme = "neon-pulse";
+      currentTheme = "sakura-blossom";
       localStorage.setItem("selectedTheme", currentTheme);
     }
 
     function applyTheme(theme) {
       if (!themes[theme]) {
-        console.warn(`Theme ${theme} not found, using 'neon-pulse'`);
-        theme = "neon-pulse";
+        console.warn(`Theme ${theme} not found, using 'sakura-blossom'`);
+        theme = "sakura-blossom";
         localStorage.setItem("selectedTheme", theme);
       }
       const root = document.documentElement;
@@ -692,9 +694,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function toggleTheme() {
       const themesOrder = [
-        "neon-pulse", "lime-surge", "flamingo-flash", "violet-vortex",
-        "aqua-glow", "cosmic-indigo", "mystic-jade", "aurora-haze",
-        "starlit-amethyst", "lunar-frost"
+        "sakura-blossom", "lavender-dream", "coral-charm", "mint-breeze", "rose-quartz",
+        "midnight-blue", "forest-shadow", "urban-slate", "desert-dusk", "charcoal-storm"
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
       applyTheme(nextTheme);
@@ -1144,42 +1145,136 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       },
       visibilitychange: () => {
-        if (document.hidden) {
-          console.log("Tab hidden, pausing playback checks");
-          if (streamAbortController) {
-            streamAbortController.abort();
-            streamAbortController = null;
-            console.log("Stream aborted due to tab hidden");
-          }
-          if (autoPlayTimeout) {
-            clearTimeout(autoPlayTimeout);
-            autoPlayTimeout = null;
-            console.log("Cleared autoPlayTimeout due to tab hidden");
-          }
-        } else if (intendedPlaying && navigator.onLine && stationItems?.length && currentIndex < stationItems.length) {
-          console.log("Tab visible, network online, checking playback");
-          const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
-          const normalizedAudioSrc = normalizeUrl(audio.src);
-          if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
-            console.log("visibilitychange: Starting playback after tab focus");
-            isAutoPlayPending = false;
-            debouncedTryAutoPlay();
-          } else {
-            console.log("visibilitychange: Skip playback, station already playing");
-          }
+        if (document.hidden || !intendedPlaying || !navigator.onLine || !stationItems?.length || currentIndex >= stationItems.length) {
+          console.log("visibilitychange: Skip, tab hidden or invalid state");
+          return;
+        }
+        const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
+        const normalizedAudioSrc = normalizeUrl(audio.src);
+        if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
+          console.log("visibilitychange: Skip playback, station already playing");
+        } else {
+          console.log("visibilitychange: Starting playback after visibility change");
+          isAutoPlayPending = false;
+          debouncedTryAutoPlay();
+        }
+      },
+      resume: () => {
+        if (!intendedPlaying || !navigator.onLine || !stationItems?.length || currentIndex >= stationItems.length) {
+          console.log("resume: Skip, invalid state");
+          return;
+        }
+        const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
+        const normalizedAudioSrc = normalizeUrl(audio.src);
+        if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
+          console.log("resume: Skip playback, station already playing");
+        } else {
+          console.log("resume: Starting playback after app resume");
+          isAutoPlayPending = false;
+          debouncedTryAutoPlay();
         }
       }
     };
 
-    // Add event listeners
-    Object.keys(eventListeners).forEach(event => {
-      document.addEventListener(event, eventListeners[event]);
+    function addEventListeners() {
+      document.addEventListener("keydown", eventListeners.keydown);
+      document.addEventListener("visibilitychange", eventListeners.visibilitychange);
+      document.addEventListener("resume", eventListeners.resume);
+    }
+
+    function removeEventListeners() {
+      document.removeEventListener("keydown", eventListeners.keydown);
+      document.removeEventListener("visibilitychange", eventListeners.visibilitychange);
+      document.removeEventListener("resume", eventListeners.resume);
+    }
+
+    audio.addEventListener("playing", () => {
+      isPlaying = true;
+      playPauseBtn.textContent = "⏸";
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
+      localStorage.setItem("isPlaying", isPlaying);
+      if (errorTimeout) {
+        clearTimeout(errorTimeout);
+        errorTimeout = null;
+      }
     });
 
-    // Initialize theme
-    applyTheme(currentTheme);
+    audio.addEventListener("pause", () => {
+      isPlaying = false;
+      playPauseBtn.textContent = "▶";
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+      localStorage.setItem("isPlaying", isPlaying);
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = null;
+      }
+    });
 
-    // Load stations and apply initial state
+    audio.addEventListener("error", () => {
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+      console.error("Audio error:", audio.error?.message || "Unknown error", "for URL:", audio.src);
+      if (intendedPlaying && errorCount < ERROR_LIMIT && !errorTimeout) {
+        errorCount++;
+        errorTimeout = setTimeout(() => {
+          debouncedTryAutoPlay();
+          errorTimeout = null;
+        }, 1000);
+      } else if (errorCount >= ERROR_LIMIT) {
+        console.error("Reached playback error limit");
+        resetStationInfo();
+      }
+    });
+
+    audio.addEventListener("volumechange", () => {
+      localStorage.setItem("volume", audio.volume);
+    });
+
+    window.addEventListener("online", () => {
+      console.log("Network restored");
+      if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
+        isAutoPlayPending = false;
+        debouncedTryAutoPlay();
+      }
+    });
+
+    window.addEventListener("offline", () => {
+      console.log("Network connection lost");
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+      errorCount = 0;
+    });
+
+    addEventListeners();
+
+    window.addEventListener("beforeunload", () => {
+      removeEventListeners();
+    });
+
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.setActionHandler("play", () => {
+        if (intendedPlaying) return;
+        togglePlayPause();
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        if (!isPlaying) return;
+        togglePlayPause();
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", prevStation);
+      navigator.mediaSession.setActionHandler("nexttrack", nextStation);
+    }
+
+    applyTheme(currentTheme);
     loadStations();
+    if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
+      const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
+      const normalizedAudioSrc = normalizeUrl(audio.src);
+      if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
+        console.log("initializeApp: Starting playback after initialization");
+        isAutoPlayPending = false;
+        debouncedTryAutoPlay();
+      } else {
+        console.log("initializeApp: Skip playback, station already playing");
+      }
+    } else {
+      console.log("initializeApp: Skip playback, invalid state");
+    }
   }
 });
