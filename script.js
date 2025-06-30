@@ -1,3 +1,4 @@
+```javascript
 let currentTab = localStorage.getItem("currentTab") || "home";
 let currentIndex = parseInt(localStorage.getItem("currentIndex")) || 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
@@ -81,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
         applyTheme(localStorage.getItem("selectedTheme") || "cyberpunk-neon");
         updatePastSearches();
         populateFilterChips();
-        renderTabs();
+        renderTabs(); // Виклик функції для рендерингу вкладок
         loadStations();
 
         miniPlayer.addEventListener("click", () => {
@@ -120,6 +121,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
         searchQuery.addEventListener("keypress", e => {
             if (e.key === "Enter") searchBtn.click();
+        });
+    }
+
+    function renderTabs() {
+        const nav = document.querySelector(".bottom-nav");
+        const staticTabs = [
+            { id: "home", icon: "🏠", label: "Дім" },
+            { id: "search", icon: "🔍", label: "Пошук" },
+            { id: "favorites", icon: "⭐", label: "Обране" },
+            { id: "settings", icon: "⚙️", label: "Налаштування" }
+        ];
+        nav.innerHTML = [...staticTabs, ...customTabs.map(tab => ({
+            id: tab,
+            icon: "📻",
+            label: tab.toUpperCase()
+        }))].map(tab => `
+            <button class="nav-btn${tab.id === currentTab ? " active" : ""}" data-tab="${tab.id}" aria-label="${tab.label}">
+                ${tab.icon}
+            </button>
+        `).join("");
+        nav.querySelectorAll(".nav-btn").forEach(btn => {
+            btn.addEventListener("click", () => switchTab(btn.dataset.tab));
         });
     }
 
@@ -531,3 +554,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+```
