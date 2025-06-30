@@ -593,74 +593,74 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const themes = {
       "dark-black": {
-        bodyBg: "#0D0D0D", // Pure black for maximum darkness
-        containerBg: "#1A1A1A", // Slightly lighter black
-        accent: "#FFFFFF", // Bright white for high contrast
-        text: "#E0E0E0", // Light gray for readability
+        bodyBg: "#0D0D0D", // Fixed pure black background
+        containerBg: "#1A1A1A", // Dark gray for containers
+        accent: "#FFFFFF", // Bright white for maximum contrast
+        text: "#E0E0E0", // Light gray for readable text
         accentGradient: "#B0B0B0" // Subtle gray gradient
       },
-      "lavender-night": {
-        bodyBg: "#1C1823", // Deep dark purple
-        containerBg: "#2A2433", // Darker purple shade
-        accent: "#9370DB", // Vibrant lavender
-        text: "#E6E6FA", // Light lavender for readability
-        accentGradient: "#BA55D3" // Medium orchid gradient
+      "neon-lavender": {
+        bodyBg: "#0D0D0D", // Fixed pure black background
+        containerBg: "#1F1B29", // Dark violet for containers
+        accent: "#B19CD9", // Vibrant neon lavender
+        text: "#F3E7F3", // Pale lavender for readability
+        accentGradient: "#DA70D6" // Bright orchid gradient
       },
-      "mint-shadow": {
-        bodyBg: "#1A2F2A", // Deep dark green
-        containerBg: "#2F4F4F", // Dark slate green
-        accent: "#48D1CC", // Vibrant mint
+      "electric-mint": {
+        bodyBg: "#0D0D0D", // Fixed pure black background
+        containerBg: "#1B2A23", // Dark emerald for containers
+        accent: "#00FFCC", // Electric mint for high contrast
+        text: "#E8F5E9", // Light mint for readability
+        accentGradient: "#26A69A" // Teal gradient
+      },
+      "cyber-crimson": {
+        bodyBg: "#0D0D0D", // Fixed pure black background
+        containerBg: "#2A1C1C", // Dark red for containers
+        accent: "#FF4040", // Bright cyber crimson
+        text: "#FFE4E1", // Pale rose for readability
+        accentGradient: "#FF6666" // Coral red gradient
+      },
+      "plasma-blue": {
+        bodyBg: "#0D0D0D", // Fixed pure black background
+        containerBg: "#1C2526", // Dark navy for containers
+        accent: "#00BFFF", // Vibrant deep sky blue
+        text: "#E6F0FA", // Pale blue for readability
+        accentGradient: "#1E90FF" // Sapphire blue gradient
+      },
+      "lime-fusion": {
+        bodyBg: "#0D0D0D", // Fixed pure black background
+        containerBg: "#1A2F2A", // Dark green for containers
+        accent: "#39FF14", // Neon lime for bold contrast
         text: "#F0FFF0", // Honeydew for readability
-        accentGradient: "#40E0D0" // Turquoise gradient
+        accentGradient: "#00FA9A" // Spring green gradient
       },
-      "cobalt-dusk": {
-        bodyBg: "#1C2526", // Deep dark blue
-        containerBg: "#2E3B4E", // Dark grayish blue
-        accent: "#00B7EB", // Bright cobalt blue
-        text: "#E6E8FA", // Light grayish blue for readability
-        accentGradient: "#1E90FF" // Dodger blue gradient
+      "hot-magenta": {
+        bodyBg: "#0D0D0D", // Fixed pure black background
+        containerBg: "#2A1B29", // Dark magenta for containers
+        accent: "#FF00FF", // Vivid hot magenta
+        text: "#F3E7F3", // Pale lavender for readability
+        accentGradient: "#FF69B4" // Hot pink gradient
       },
-      "crimson-abyss": {
-        bodyBg: "#2A1C1C", // Deep dark red
-        containerBg: "#3F2A2A", // Dark reddish gray
-        accent: "#DC143C", // Vibrant crimson
-        text: "#FFDAB9", // Peach puff for readability
-        accentGradient: "#B22222" // Firebrick gradient
+      "solar-amber": {
+        bodyBg: "#0D0D0D", // Fixed pure black background
+        containerBg: "#2A231C", // Dark bronze for containers
+        accent: "#FFAA00", // Bright amber for contrast
+        text: "#FFF8DC", // Cornsilk for readability
+        accentGradient: "#FFA500" // Orange gradient
       },
-      "amethyst-glow": {
-        bodyBg: "#1F1B29", // Deep dark violet
-        containerBg: "#2C2538", // Darker violet shade
-        accent: "#C71585", // Vivid amethyst (medium violet red)
+      "aqua-pulse": {
+        bodyBg: "#0D0D0D", // Fixed pure black background
+        containerBg: "#1B2A33", // Dark teal for containers
+        accent: "#00FFFF", // Vibrant cyan for high contrast
+        text: "#E0FFFF", // Light cyan for readability
+        accentGradient: "#40C4FF" // Light blue gradient
+      },
+      "neon-violet": {
+        bodyBg: "#0D0D0D", // Fixed pure black background
+        containerBg: "#1F1B29", // Dark violet for containers
+        accent: "#EE82EE", // Bright neon violet
         text: "#F3E7F3", // Pale lavender for readability
         accentGradient: "#DA70D6" // Orchid gradient
-      },
-      "emerald-depth": {
-        bodyBg: "#1B2A23", // Deep dark emerald
-        containerBg: "#2A3F33", // Dark forest green
-        accent: "#00FA9A", // Medium spring green
-        text: "#E8F5E9", // Light mint for readability
-        accentGradient: "#20B2AA" // Light sea green gradient
-      },
-      "sapphire-noir": {
-        bodyBg: "#161C2A", // Deep dark navy
-        containerBg: "#242F4A", // Dark slate blue
-        accent: "#1E90FF", // Bright sapphire blue
-        text: "#E6F0FA", // Pale blue for readability
-        accentGradient: "#4169E1" // Royal blue gradient
-      },
-      "amber-twilight": {
-        bodyBg: "#2A231C", // Deep dark bronze
-        containerBg: "#3F332A", // Dark brown
-        accent: "#FF8C00", // Vibrant amber
-        text: "#FFF8DC", // Cornsilk for readability
-        accentGradient: "#DAA520" // Goldenrod gradient
-      },
-      "onyx-neon": {
-        bodyBg: "#151515", // Deep onyx black
-        containerBg: "#242424", // Slightly lighter onyx
-        accent: "#FF1493", // Neon pink (deep pink)
-        text: "#F0F0F0", // Off-white for readability
-        accentGradient: "#FF69B4" // Hot pink gradient
       }
     };
     let currentTheme = localStorage.getItem("selectedTheme") || "dark-black";
@@ -692,8 +692,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function toggleTheme() {
       const themesOrder = [
-        "dark-black", "lavender-night", "mint-shadow", "cobalt-dusk", "crimson-abyss",
-        "amethyst-glow", "emerald-depth", "sapphire-noir", "amber-twilight", "onyx-neon"
+        "dark-black", "neon-lavender", "electric-mint", "cyber-crimson", "plasma-blue",
+        "lime-fusion", "hot-magenta", "solar-amber", "aqua-pulse", "neon-violet"
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
       applyTheme(nextTheme);
