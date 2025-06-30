@@ -1,4 +1,3 @@
-```javascript
 let currentTab = localStorage.getItem("currentTab") || "home";
 let currentIndex = parseInt(localStorage.getItem("currentIndex")) || 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
@@ -82,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
         applyTheme(localStorage.getItem("selectedTheme") || "cyberpunk-neon");
         updatePastSearches();
         populateFilterChips();
-        renderTabs(); // Виклик функції для рендерингу вкладок
+        renderTabs();
         loadStations();
 
         miniPlayer.addEventListener("click", () => {
@@ -126,21 +125,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderTabs() {
         const nav = document.querySelector(".bottom-nav");
+        if (!nav) {
+            console.error("Bottom navigation element not found");
+            return;
+        }
         const staticTabs = [
             { id: "home", icon: "🏠", label: "Дім" },
             { id: "search", icon: "🔍", label: "Пошук" },
             { id: "favorites", icon: "⭐", label: "Обране" },
             { id: "settings", icon: "⚙️", label: "Налаштування" }
         ];
-        nav.innerHTML = [...staticTabs, ...customTabs.map(tab => ({
-            id: tab,
-            icon: "📻",
-            label: tab.toUpperCase()
-        }))].map(tab => `
-            <button class="nav-btn${tab.id === currentTab ? " active" : ""}" data-tab="${tab.id}" aria-label="${tab.label}">
-                ${tab.icon}
-            </button>
-        `).join("");
+        // Фільтруємо customTabs, щоб уникнути некоректних значень
+        const validCustomTabs = customTabs.filter(tab => typeof tab === "string" && tab.trim() !== "");
+        const allTabs = [
+            ...staticTabs,
+            ...validCustomTabs.map(tab => ({
+                id: tab,
+                icon: "📻",
+                label: tab.toUpperCase()
+            }))
+        ];
+        nav.innerHTML = allTabs.map(tab => {
+            const isActive = tab.id === currentTab ? " active" : "";
+            return `<button class="nav-btn${isActive}" data-tab="${tab.id}" aria-label="${tab.label}">${tab.icon}</button>`;
+        }).join("");
         nav.querySelectorAll(".nav-btn").forEach(btn => {
             btn.addEventListener("click", () => switchTab(btn.dataset.tab));
         });
@@ -352,8 +360,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function switchTab(tab) {
         currentTab = tab;
         localStorage.setItem("currentTab", tab);
-        navButtons.forEach(btn => btn.classList.remove("active"));
-        document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add("active");
+        document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+        const activeBtn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
+        if (activeBtn) activeBtn.classList.add("active");
         searchPanel.style.display = tab === "search" ? "flex" : "none";
         settingsPanel.style.display = tab === "settings" ? "flex" : "none";
         nowPlaying.style.display = tab === "settings" || tab === "search" ? "none" : nowPlaying.style.display;
@@ -554,4 +563,3 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
-```
