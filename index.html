@@ -40,107 +40,91 @@
         </script><!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#00F0FF">
-  <title>Radio S O</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="script.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FF007A">
+    <title>VibeWave</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <div class="theme-toggle">🌙</div>
-  <div class="share-button">📤</div>
-
-  <div class="container">
-    <h1>🎧 Radio Music</h1>
-
-    <div id="currentStationInfo">
-      <div class="station-info-content">
-        <div class="station-icon">🎵</div>
-        <div class="station-text">
-          <div class="station-name">Обирайте станцію</div>
-          <div class="station-genre">жанр: -</div>
-          <div class="station-country">країна: -</div>
+    <div class="container">
+        <div class="header">
+            <h1>VibeWave 🎧</h1>
+            <button class="settings-btn" aria-label="Налаштування">⚙️</button>
         </div>
-        <div class="wave-visualizer">
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
+        <div class="station-cards" id="stationCards"></div>
+        <div class="mini-player" id="miniPlayer">
+            <span class="station-name">Виберіть станцію</span>
+            <button class="play-pause-btn" aria-label="Відтворити або призупинити">▶</button>
         </div>
-      </div>
-    </div>
-
-    <div id="searchInput">
-      <input id="searchQuery" list="pastSearches" placeholder="Назва станції">
-      <datalist id="pastSearches"></datalist>
-      <input id="searchCountry" list="suggestedCountries" placeholder="Країна">
-      <datalist id="suggestedCountries"></datalist>
-      <input id="searchGenre" list="suggestedGenres" placeholder="Жанр">
-      <datalist id="suggestedGenres"></datalist>
-      <button class="search-btn">🔍</button>
-    </div>
-
-    <div class="station-list" id="stationList"></div>
-
-    <div class="tabs-wrapper">
-      <div class="tabs" id="tabs">
-        <button class="tab-btn active" data-tab="best">Best</button>
-        <button class="tab-btn" data-tab="techno">Techno</button>
-        <button class="tab-btn" data-tab="trance">Trance</button>
-        <button class="tab-btn" data-tab="ukraine">UA</button>
-        <button class="tab-btn" data-tab="pop">Pop</button>
-        <button class="tab-btn" data-tab="search">Search</button>
-        <button class="add-tab-btn">+</button>
-      </div>
-    </div>
-
-    <div class="controls-container">
-      <audio id="audioPlayer"></audio>
-      <div class="controls">
-        <button class="control-btn">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="19 3 5 12 19 21 19 3"></polygon>
-          </svg>
-        </button>
-        <button class="control-btn">▶</button>
-        <button class="control-btn">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <div class="new-tab-modal" style="display: none;">
-      <div class="modal">
-        <h2>Створити нову вкладку</h2>
-        <input id="newTabName" type="text" placeholder="Назва вкладки">
-        <div class="modal-tabs">
-          <button id="createTabBtn">Створити</button>
-          <button class="modal-cancel-btn">Відміна</button>
+        <div class="now-playing" id="nowPlaying" style="display: none;">
+            <div class="station-icon" id="nowPlayingIcon"></div>
+            <div class="station-info">
+                <span class="station-name"></span>
+                <span class="station-genre"></span>
+                <span class="station-country"></span>
+            </div>
+            <div class="wave-visualizer">
+                <div class="wave-circle"></div>
+                <div class="wave-circle"></div>
+                <div class="wave-circle"></div>
+            </div>
+            <div class="controls">
+                <button class="control-btn prev" aria-label="Попередня станція">⏮</button>
+                <button class="control-btn play-pause" aria-label="Відтворити або призупинити">▶</button>
+                <button class="control-btn next" aria-label="Наступна станція">⏭</button>
+            </div>
+            <button class="share-btn" aria-label="Поділитися">📤</button>
         </div>
-      </div>
-    </div>
-
-    <div class="edit-tab-modal" style="display: none;">
-      <div class="modal">
-        <h2>Дії з вкладкою</h2>
-        <input id="renameTabName" type="text" placeholder="Нова назва вкладки">
-        <div class="modal-tabs">
-          <button id="renameTabBtn">Перейменувати</button>
-          <button id="deleteTabBtn">Видалити</button>
-          <button class="modal-cancel-btn">Відміна</button>
+        <div class="search-panel" id="searchPanel" style="display: none;">
+            <input type="text" id="searchQuery" list="pastSearches" placeholder="Пошук станцій..." aria-label="Пошук станцій">
+            <datalist id="pastSearches"></datalist>
+            <div class="filter-chips" id="filterChips"></div>
+            <button class="search-btn" aria-label="Знайти">Знайти</button>
         </div>
-      </div>
+        <div class="settings-panel" id="settingsPanel" style="display: none;">
+            <h2>Налаштування</h2>
+            <div class="theme-carousel" id="themeCarousel"></div>
+            <div class="tabs-manager" id="tabsManager"></div>
+            <div class="sleep-timer">
+                <label for="sleepTimer">Таймер сну (хв):</label>
+                <input type="number" id="sleepTimer" min="0" max="120" value="0">
+                <button class="set-timer-btn">Встановити</button>
+            </div>
+        </div>
+        <div class="modal-overlay new-tab-modal" style="display: none;">
+            <div class="modal">
+                <h2>Створити нову вкладку</h2>
+                <input type="text" id="newTabName" placeholder="Назва вкладки" maxlength="10">
+                <button id="createTabBtn">Створити</button>
+                <button class="modal-cancel-btn">Відміна</button>
+            </div>
+        </div>
+        <div class="modal-overlay edit-tab-modal" style="display: none;">
+            <div class="modal">
+                <h2>Дії з вкладкою</h2>
+                <input type="text" id="renameTabName" placeholder="Нова назва вкладки" maxlength="10">
+                <button id="renameTabBtn">Перейменувати</button>
+                <button id="deleteTabBtn">Видалити</button>
+                <button class="modal-cancel-btn">Відміна</button>
+            </div>
+        </div>
+        <div class="modal-overlay add-station-modal" style="display: none;">
+            <div class="modal">
+                <h2>Додати до вкладки</h2>
+                <div class="modal-tabs" id="modalTabs"></div>
+                <button class="modal-cancel-btn">Відміна</button>
+            </div>
+        </div>
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-tab="home" aria-label="Дім">🏠</button>
+            <button class="nav-btn" data-tab="search" aria-label="Пошук">🔍</button>
+            <button class="nav-btn" data-tab="favorites" aria-label="Обране">⭐</button>
+            <button class="nav-btn" data-tab="settings" aria-label="Налаштування">⚙️</button>
+        </nav>
     </div>
-  </div>
+    <audio id="audioPlayer" preload="auto"></audio>
+    <script src="script.js"></script>
 </body>
 </html>
