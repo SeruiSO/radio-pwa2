@@ -592,89 +592,52 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const themes = {
-      // Feminine Themes
-      "sakura-blossom": {
-        bodyBg: "#FFF0F5", // Soft lavender pink
-        containerBg: "#FFE4E1", // Muted rose
-        accent: "#FF69B4", // Hot pink
-        text: "#4B0082", // Indigo
-        accentGradient: "#DB7093" // Pale violet red
+      "dark-black": {
+        bodyBg: "#0D0D0D", // Pure black for maximum darkness
+        containerBg: "#1A1A1A", // Slightly lighter black for containers
+        accent: "#FFFFFF", // Bright white for high contrast
+        text: "#E0E0E0", // Light gray for readable text
+        accentGradient: "#B0B0B0" // Subtle gray for gradient accents
       },
-      "lavender-dream": {
-        bodyBg: "#E6E6FA", // Light lavender
-        containerBg: "#F0E6FF", // Pale lilac
-        accent: "#9370DB", // Medium purple
-        text: "#2F2F4F", // Dark slate
-        accentGradient: "#BA55D3" // Medium orchid
+      "lavender-night": {
+        bodyBg: "#1C1823", // Deep dark purple
+        containerBg: "#2A2433", // Slightly lighter dark purple
+        accent: "#9370DB", // Vibrant lavender
+        text: "#E6E6FA", // Light lavender for readability
+        accentGradient: "#BA55D3" // Medium orchid for gradient
       },
-      "coral-charm": {
-        bodyBg: "#FFF5EE", // Seashell
-        containerBg: "#FFEFD5", // Papaya whip
-        accent: "#FF6F61", // Coral
-        text: "#5C4033", // Dark brown
-        accentGradient: "#FF8C69" // Salmon
+      "mint-shadow": {
+        bodyBg: "#1A2F2A", // Deep dark green
+        containerBg: "#2F4F4F", // Dark slate green
+        accent: "#48D1CC", // Vibrant mint
+        text: "#F0FFF0", // Honeydew for readable text
+        accentGradient: "#40E0D0" // Turquoise for gradient
       },
-      "mint-breeze": {
-        bodyBg: "#F5FFFA", // Mint cream
-        containerBg: "#E0FFFF", // Light cyan
-        accent: "#48D1CC", // Medium turquoise
-        text: "#2F4F4F", // Dark slate gray
-        accentGradient: "#40E0D0" // Turquoise
-      },
-      "rose-quartz": {
-        bodyBg: "#F8E8EE", // Pale pink
-        containerBg: "#F4C4C4", // Light pink
-        accent: "#F08080", // Light coral
-        text: "#4A2F2F", // Dark reddish brown
-        accentGradient: "#DB7093" // Pale violet red
-      },
-      // Masculine Themes
-      "midnight-blue": {
-        bodyBg: "#1C2526", // Dark slate blue
+      "cobalt-dusk": {
+        bodyBg: "#1C2526", // Deep dark blue
         containerBg: "#2E3B4E", // Dark grayish blue
-        accent: "#4682B4", // Steel blue
-        text: "#E6E8FA", // Light grayish blue
-        accentGradient: "#5F9EA0" // Cadet blue
+        accent: "#00B7EB", // Bright cobalt blue
+        text: "#E6E8FA", // Light grayish blue for readability
+        accentGradient: "#1E90FF" // Dodger blue for gradient
       },
-      "forest-shadow": {
-        bodyBg: "#1A2F2A", // Dark green
-        containerBg: "#2F4F4F", // Dark slate gray
-        accent: "#3CB371", // Medium sea green
-        text: "#F0FFF0", // Honeydew
-        accentGradient: "#228B22" // Forest green
-      },
-      "urban-slate": {
-        bodyBg: "#2F2F2F", // Dark gray
-        containerBg: "#4A4A4A", // Medium gray
-        accent: "#708090", // Slate gray
-        text: "#DCDCDC", // Gainsboro
-        accentGradient: "#778899" // Light slate gray
-      },
-      "desert-dusk": {
-        bodyBg: "#3C2F2F", // Dark reddish gray
-        containerBg: "#5C4033", // Dark brown
-        accent: "#DAA520", // Goldenrod
-        text: "#FFF8DC", // Cornsilk
-        accentGradient: "#B8860B" // Dark goldenrod
-      },
-      "charcoal-storm": {
-        bodyBg: "#1C1C1C", // Very dark gray
-        containerBg: "#2F2F2F", // Dark gray
-        accent: "#4169E1", // Royal blue
-        text: "#F5F5F5", // White smoke
-        accentGradient: "#483D8B" // Dark slate blue
+      "crimson-abyss": {
+        bodyBg: "#2A1C1C", // Deep dark red
+        containerBg: "#3F2A2A", // Dark reddish gray
+        accent: "#DC143C", // Vibrant crimson
+        text: "#FFDAB9", // Peach puff for readable text
+        accentGradient: "#B22222" // Firebrick for gradient
       }
     };
-    let currentTheme = localStorage.getItem("selectedTheme") || "sakura-blossom";
+    let currentTheme = localStorage.getItem("selectedTheme") || "dark-black";
     if (!themes[currentTheme]) {
-      currentTheme = "sakura-blossom";
+      currentTheme = "dark-black";
       localStorage.setItem("selectedTheme", currentTheme);
     }
 
     function applyTheme(theme) {
       if (!themes[theme]) {
-        console.warn(`Theme ${theme} not found, using 'sakura-blossom'`);
-        theme = "sakura-blossom";
+        console.warn(`Theme ${theme} not found, using 'dark-black'`);
+        theme = "dark-black";
         localStorage.setItem("selectedTheme", theme);
       }
       const root = document.documentElement;
@@ -694,8 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function toggleTheme() {
       const themesOrder = [
-        "sakura-blossom", "lavender-dream", "coral-charm", "mint-breeze", "rose-quartz",
-        "midnight-blue", "forest-shadow", "urban-slate", "desert-dusk", "charcoal-storm"
+        "dark-black", "lavender-night", "mint-shadow", "cobalt-dusk", "crimson-abyss"
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
       applyTheme(nextTheme);
