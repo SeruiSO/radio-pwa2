@@ -596,7 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
         bodyBg: "#0A0A0A", // Fixed dark black background
         containerBg: "#121212", // Dark gray for containers
         accent: "#00F0FF", // Vibrant neon cyan
-        text: "#F0F0F0", // Light gray for readability
+        text: "#E6F7FA", // Light cyan for readability
         accentGradient: "#003C4B" // Dark cyan gradient
       },
       "lime-surge": {
@@ -606,61 +606,40 @@ document.addEventListener("DOMContentLoaded", () => {
         text: "#E8F5E9", // Pale green for readability
         accentGradient: "#2E4B2F" // Dark green gradient
       },
-      "flamingo-flash": {
-        bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#121212", // Dark gray for containers
-        accent: "#FF4081", // Vivid flamingo pink
-        text: "#FCE4EC", // Pale pink for readability
-        accentGradient: "#4B1A2E" // Dark pink gradient
-      },
       "violet-vibe": {
         bodyBg: "#0A0A0A", // Fixed dark black background
         containerBg: "#121212", // Dark gray for containers
-        accent: "#E040FB", // Bright violet
-        text: "#F4E6FF", // Light violet for readability
-        accentGradient: "#3C1A4B" // Dark violet gradient
+        accent: "#B388FF", // Vibrant deep violet
+        text: "#E6D9FF", // Light violet for readability
+        accentGradient: "#3C2E4B" // Dark violet gradient
       },
-      "amber-rush": {
+      "amber-glow": {
         bodyBg: "#0A0A0A", // Fixed dark black background
         containerBg: "#121212", // Dark gray for containers
-        accent: "#FFAB00", // Vibrant amber
+        accent: "#FFD740", // Bright amber yellow
         text: "#FFF3CC", // Light amber for readability
-        accentGradient: "#4B2E00" // Dark amber gradient
+        accentGradient: "#4B3C00" // Dark amber gradient
       },
-      "aqua-burst": {
+      "aqua-spark": {
         bodyBg: "#0A0A0A", // Fixed dark black background
         containerBg: "#121212", // Dark gray for containers
-        accent: "#26A69A", // Bright aqua
-        text: "#E6F5F3", // Pale aqua for readability
-        accentGradient: "#1A3C36" // Dark aqua gradient
+        accent: "#4DD0E1", // Vibrant aqua
+        text: "#E6F5F7", // Light aqua for readability
+        accentGradient: "#1A3C4B" // Dark aqua gradient
       },
-      "ruby-glow": {
-        bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#121212", // Dark gray for containers
-        accent: "#D81B60", // Rich ruby red
-        text: "#F7D9E3", // Light ruby for readability
-        accentGradient: "#3C0F1F" // Dark ruby gradient
-      },
-      "emerald-spark": {
+      "emerald-shine": {
         bodyBg: "#0A0A0A", // Fixed dark black background
         containerBg: "#121212", // Dark gray for containers
         accent: "#00E676", // Vivid emerald green
         text: "#E6FFE6", // Light emerald for readability
         accentGradient: "#004B2E" // Dark emerald gradient
       },
-      "sapphire-shine": {
+      "sapphire-burst": {
         bodyBg: "#0A0A0A", // Fixed dark black background
         containerBg: "#121212", // Dark gray for containers
         accent: "#0288D1", // Bright sapphire blue
         text: "#E6F3FA", // Light sapphire for readability
         accentGradient: "#0A2E4B" // Dark sapphire gradient
-      },
-      "coral-blast": {
-        bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#121212", // Dark gray for containers
-        accent: "#FF7F50", // Vibrant coral
-        text: "#FFE6D9", // Light coral for readability
-        accentGradient: "#4B231A" // Dark coral gradient
       },
       "lemon-zest": {
         bodyBg: "#0A0A0A", // Fixed dark black background
@@ -672,16 +651,9 @@ document.addEventListener("DOMContentLoaded", () => {
       "orchid-flare": {
         bodyBg: "#0A0A0A", // Fixed dark black background
         containerBg: "#121212", // Dark gray for containers
-        accent: "#BA68C8", // Vivid orchid purple
+        accent: "#BA68C8", // Vibrant orchid purple
         text: "#F4E6F7", // Light orchid for readability
         accentGradient: "#3C1A3C" // Dark orchid gradient
-      },
-      "tangerine-tide": {
-        bodyBg: "#0A0A0A", // Fixed dark black background
-        containerBg: "#121212", // Dark gray for containers
-        accent: "#FF7043", // Bright tangerine
-        text: "#FFE6D6", // Light tangerine for readability
-        accentGradient: "#4B210F" // Dark tangerine gradient
       },
       "mint-sparkle": {
         bodyBg: "#0A0A0A", // Fixed dark black background
@@ -690,12 +662,40 @@ document.addEventListener("DOMContentLoaded", () => {
         text: "#E6F7FA", // Light mint for readability
         accentGradient: "#1A3C4B" // Dark mint gradient
       },
-      "magenta-rush": {
+      "golden-haze": {
         bodyBg: "#0A0A0A", // Fixed dark black background
         containerBg: "#121212", // Dark gray for containers
-        accent: "#F50057", // Bright magenta
-        text: "#FCE4EC", // Light magenta for readability
-        accentGradient: "#4B0F2E" // Dark magenta gradient
+        accent: "#FFCA28", // Vibrant golden yellow
+        text: "#FFF3D6", // Light golden for readability
+        accentGradient: "#4B2E0A" // Dark golden gradient
+      },
+      "teal-rush": {
+        bodyBg: "#0A0A0A", // Fixed dark black background
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#26A69A", // Bright teal
+        text: "#E6F5F3", // Light teal for readability
+        accentGradient: "#1A3C36" // Dark teal gradient
+      },
+      "lavender-bloom": {
+        bodyBg: "#0A0A0A", // Fixed dark black background
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#D81B60", // Soft lavender purple
+        text: "#F7D9E3", // Light lavender for readability
+        accentGradient: "#3C0F2E" // Dark lavender gradient
+      },
+      "silver-gleam": {
+        bodyBg: "#0A0A0A", // Fixed dark black background
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#B0BEC5", // Vibrant silver
+        text: "#E6ECEF", // Light silver for readability
+        accentGradient: "#2E3C4B" // Dark silver gradient
+      },
+      "turquoise-tide": {
+        bodyBg: "#0A0A0A", // Fixed dark black background
+        containerBg: "#121212", // Dark gray for containers
+        accent: "#40C4FF", // Bright turquoise
+        text: "#E6F7FF", // Light turquoise for readability
+        accentGradient: "#0A3C4B" // Dark turquoise gradient
       }
     };
     let currentTheme = localStorage.getItem("selectedTheme") || "neon-pulse";
@@ -727,9 +727,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function toggleTheme() {
       const themesOrder = [
-        "neon-pulse", "lime-surge", "flamingo-flash", "violet-vibe", "amber-rush",
-        "aqua-burst", "ruby-glow", "emerald-spark", "sapphire-shine", "coral-blast",
-        "lemon-zest", "orchid-flare", "tangerine-tide", "mint-sparkle", "magenta-rush"
+        "neon-pulse", "lime-surge", "violet-vibe", "amber-glow", "aqua-spark",
+        "emerald-shine", "sapphire-burst", "lemon-zest", "orchid-flare", "mint-sparkle",
+        "golden-haze", "teal-rush", "lavender-bloom", "silver-gleam", "turquoise-tide"
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
       applyTheme(nextTheme);
