@@ -594,38 +594,73 @@ document.addEventListener("DOMContentLoaded", () => {
     const themes = {
       "dark-black": {
         bodyBg: "#0D0D0D", // Pure black for maximum darkness
-        containerBg: "#1A1A1A", // Slightly lighter black for containers
+        containerBg: "#1A1A1A", // Slightly lighter black
         accent: "#FFFFFF", // Bright white for high contrast
-        text: "#E0E0E0", // Light gray for readable text
-        accentGradient: "#B0B0B0" // Subtle gray for gradient accents
+        text: "#E0E0E0", // Light gray for readability
+        accentGradient: "#B0B0B0" // Subtle gray gradient
       },
       "lavender-night": {
         bodyBg: "#1C1823", // Deep dark purple
-        containerBg: "#2A2433", // Slightly lighter dark purple
+        containerBg: "#2A2433", // Darker purple shade
         accent: "#9370DB", // Vibrant lavender
         text: "#E6E6FA", // Light lavender for readability
-        accentGradient: "#BA55D3" // Medium orchid for gradient
+        accentGradient: "#BA55D3" // Medium orchid gradient
       },
       "mint-shadow": {
         bodyBg: "#1A2F2A", // Deep dark green
         containerBg: "#2F4F4F", // Dark slate green
         accent: "#48D1CC", // Vibrant mint
-        text: "#F0FFF0", // Honeydew for readable text
-        accentGradient: "#40E0D0" // Turquoise for gradient
+        text: "#F0FFF0", // Honeydew for readability
+        accentGradient: "#40E0D0" // Turquoise gradient
       },
       "cobalt-dusk": {
         bodyBg: "#1C2526", // Deep dark blue
         containerBg: "#2E3B4E", // Dark grayish blue
         accent: "#00B7EB", // Bright cobalt blue
         text: "#E6E8FA", // Light grayish blue for readability
-        accentGradient: "#1E90FF" // Dodger blue for gradient
+        accentGradient: "#1E90FF" // Dodger blue gradient
       },
       "crimson-abyss": {
         bodyBg: "#2A1C1C", // Deep dark red
         containerBg: "#3F2A2A", // Dark reddish gray
         accent: "#DC143C", // Vibrant crimson
-        text: "#FFDAB9", // Peach puff for readable text
-        accentGradient: "#B22222" // Firebrick for gradient
+        text: "#FFDAB9", // Peach puff for readability
+        accentGradient: "#B22222" // Firebrick gradient
+      },
+      "amethyst-glow": {
+        bodyBg: "#1F1B29", // Deep dark violet
+        containerBg: "#2C2538", // Darker violet shade
+        accent: "#C71585", // Vivid amethyst (medium violet red)
+        text: "#F3E7F3", // Pale lavender for readability
+        accentGradient: "#DA70D6" // Orchid gradient
+      },
+      "emerald-depth": {
+        bodyBg: "#1B2A23", // Deep dark emerald
+        containerBg: "#2A3F33", // Dark forest green
+        accent: "#00FA9A", // Medium spring green
+        text: "#E8F5E9", // Light mint for readability
+        accentGradient: "#20B2AA" // Light sea green gradient
+      },
+      "sapphire-noir": {
+        bodyBg: "#161C2A", // Deep dark navy
+        containerBg: "#242F4A", // Dark slate blue
+        accent: "#1E90FF", // Bright sapphire blue
+        text: "#E6F0FA", // Pale blue for readability
+        accentGradient: "#4169E1" // Royal blue gradient
+      },
+      "amber-twilight": {
+        bodyBg: "#2A231C", // Deep dark bronze
+        containerBg: "#3F332A", // Dark brown
+        accent: "#FF8C00", // Vibrant amber
+        text: "#FFF8DC", // Cornsilk for readability
+        accentGradient: "#DAA520" // Goldenrod gradient
+      },
+      "onyx-neon": {
+        bodyBg: "#151515", // Deep onyx black
+        containerBg: "#242424", // Slightly lighter onyx
+        accent: "#FF1493", // Neon pink (deep pink)
+        text: "#F0F0F0", // Off-white for readability
+        accentGradient: "#FF69B4" // Hot pink gradient
       }
     };
     let currentTheme = localStorage.getItem("selectedTheme") || "dark-black";
@@ -657,7 +692,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function toggleTheme() {
       const themesOrder = [
-        "dark-black", "lavender-night", "mint-shadow", "cobalt-dusk", "crimson-abyss"
+        "dark-black", "lavender-night", "mint-shadow", "cobalt-dusk", "crimson-abyss",
+        "amethyst-glow", "emerald-depth", "sapphire-noir", "amber-twilight", "onyx-neon"
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
       applyTheme(nextTheme);
