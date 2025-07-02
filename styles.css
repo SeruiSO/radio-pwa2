@@ -36,13 +36,14 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   transition: background 0.4s ease, border-color 0.4s ease;
-  padding-top: 60px; /* Adjusted for top-bar height */
-  padding-bottom: 100px; /* Ensure space for sticky tabs and controls */
+  padding-top: 80px; /* Adjusted for top-bar and h1 */
+  padding-bottom: 120px; /* Space for tabs and controls */
+  position: relative; /* For absolute positioning of controls-container */
 }
 
 h1 {
   font-size: 2.5em;
-  margin: 2px 0 5px;
+  margin: 0 0 5px;
   text-align: center;
   color: var(--accent);
   transition: color 0.4s ease;
@@ -340,7 +341,7 @@ h1 {
   background: transparent;
   order: 6;
   position: sticky;
-  bottom: 90px; /* Adjusted to avoid overlapping controls-container */
+  bottom: 110px; /* Adjusted to avoid overlapping controls-container */
   z-index: 11;
 }
 
@@ -416,6 +417,10 @@ h1 {
   display: flex;
 }
 
+#searchInput.hidden {
+  display: none;
+}
+
 #searchInput:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
@@ -462,8 +467,10 @@ h1 {
 }
 
 .controls-container {
-  position: sticky;
+  position: absolute;
   bottom: 0;
+  left: 0;
+  right: 0;
   background: var(--container-bg);
   border-top: 2px solid var(--accent);
   padding: 10px;
@@ -479,7 +486,7 @@ h1 {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  max-width: 300px; /* Limit max width for better spacing */
+  max-width: 300px;
 }
 
 .control-btn {
@@ -635,15 +642,15 @@ datalist {
   h1 {
     font-size: 1.8em;
     line-height: 1.2;
-    margin: 2px 0 5px;
+    margin: 0 0 5px;
   }
 
   .container {
     padding: 10px;
     margin: 0 auto;
     min-height: 80vh;
-    padding-top: 50px; /* Adjusted for smaller screens */
-    padding-bottom: 100px;
+    padding-top: 60px;
+    padding-bottom: 120px;
   }
 
   .top-bar {
@@ -706,7 +713,7 @@ datalist {
     margin: 2px 0;
     padding: 0 5px;
     background: transparent;
-    bottom: 90px; /* Consistent with controls-container height */
+    bottom: 110px;
   }
 
   .tab-btn,
@@ -773,7 +780,7 @@ datalist {
 
   .controls {
     justify-content: space-between;
-    max-width: 100%; /* Full width on smaller screens */
+    max-width: 100%;
   }
 
   #searchInput {
