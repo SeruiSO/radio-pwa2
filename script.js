@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
       importFileInput: !!importFileInput,
       searchInput: !!searchInput,
       searchQuery: !!searchQuery,
-      search кількості: !!searchCountry,
+      searchCountry: !!searchCountry,
       searchGenre: !!searchGenre,
       searchBtn: !!searchBtn,
       pastSearchesList: !!pastSearchesList,
