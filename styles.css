@@ -36,6 +36,8 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   transition: background 0.4s ease, border-color 0.4s ease;
+  padding-top: 60px; /* Adjusted for top-bar height */
+  padding-bottom: 100px; /* Ensure space for sticky tabs and controls */
 }
 
 h1 {
@@ -48,10 +50,13 @@ h1 {
 }
 
 .top-bar {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  right: 5px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2px;
   order: 2;
 }
 
@@ -335,7 +340,7 @@ h1 {
   background: transparent;
   order: 6;
   position: sticky;
-  bottom: 80px;
+  bottom: 90px; /* Adjusted to avoid overlapping controls-container */
   z-index: 11;
 }
 
@@ -465,7 +470,6 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   z-index: 10;
   transition: background 0.4s ease, border-color 0.4s ease;
   order: 7;
@@ -473,8 +477,9 @@ h1 {
 
 .controls {
   display: flex;
-  justify-content: center;
-  gap: 10px;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 300px; /* Limit max width for better spacing */
 }
 
 .control-btn {
@@ -637,6 +642,14 @@ datalist {
     padding: 10px;
     margin: 0 auto;
     min-height: 80vh;
+    padding-top: 50px; /* Adjusted for smaller screens */
+    padding-bottom: 100px;
+  }
+
+  .top-bar {
+    top: 3px;
+    left: 3px;
+    right: 3px;
   }
 
   .control-btn {
@@ -693,6 +706,7 @@ datalist {
     margin: 2px 0;
     padding: 0 5px;
     background: transparent;
+    bottom: 90px; /* Consistent with controls-container height */
   }
 
   .tab-btn,
@@ -755,11 +769,11 @@ datalist {
 
   .controls-container {
     padding: 10px;
-    gap: 10px;
   }
 
   .controls {
-    gap: 10px;
+    justify-content: space-between;
+    max-width: 100%; /* Full width on smaller screens */
   }
 
   #searchInput {
