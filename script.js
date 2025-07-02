@@ -218,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
       genreDatalist.innerHTML = suggestedGenres.map(genre => `<option value="${genre}">`).join("");
     }
 
-    funktion updatePastSearches() {
+    function updatePastSearches() {
       pastSearchesList.innerHTML = "";
       pastSearches.forEach(search => {
         const option = document.createElement("option");
@@ -367,7 +367,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function searchStations(query, country, genre) {
-      stationList.innerHTML = "<div class='tation-item empty'>Searching...</div>";
+      stationList.innerHTML = "<div class='station-item empty'>Searching...</div>";
       try {
         abortController.abort();
         abortController = new AbortController();
