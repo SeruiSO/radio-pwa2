@@ -43,21 +43,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#00F0FF">
-  <title>Radio S O</title>
+  <title>Radio Music S O</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.ico">
 </head>
 <body>
-  <button class="theme-toggle">🌙</button>
-  <button class="share-button">🔗</button>
-  <button class="export-button">📤</button>
-  <button class="import-button">📥</button>
-  <input type="file" id="importFileInput" accept=".json" style="display: none;">
   <div class="container">
+    <div class="top-bar">
+      <button class="theme-toggle">🌙</button>
+      <button class="share-button">🔗</button>
+      <button class="import-button">📥</button>
+      <button class="export-button">📤</button>
+      <input type="file" id="importFileInput" accept=".json" style="display: none;">
+    </div>
+
     <h1>🎧 Radio Music</h1>
-    <audio id="audioPlayer" preload="auto"></audio>
+
     <div id="currentStationInfo">
       <div class="station-info-content">
         <div class="station-icon">🎵</div>
@@ -79,8 +80,21 @@
         </div>
       </div>
     </div>
+
+    <div id="stationList" class="station-list"></div>
+
+    <div id="searchInput">
+      <input id="searchQuery" list="pastSearches" placeholder="Назва станції">
+      <input id="searchCountry" list="suggestedCountries" placeholder="Країна">
+      <input id="searchGenre" list="suggestedGenres" placeholder="Жанр">
+      <datalist id="pastSearches"></datalist>
+      <datalist id="suggestedCountries"></datalist>
+      <datalist id="suggestedGenres"></datalist>
+      <button class="search-btn">🔍</button>
+    </div>
+
     <div class="tabs-wrapper">
-      <div class="tabs" id="tabs">
+      <div id="tabs" class="tabs">
         <button class="tab-btn" data-tab="best">Best</button>
         <button class="tab-btn" data-tab="techno">Techno</button>
         <button class="tab-btn" data-tab="trance">Trance</button>
@@ -90,16 +104,7 @@
         <button class="add-tab-btn">+</button>
       </div>
     </div>
-    <div id="searchInput">
-      <input type="text" id="searchQuery" list="pastSearches" placeholder="Назва радіо...">
-      <datalist id="pastSearches"></datalist>
-      <input type="text" id="searchCountry" list="suggestedCountries" placeholder="Країна...">
-      <datalist id="suggestedCountries"></datalist>
-      <input type="text" id="searchGenre" list="suggestedGenres" placeholder="Жанр...">
-      <datalist id="suggestedGenres"></datalist>
-      <button class="search-btn">🔍</button>
-    </div>
-    <div id="stationList" class="station-list"></div>
+
     <div class="controls-container">
       <div class="controls">
         <button class="control-btn">⏮</button>
@@ -107,20 +112,22 @@
         <button class="control-btn">⏭</button>
       </div>
     </div>
-    <div class="new-tab-modal modal-overlay" style="display: none;">
+
+    <div class="new-tab-modal" style="display: none;">
       <div class="modal">
         <h2>Створити нову вкладку</h2>
-        <input type="text" id="newTabName" placeholder="Назва вкладки (макс. 10 символів)">
+        <input id="newTabName" type="text" placeholder="Назва вкладки">
         <div class="modal-tabs">
           <button id="createTabBtn">Створити</button>
           <button class="modal-cancel-btn">Відміна</button>
         </div>
       </div>
     </div>
-    <div class="edit-tab-modal modal-overlay" style="display: none;">
+
+    <div class="edit-tab-modal" style="display: none;">
       <div class="modal">
         <h2>Дії з вкладкою</h2>
-        <input type="text" id="renameTabName" placeholder="Нова назва вкладки">
+        <input id="renameTabName" type="text" placeholder="Нова назва вкладки">
         <div class="modal-tabs">
           <button id="renameTabBtn">Перейменувати</button>
           <button id="deleteTabBtn">Видалити</button>
@@ -128,7 +135,10 @@
         </div>
       </div>
     </div>
+
+    <audio id="audioPlayer" preload="auto"></audio>
   </div>
+
   <script src="script.js"></script>
 </body>
 </html>
