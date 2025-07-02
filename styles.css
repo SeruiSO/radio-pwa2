@@ -70,15 +70,15 @@ h1 {
 }
 
 .share-button {
-  right: 10px;
+  left: 60px;
 }
 
 .export-button {
-  right: 60px;
+  right: 10px;
 }
 
 .import-button {
-  right: 110px;
+  right: 60px;
 }
 
 #importFileInput {
@@ -699,15 +699,15 @@ datalist {
   }
 
   .share-button {
-    right: 5px;
+    left: 50px;
   }
 
   .export-button {
-    right: 50px;
+    right: 5px;
   }
 
   .import-button {
-    right: 95px;
+    right: 50px;
   }
 
   .tabs-wrapper {
@@ -777,7 +777,7 @@ datalist {
     height: 1px;
   }
 
-  #searchInput {
+  .searchInput {
     flex-direction: column;
     align-items: stretch;
     padding: 6px;
