@@ -1,11 +1,3 @@
-const debounce = (func, wait) => {
-  let timeout;
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-};
-
 let currentTab = localStorage.getItem("currentTab") || "techno";
 let currentIndex = 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
@@ -34,19 +26,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const currentStationInfo = document.getElementById("currentStationInfo");
   const themeToggle = document.querySelector(".theme-toggle");
   const shareButton = document.querySelector(".share-button");
-  const exportButton = document.querySelector(".export-button");
-  const importButton = document.querySelector(".import-button");
-  const importFileInput = document.getElementById("importFileInput");
   const searchInput = document.getElementById("searchInput");
   const searchQuery = document.getElementById("searchQuery");
   const searchCountry = document.getElementById("searchCountry");
   const searchGenre = document.getElementById("searchGenre");
   const searchBtn = document.querySelector(".search-btn");
   const pastSearchesList = document.getElementById("pastSearches");
-  const tabsContainer = document.getLevelById("tabs");
-  const loadingSpinner = document.getElementById("loadingSpinner");
+  const tabsContainer = document.getElementById("tabs");
 
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer || !loadingSpinner) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
     console.error("One of required DOM elements not found", {
       audio: !!audio,
       stationList: !!stationList,
@@ -54,17 +42,13 @@ document.addEventListener("DOMContentLoaded", () => {
       currentStationInfo: !!currentStationInfo,
       themeToggle: !!themeToggle,
       shareButton: !!shareButton,
-      exportButton: !!exportButton,
-      importButton: !!importButton,
-      importFileInput: !!importFileInput,
       searchInput: !!searchInput,
       searchQuery: !!searchQuery,
       searchCountry: !!searchCountry,
       searchGenre: !!searchGenre,
       searchBtn: !!searchBtn,
       pastSearchesList: !!pastSearchesList,
-      tabsContainer: !!tabsContainer,
-      loadingSpinner: !!loadingSpinner
+      tabsContainer: !!tabsContainer
     });
     setTimeout(initializeApp, 100);
     return;
@@ -95,90 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    exportButton.addEventListener("click", () => {
-      const settings = {
-        customTabs,
-        stationLists,
-        userAddedStations,
-        favoriteStations,
-        deletedStations
-      };
-      const blob = new Blob([JSON.stringify(settings, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "radio-settings.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      console.log("Settings exported:", settings);
-    });
-
-    importButton.addEventListener("click", () => {
-      importFileInput.click();
-    });
-
-    importFileInput.addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (!file) {
-        console.warn("No file selected for import");
-        return;
-      }
-      if (!file.type.match("application/json")) {
-        alert("Помилка: Будь ласка, виберіть файл у форматі JSON.");
-        importFileInput.value = "";
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const importedSettings = JSON.parse(e.target.result);
-          if (!importedSettings.customTabs || !importedSettings.stationLists || 
-              !importedSettings.userAddedStations || !importedSettings.favoriteStations || 
-              !importedSettings.deletedStations) {
-            throw new Error("Missing required settings fields");
-          }
-          customTabs = Array.isArray(importedSettings.customTabs) 
-            ? importedSettings.customTabs.filter(tab => typeof tab === "string" && tab.trim() && !["best", "techno", "trance", "ukraine", "pop", "search"].includes(tab)) 
-            : [];
-          stationLists = importedSettings.stationLists || {};
-          userAddedStations = importedSettings.userAddedStations || {};
-          favoriteStations = Array.isArray(importedSettings.favoriteStations) 
-            ? importedSettings.favoriteStations.filter(name => typeof name === "string") 
-            : [];
-          deletedStations = Array.isArray(importedSettings.deletedStations) 
-            ? importedSettings.deletedStations.filter(name => typeof name === "string") 
-            : [];
-          localStorage.setItem("customTabs", JSON.stringify(customTabs));
-          localStorage.setItem("stationLists", JSON.stringify(stationLists));
-          localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
-          localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-          localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
-          console.log("Settings imported:", importedSettings);
-          renderTabs();
-          switchTab(currentTab);
-          importFileInput.value = "";
-        } catch (error) {
-          console.error("Error importing settings:", error);
-          alert("Помилка: Некоректний файл налаштувань. Перевірте формат файлу.");
-          importFileInput.value = "";
-        }
-      };
-      reader.onerror = () => {
-        console.error("Error reading file:", reader.error);
-        alert("Помилка: Не вдалося прочитати файл.");
-        importFileInput.value = "";
-      };
-      reader.readAsText(file);
-    });
-
     document.querySelector(".controls .control-btn:nth-child(1)").addEventListener("click", prevStation);
     document.querySelector(".controls .control-btn:nth-child(2)").addEventListener("click", togglePlayPause);
     document.querySelector(".controls .control-btn:nth-child(3)").addEventListener("click", nextStation);
-    document.querySelectorAll(".controls .control-btn").forEach(btn => {
-      btn.addEventListener("touchstart", (e) => e.preventDefault());
-    });
 
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
@@ -192,9 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("pastSearches", JSON.stringify(pastSearches));
           updatePastSearches();
         }
-        debounced……
-
-searchStations(query, country, genre);
+        searchStations(query, country, genre);
       } else {
         console.warn("All search fields are empty");
         stationList.innerHTML = "<div class='station-item empty'>Enter station name, country or genre</div>";
@@ -296,10 +197,8 @@ searchStations(query, country, genre);
       } else console.error(".station-icon element not found");
     }
 
-    const debouncedLoadStations = debounce(loadStations, 1000);
     async function loadStations() {
       console.time("loadStations");
-      loadingSpinner.style.display = "block";
       stationList.innerHTML = "<div class='station-item empty'>Loading...</div>";
       try {
         abortController.abort();
@@ -380,14 +279,10 @@ searchStations(query, country, genre);
         }
       } finally {
         console.timeEnd("loadStations");
-        loadingSpinner.style.display = "none";
-        abortController = null;
       }
     }
 
-    const debouncedSearchStations = debounce(searchStations, 1000);
     async function searchStations(query, country, genre) {
-      loadingSpinner.style.display = "block";
       stationList.innerHTML = "<div class='station-item empty'>Searching...</div>";
       try {
         abortController.abort();
@@ -416,9 +311,6 @@ searchStations(query, country, genre);
           console.error("Error searching stations:", error);
           stationList.innerHTML = "<div class='station-item empty'>Failed to find stations</div>";
         }
-      } finally {
-        loadingSpinner.style.display = "none";
-        abortController = null;
       }
     }
 
@@ -825,7 +717,6 @@ searchStations(query, country, genre);
             });
           }
         });
-        registration.periodicSync.register('update-stations', { minInterval: 30 * 60 * 1000 }).catch(err => console.error('Periodic Sync registration failed:', err));
       });
 
       navigator.serviceWorker.addEventListener("message", (event) => {
@@ -838,7 +729,7 @@ searchStations(query, country, genre);
             );
             localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
             localStorage.setItem("cacheVersion", event.data.cacheVersion);
-            debouncedLoadStations();
+            loadStations();
           }
         }
         if (event.data.type === "NETWORK_STATUS" && event.data.online && intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
@@ -945,11 +836,6 @@ searchStations(query, country, genre);
           } catch (error) {
             if (error.name === 'AbortError') {
               console.log("Stream request canceled");
-              return;
-            }
-            if (error.name === 'NotAllowedError') {
-              console.warn("Autoplay blocked by browser");
-              alert("Торкніться екрана, щоб увімкнути відтворення");
               return;
             }
             console.error("Playback error:", error);
@@ -1375,7 +1261,7 @@ searchStations(query, country, genre);
     }
 
     applyTheme(currentTheme);
-    debouncedLoadStations();
+    loadStations();
     if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
       const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
       const normalizedAudioSrc = normalizeUrl(audio.src);

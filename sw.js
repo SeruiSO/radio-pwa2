@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v8579.1.95250919';
+const CACHE_NAME = 'radio-cache-v944.1.20250974';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -62,12 +62,20 @@ self.addEventListener('activate', (event) => {
 
 // Моніторинг стану мережі
 let wasOnline = navigator.onLine;
-let intervalId = null;
 
-function startNetworkMonitoring() {
-  if (intervalId) return; // Запобігаємо множинним інтервалам
-  intervalId = setInterval(() => {
-    if (!navigator.onLine) {
+setInterval(() => {
+  fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
+    .then(() => {
+      if (!wasOnline) {
+        wasOnline = true;
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ type: "NETWORK_STATUS", online: true });
+          });
+        });
+      }
+    })
+    .catch(error => {
       if (wasOnline) {
         wasOnline = false;
         self.clients.matchAll().then(clients => {
@@ -76,37 +84,5 @@ function startNetworkMonitoring() {
           });
         });
       }
-      return; // Зупиняємо перевірку в офлайн-режимі
-    }
-    fetch("stations.json", { method: "HEAD", cache: "no-store" })
-      .then(() => {
-        if (!wasOnline) {
-          wasOnline = true;
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-              client.postMessage({ type: "NETWORK_STATUS", online: true });
-            });
-          });
-        }
-      })
-      .catch(() => {
-        if (wasOnline) {
-          wasOnline = false;
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-              client.postMessage({ type: "NETWORK_STATUS", online: false });
-            });
-          });
-        }
-      });
-  }, 2000);
-}
-
-startNetworkMonitoring();
-
-self.addEventListener('controllerchange', () => {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
-  }
-});
+    });
+}, 2000); // Збільшено інтервал до 2 секунд
