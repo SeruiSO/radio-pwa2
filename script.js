@@ -15,8 +15,11 @@ let customTabs = JSON.parse(localStorage.getItem("customTabs")) || [];
 let isAutoPlayPending = false;
 let lastSuccessfulPlayTime = 0;
 let streamAbortController = null;
-let errorTimeout = null;
-let autoPlayRequestId = 0; // Unique ID for autoplay requests
+let autoPlayTimeout = null;
+let autoPlayRequestId = 0;
+let lastCurrentTime = 0;
+let staleCurrentTimeCount = 0;
+
 customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab === "string" && tab.trim()) : [];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -70,7 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
     populateSearchSuggestions();
     renderTabs();
 
-    // Зміна: Додано періодичну перевірку стану аудіоплеєра кожні 5 секунд
     setInterval(() => {
       if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
         const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
@@ -83,11 +85,20 @@ document.addEventListener("DOMContentLoaded", () => {
           error: audio.error ? audio.error.message : null,
           src: audio.src
         });
-        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2) {
+        if (
+          normalizedAudioSrc !== normalizedCurrentUrl ||
+          audio.paused ||
+          audio.error ||
+          audio.readyState < 2 ||
+          (audio.readyState === 2 && audio.currentTime === lastCurrentTime && ++staleCurrentTimeCount >= 2)
+        ) {
           console.log("Periodic check: Stream not active, retrying");
           isAutoPlayPending = false;
           debouncedTryAutoPlay();
+        } else {
+          staleCurrentTimeCount = 0;
         }
+        lastCurrentTime = audio.currentTime;
       }
     }, 5000);
 
@@ -507,10 +518,10 @@ document.addEventListener("DOMContentLoaded", () => {
           genre: item.dataset.genre,
           country: item.dataset.country,
           favicon: item.dataset.favicon || "",
-          isFromSearch: currentTab === "search" // Mark station as from search
+          isFromSearch: currentTab === "search"
         };
         stationLists[targetTab].unshift(newStation);
-        userAddedStations[targetTab].unshift(newStation); // Always add to userAddedStations
+        userAddedStations[targetTab].unshift(newStation);
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
         localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
         console.log(`Added station ${stationName} to ${targetTab}:`, newStation);
@@ -844,7 +855,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    let autoPlayTimeout = null;
     function debouncedTryAutoPlay(retryCount = 2, delay = 1000) {
       if (isAutoPlayPending) {
         console.log("debouncedTryAutoPlay: Skip, previous tryAutoPlay still active");
@@ -861,9 +871,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (autoPlayTimeout) {
         clearTimeout(autoPlayTimeout);
       }
-      autoPlayRequestId++; // Increment request ID
+      autoPlayRequestId++;
       const currentRequestId = autoPlayRequestId;
-      autoPlayTimeout = setTimeout(() => tryAutoPlay(retryCount, delay, currentRequestId), 0);
+      autoPlayTimeout = setTimeout(() => tryAutoPlay(retryCount, delay, currentRequestId), 1000);
     }
 
     async function tryAutoPlay(retryCount = 2, delay = 1000, requestId) {
@@ -891,7 +901,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const initialStationUrl = currentStationUrl;
         const normalizedCurrentUrl = normalizeUrl(currentStationUrl);
         const normalizedAudioSrc = normalizeUrl(audio.src);
-        if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
+        if (
+          normalizedAudioSrc === normalizedCurrentUrl &&
+          !audio.paused &&
+          !audio.error &&
+          audio.readyState >= 2 &&
+          audio.currentTime > 0 &&
+          Date.now() - lastSuccessfulPlayTime < 10000
+        ) {
           console.log("Skip tryAutoPlay: audio already playing with correct src, no errors and active stream");
           return;
         }
@@ -899,14 +916,13 @@ document.addEventListener("DOMContentLoaded", () => {
           console.error("Invalid URL:", currentStationUrl);
           errorCount++;
           if (errorCount >= ERROR_LIMIT) {
-            console.error("Reached playback error limit, retrying current station"); // Зміна: Спроба відновлення поточної станції
+            console.error("Reached playback error limit, retrying current station");
             errorCount = 0;
             debouncedTryAutoPlay();
           }
           return;
         }
 
-        // Зміна: Додано детальне логування стану аудіоплеєра перед спробою відтворення
         console.log("tryAutoPlay: Audio state before attempt", {
           readyState: audio.readyState,
           currentTime: audio.currentTime,
@@ -917,6 +933,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const attemptPlay = async (attemptsLeft) => {
+          if (streamAbortController && normalizedCurrentUrl === normalizeUrl(audio.src)) {
+            console.log("Skip canceling stream: same URL is already loading");
+            return;
+          }
           if (streamAbortController) {
             streamAbortController.abort();
             console.log("Previous audio stream canceled");
@@ -943,7 +963,6 @@ document.addEventListener("DOMContentLoaded", () => {
             errorCount = 0;
             isPlaying = true;
             lastSuccessfulPlayTime = Date.now();
-            // Зміна: Додано детальне логування після успішного відтворення
             console.log("Playback started successfully", {
               readyState: audio.readyState,
               currentTime: audio.currentTime,
@@ -962,7 +981,6 @@ document.addEventListener("DOMContentLoaded", () => {
               console.log("Stream request canceled");
               return;
             }
-            // Зміна: Додано детальне логування помилки
             console.error("Playback error:", error, {
               readyState: audio.readyState,
               currentTime: audio.currentTime,
@@ -972,7 +990,7 @@ document.addEventListener("DOMContentLoaded", () => {
               src: audio.src
             });
             document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-            if (attemptsLeft > 1) {
+            if (attemptsLeft' > 1) {
               if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
                 console.log("tryAutoPlay: Station changed during retry, canceling");
                 return;
@@ -987,7 +1005,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
               errorCount++;
               if (errorCount >= ERROR_LIMIT) {
-                console.error("Reached playback error limit, retrying current station"); // Зміна: Спроба відновлення поточної станції
+                console.error("Reached playback error limit, retrying current station");
                 errorCount = 0;
                 debouncedTryAutoPlay();
               }
@@ -1024,7 +1042,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (stationItems?.length && currentIndex < stationItems.length && intendedPlaying) {
         const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
         const normalizedAudioSrc = normalizeUrl(audio.src);
-        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
+        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2) {
           console.log("switchTab: Starting playback after tab change");
           isAutoPlayPending = false;
           debouncedTryAutoPlay();
@@ -1129,7 +1147,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
         userAddedStations[currentTab] = userAddedStations[currentTab]?.filter(s => s.name === stationName) || [];
-        if (!station.isFromSearch && !deletedStations.includes(stationName)) {
+        if (!station.isFromSearch && ! deletedStations.includes(stationName)) {
           if (!Array.isArray(deletedStations)) deletedStations = [];
           deletedStations.push(stationName);
           localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
@@ -1160,7 +1178,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (intendedPlaying) {
         const normalizedCurrentUrl = normalizeUrl(item.dataset.value);
         const normalizedAudioSrc = normalizeUrl(audio.src);
-        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
+        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2) {
           console.log("changeStation: Starting playback after station change");
           isAutoPlayPending = false;
           debouncedTryAutoPlay();
@@ -1281,11 +1299,17 @@ document.addEventListener("DOMContentLoaded", () => {
           console.log("visibilitychange: Skip, tab hidden or invalid state");
           return;
         }
-        // Зміна: Додано затримку 500 мс перед викликом debouncedTryAutoPlay
         setTimeout(() => {
           const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
           const normalizedAudioSrc = normalizeUrl(audio.src);
-          if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
+          if (
+            normalizedAudioSrc === normalizedCurrentUrl &&
+            !audio.paused &&
+            !audio.error &&
+            audio.readyState >= 2 &&
+            audio.currentTime > 0 &&
+            Date.now() - lastSuccessfulPlayTime < 10000
+          ) {
             console.log("visibilitychange: Skip playback, station already playing");
           } else {
             console.log("visibilitychange: Starting playback after visibility change");
@@ -1299,131 +1323,79 @@ document.addEventListener("DOMContentLoaded", () => {
           console.log("resume: Skip, invalid state");
           return;
         }
-        // Зміна: Додано затримку 500 мс перед викликом debouncedTryAutoPlay
         setTimeout(() => {
           const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
           const normalizedAudioSrc = normalizeUrl(audio.src);
-          if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
+          if (
+            normalizedAudioSrc === normalizedCurrentUrl &&
+            !audio.paused &&
+            !audio.error &&
+            audio.readyState >= 2 &&
+            audio.currentTime > 0 &&
+            Date.now() - lastSuccessfulPlayTime < 10000
+          ) {
             console.log("resume: Skip playback, station already playing");
           } else {
-            console.log("resume: Starting playback after app resume");
+            console.log("resume: Starting playback after resume");
             isAutoPlayPending = false;
             debouncedTryAutoPlay();
           }
         }, 500);
+      },
+      online: () => {
+        console.log("Network restored");
+        if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
+          const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
+          const normalizedAudioSrc = normalizeUrl(audio.src);
+          if (
+            normalizedAudioSrc !== normalizedCurrentUrl ||
+            audio.paused ||
+            audio.error ||
+            audio.readyState < 2 ||
+            (audio.readyState === 2 && Date.now() - lastSuccessfulPlayTime > 10000)
+          ) {
+            console.log("online: Starting playback after network restore");
+            isAutoPlayPending = false;
+            debouncedTryAutoPlay();
+          } else {
+            console.log("online: Skip playback, station already playing");
+          }
+        }
+      },
+      offline: () => {
+        console.log("Network connection lost");
+        document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       }
     };
 
-    function addEventListeners() {
-      document.addEventListener("keydown", eventListeners.keydown);
-      document.addEventListener("visibilitychange", eventListeners.visibilitychange);
-      document.addEventListener("resume", eventListeners.resume);
-    }
-
-    function removeEventListeners() {
-      document.removeEventListener("keydown", eventListeners.keydown);
-      document.removeEventListener("visibilitychange", eventListeners.visibilitychange);
-      document.removeEventListener("resume", eventListeners.resume);
-    }
-
-    audio.addEventListener("playing", () => {
-      isPlaying = true;
-      playPauseBtn.textContent = "⏸";
-      document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
-      localStorage.setItem("isPlaying", isPlaying);
-      if (errorTimeout) {
-        clearTimeout(errorTimeout);
-        errorTimeout = null;
-      }
-    });
-
-    audio.addEventListener("pause", () => {
-      isPlaying = false;
-      playPauseBtn.textContent = "▶";
-      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      localStorage.setItem("isPlaying", isPlaying);
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.metadata = null;
-      }
-    });
-
-    audio.addEventListener("error", () => {
-      // Зміна: Додано скидання lastSuccessfulPlayTime при помилці
-      lastSuccessfulPlayTime = 0;
-      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      // Зміна: Додано детальне логування помилки
-      console.error("Audio error:", audio.error?.message || "Unknown error", "for URL:", audio.src, {
-        readyState: audio.readyState,
-        currentTime: audio.currentTime,
-        networkState: audio.networkState,
-        paused: audio.paused,
-        error: audio.error ? audio.error.message : null,
-        src: audio.src
-      });
-      if (intendedPlaying && errorCount < ERROR_LIMIT && !errorTimeout) {
-        errorCount++;
-        errorTimeout = setTimeout(() => {
-          debouncedTryAutoPlay();
-          errorTimeout = null;
-        }, 1000);
-      } else if (errorCount >= ERROR_LIMIT) {
-        console.error("Reached playback error limit, retrying current station"); // Зміна: Спроба відновлення поточної станції
-        errorCount = 0;
-        debouncedTryAutoPlay();
-      }
+    Object.entries(eventListeners).forEach(([event, handler]) => {
+      document.removeEventListener(event, handler);
+      document.addEventListener(event, handler);
     });
 
     audio.addEventListener("volumechange", () => {
       localStorage.setItem("volume", audio.volume);
     });
 
-    window.addEventListener("online", () => {
-      console.log("Network restored");
-      if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
-        isAutoPlayPending = false;
+    audio.addEventListener("error", () => {
+      console.error("Audio error:", audio.error ? audio.error.message : "Unknown error");
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+      errorCount++;
+      if (errorCount < ERROR_LIMIT) {
+        console.log(`Retrying playback due to error, attempts left: ${ERROR_LIMIT - errorCount}`);
         debouncedTryAutoPlay();
+      } else {
+        console.error("Reached playback error limit, stopping retries");
+        errorCount = 0;
+        isPlaying = false;
+        intendedPlaying = false;
+        localStorage.setItem("isPlaying", isPlaying);
+        localStorage.setItem("intendedPlaying", intendedPlaying);
+        playPauseBtn.textContent = "▶";
       }
     });
-
-    window.addEventListener("offline", () => {
-      console.log("Network connection lost");
-      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      errorCount = 0;
-    });
-
-    addEventListeners();
-
-    window.addEventListener("beforeunload", () => {
-      removeEventListeners();
-    });
-
-    if ("mediaSession" in navigator) {
-      navigator.mediaSession.setActionHandler("play", () => {
-        if (intendedPlaying) return;
-        togglePlayPause();
-      });
-      navigator.mediaSession.setActionHandler("pause", () => {
-        if (!isPlaying) return;
-        togglePlayPause();
-      });
-      navigator.mediaSession.setActionHandler("previoustrack", prevStation);
-      navigator.mediaSession.setActionHandler("nexttrack", nextStation);
-    }
 
     applyTheme(currentTheme);
     loadStations();
-    if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
-      const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
-      const normalizedAudioSrc = normalizeUrl(audio.src);
-      if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
-        console.log("initializeApp: Starting playback after initialization");
-        isAutoPlayPending = false;
-        debouncedTryAutoPlay();
-      } else {
-        console.log("initializeApp: Skip playback, station already playing");
-      }
-    } else {
-      console.log("initializeApp: Skip playback, invalid state");
-    }
   }
 });
