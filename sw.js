@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v8579.1.95250999';
+const CACHE_NAME = 'radio-cache-v944.1.20250984';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -63,26 +63,34 @@ self.addEventListener('activate', (event) => {
 // Моніторинг стану мережі
 let wasOnline = navigator.onLine;
 
+async function checkNetwork() {
+  try {
+    const response = await Promise.race([
+      fetch("https://radioso2.netlify.app/favicon.ico", { method: "HEAD" }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1000))
+    ]);
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 setInterval(() => {
-  fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
-    .then(() => {
-      if (!wasOnline) {
-        wasOnline = true;
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({ type: "NETWORK_STATUS", online: true });
-          });
+  checkNetwork().then((isOnline) => {
+    if (isOnline && !wasOnline) {
+      wasOnline = true;
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: "NETWORK_STATUS", online: true });
         });
-      }
-    })
-    .catch(error => {
-      if (wasOnline) {
-        wasOnline = false;
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({ type: "NETWORK_STATUS", online: false });
-          });
+      });
+    } else if (!isOnline && wasOnline) {
+      wasOnline = false;
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: "NETWORK_STATUS", online: false });
         });
-      }
-    });
+      });
+    }
+  });
 }, 2000); // Збільшено інтервал до 2 секунд
