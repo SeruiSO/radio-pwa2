@@ -26,6 +26,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const currentStationInfo = document.getElementById("currentStationInfo");
   const themeToggle = document.querySelector(".theme-toggle");
   const shareButton = document.querySelector(".share-button");
+  const exportButton = document.querySelector(".export-button");
+  const importButton = document.querySelector(".import-button");
+  const importFileInput = document.getElementById("importFileInput");
   const searchInput = document.getElementById("searchInput");
   const searchQuery = document.getElementById("searchQuery");
   const searchCountry = document.getElementById("searchCountry");
@@ -34,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const pastSearchesList = document.getElementById("pastSearches");
   const tabsContainer = document.getElementById("tabs");
 
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
     console.error("One of required DOM elements not found", {
       audio: !!audio,
       stationList: !!stationList,
@@ -42,6 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
       currentStationInfo: !!currentStationInfo,
       themeToggle: !!themeToggle,
       shareButton: !!shareButton,
+      exportButton: !!exportButton,
+      importButton: !!importButton,
+      importFileInput: !!importFileInput,
       searchInput: !!searchInput,
       searchQuery: !!searchQuery,
       searchCountry: !!searchCountry,
@@ -79,6 +85,84 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
+    exportButton.addEventListener("click", () => {
+      const settings = {
+        customTabs,
+        stationLists,
+        userAddedStations,
+        favoriteStations,
+        deletedStations
+      };
+      const blob = new Blob([JSON.stringify(settings, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "radio-settings.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      console.log("Settings exported:", settings);
+    });
+
+    importButton.addEventListener("click", () => {
+      importFileInput.click();
+    });
+
+    importFileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) {
+        console.warn("No file selected for import");
+        return;
+      }
+      if (!file.type.match("application/json")) {
+        alert("Помилка: Будь ласка, виберіть файл у форматі JSON.");
+        importFileInput.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedSettings = JSON.parse(e.target.result);
+          if (!importedSettings.customTabs || !importedSettings.stationLists || 
+              !importedSettings.userAddedStations || !importedSettings.favoriteStations || 
+              !importedSettings.deletedStations) {
+            throw new Error("Missing required settings fields");
+          }
+          customTabs = Array.isArray(importedSettings.customTabs) 
+            ? importedSettings.customTabs.filter(tab => typeof tab === "string" && tab.trim() && !["best", "techno", "trance", "ukraine", "pop", "search"].includes(tab)) 
+            : [];
+          stationLists = importedSettings.stationLists || {};
+          userAddedStations = importedSettings.userAddedStations || {};
+          favoriteStations = Array.isArray(importedSettings.favoriteStations) 
+            ? importedSettings.favoriteStations.filter(name => typeof name === "string") 
+            : [];
+          deletedStations = Array.isArray(importedSettings.deletedStations) 
+            ? importedSettings.deletedStations.filter(name => typeof name === "string") 
+            : [];
+          localStorage.setItem("customTabs", JSON.stringify(customTabs));
+          localStorage.setItem("stationLists", JSON.stringify(stationLists));
+          localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+          localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+          localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
+          console.log("Settings imported:", importedSettings);
+          renderTabs();
+          switchTab(currentTab);
+          importFileInput.value = "";
+        } catch (error) {
+          console.error("Error importing settings:", error);
+          alert("Помилка: Некоректний файл налаштувань. Перевірте формат файлу.");
+          importFileInput.value = "";
+        }
+      };
+      reader.onerror = () => {
+        console.error("Error reading file:", reader.error);
+        alert("Помилка: Не вдалося прочитати файл.");
+        importFileInput.value = "";
+      };
+      reader.readAsText(file);
+    });
+
     document.querySelector(".controls .control-btn:nth-child(1)").addEventListener("click", prevStation);
     document.querySelector(".controls .control-btn:nth-child(2)").addEventListener("click", togglePlayPause);
     document.querySelector(".controls .control-btn:nth-child(3)").addEventListener("click", nextStation);
@@ -113,27 +197,6 @@ document.addEventListener("DOMContentLoaded", () => {
     searchGenre.addEventListener("keypress", (e) => {
       if (e.key === "Enter") searchBtn.click();
     });
-
-    // Періодична перевірка стану аудіоплеєра кожні 5 секунд
-    setInterval(() => {
-      if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
-        const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
-        const normalizedAudioSrc = normalizeUrl(audio.src);
-        console.log("Periodic audio check:", {
-          readyState: audio.readyState,
-          currentTime: audio.currentTime,
-          networkState: audio.networkState,
-          paused: audio.paused,
-          error: audio.error ? audio.error.message : null,
-          src: audio.src
-        });
-        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2) {
-          console.log("Periodic check: Stream not active, retrying");
-          isAutoPlayPending = false;
-          debouncedTryAutoPlay();
-        }
-      }
-    }, 5000);
 
     function populateSearchSuggestions() {
       const suggestedCountries = [
@@ -194,7 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function normalizeUrl(url) {
       if (!url) return "";
       try {
-        const urlObj = new URL(url grup);
+        const urlObj = new URL(url);
         return urlObj.origin + urlObj.pathname;
       } catch {
         return url;
@@ -815,21 +878,11 @@ document.addEventListener("DOMContentLoaded", () => {
           console.error("Invalid URL:", currentStationUrl);
           errorCount++;
           if (errorCount >= ERROR_LIMIT) {
-            console.error("Reached playback error limit, retrying current station");
-            errorCount = 0;
-            debouncedTryAutoPlay();
+            console.error("Reached playback error limit");
+            resetStationInfo();
           }
           return;
         }
-
-        console.log("tryAutoPlay: Audio state before attempt", {
-          readyState: audio.readyState,
-          currentTime: audio.currentTime,
-          networkState: audio.networkState,
-          paused: audio.paused,
-          error: audio.error ? audio.error.message : null,
-          src: audio.src
-        });
 
         const attemptPlay = async (attemptsLeft) => {
           if (streamAbortController) {
@@ -858,14 +911,7 @@ document.addEventListener("DOMContentLoaded", () => {
             errorCount = 0;
             isPlaying = true;
             lastSuccessfulPlayTime = Date.now();
-            console.log("Playback started successfully", {
-              readyState: audio.readyState,
-              currentTime: audio.currentTime,
-              networkState: audio.networkState,
-              paused: audio.paused,
-              error: audio.error ? audio.error.message : null,
-              src: audio.src
-            });
+            console.log("Playback started successfully");
             document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
             localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
@@ -876,14 +922,7 @@ document.addEventListener("DOMContentLoaded", () => {
               console.log("Stream request canceled");
               return;
             }
-            console.error("Playback error:", error, {
-              readyState: audio.readyState,
-              currentTime: audio.currentTime,
-              networkState: audio.networkState,
-              paused: audio.paused,
-              error: audio.error ? audio.error.message : null,
-              src: audio.src
-            });
+            console.error("Playback error:", error);
             document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
             if (attemptsLeft > 1) {
               if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
@@ -900,9 +939,8 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
               errorCount++;
               if (errorCount >= ERROR_LIMIT) {
-                console.error("Reached playback error limit, retrying current station");
-                errorCount = 0;
-                debouncedTryAutoPlay();
+                console.error("Reached playback error limit");
+                resetStationInfo();
               }
             }
           } finally {
@@ -1194,34 +1232,30 @@ document.addEventListener("DOMContentLoaded", () => {
           console.log("visibilitychange: Skip, tab hidden or invalid state");
           return;
         }
-        setTimeout(() => {
-          const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
-          const normalizedAudioSrc = normalizeUrl(audio.src);
-          if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
-            console.log("visibilitychange: Skip playback, station already playing");
-          } else {
-            console.log("visibilitychange: Starting playback after visibility change");
-            isAutoPlayPending = false;
-            debouncedTryAutoPlay();
-          }
-        }, 500); // Додано затримку 500 мс
+        const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
+        const normalizedAudioSrc = normalizeUrl(audio.src);
+        if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
+          console.log("visibilitychange: Skip playback, station already playing");
+        } else {
+          console.log("visibilitychange: Starting playback after visibility change");
+          isAutoPlayPending = false;
+          debouncedTryAutoPlay();
+        }
       },
       resume: () => {
         if (!intendedPlaying || !navigator.onLine || !stationItems?.length || currentIndex >= stationItems.length) {
           console.log("resume: Skip, invalid state");
           return;
         }
-        setTimeout(() => {
-          const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
-          const normalizedAudioSrc = normalizeUrl(audio.src);
-          if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
-            console.log("resume: Skip playback, station already playing");
-          } else {
-            console.log("resume: Starting playback after app resume");
-            isAutoPlayPending = false;
-            debouncedTryAutoPlay();
-          }
-        }, 500); // Додано затримку 500 мс
+        const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
+        const normalizedAudioSrc = normalizeUrl(audio.src);
+        if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
+          console.log("resume: Skip playback, station already playing");
+        } else {
+          console.log("resume: Starting playback after app resume");
+          isAutoPlayPending = false;
+          debouncedTryAutoPlay();
+        }
       }
     };
 
@@ -1259,16 +1293,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     audio.addEventListener("error", () => {
-      lastSuccessfulPlayTime = 0; // Скидання lastSuccessfulPlayTime при помилці
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      console.error("Audio error:", audio.error?.message || "Unknown error", "for URL:", audio.src, {
-        readyState: audio.readyState,
-        currentTime: audio.currentTime,
-        networkState: audio.networkState,
-        paused: audio.paused,
-        error: audio.error ? audio.error.message : null,
-        src: audio.src
-      });
+      console.error("Audio error:", audio.error?.message || "Unknown error", "for URL:", audio.src);
       if (intendedPlaying && errorCount < ERROR_LIMIT && !errorTimeout) {
         errorCount++;
         errorTimeout = setTimeout(() => {
@@ -1276,9 +1302,8 @@ document.addEventListener("DOMContentLoaded", () => {
           errorTimeout = null;
         }, 1000);
       } else if (errorCount >= ERROR_LIMIT) {
-        console.error("Reached playback error limit, retrying current station");
-        errorCount = 0;
-        debouncedTryAutoPlay();
+        console.error("Reached playback error limit");
+        resetStationInfo();
       }
     });
 
