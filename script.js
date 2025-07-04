@@ -990,7 +990,7 @@ document.addEventListener("DOMContentLoaded", () => {
               src: audio.src
             });
             document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-            if (attemptsLeft' > 1) {
+            if (attemptsLeft > 1) {
               if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
                 console.log("tryAutoPlay: Station changed during retry, canceling");
                 return;
@@ -1147,7 +1147,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
         userAddedStations[currentTab] = userAddedStations[currentTab]?.filter(s => s.name === stationName) || [];
-        if (!station.isFromSearch && ! deletedStations.includes(stationName)) {
+        if (!station.isFromSearch && !deletedStations.includes(stationName)) {
           if (!Array.isArray(deletedStations)) deletedStations = [];
           deletedStations.push(stationName);
           localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
