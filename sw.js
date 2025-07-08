@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v8579.1.95250999';
+const CACHE_NAME = 'radio-cache-v8579.1.95250799';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -131,7 +131,7 @@ self.addEventListener('message', event => {
     if (!isOnline && !networkCheckInterval) {
       console.log('SW: Starting network check on demand');
       checkNetworkStatus();
-      networkCheckInterval = setInterval(checkNetworkStatus, 1000);
+      networkCheckInterval = setInterval(checkNetworkStatus, 5000); // Збільшено інтервал до 5 секунд
     }
   }
 });
@@ -151,7 +151,7 @@ self.addEventListener('offline', () => {
     });
     if (!networkCheckInterval) {
       console.log('SW: Starting network check after offline event');
-      networkCheckInterval = setInterval(checkNetworkStatus, 1000);
+      networkCheckInterval = setInterval(checkNetworkStatus, 5000); // Збільшено інтервал до 5 секунд
     }
   }
   lastStatus = isOnline;
