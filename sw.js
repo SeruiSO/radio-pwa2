@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v8579.1.95250999';
+const CACHE_NAME = 'radio-cache-v17.1.20250617';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -85,4 +85,4 @@ setInterval(() => {
         });
       }
     });
-}, 2000); // Збільшено інтервал до 2 секунд
+}, 1000);
