@@ -47,7 +47,9 @@ h1 {
 }
 
 .theme-toggle,
-.share-button {
+.share-button,
+.export-button,
+.import-button {
   position: absolute;
   top: 10px;
   background: var(--container-bg);
@@ -68,11 +70,21 @@ h1 {
 }
 
 .share-button {
+  left: 60px;
+}
+
+.export-button {
+  right: 60px;
+}
+
+.import-button {
   right: 10px;
 }
 
 .theme-toggle:hover,
-.share-button:hover {
+.share-button:hover,
+.export-button:hover,
+.import-button:hover {
   background: var(--accent);
   color: #0A0A0A;
   transform: scale(1.1);
@@ -662,7 +674,9 @@ datalist {
   }
 
   .theme-toggle,
-  .share-button {
+  .share-button,
+  .export-button,
+  .import-button {
     top: 5px;
     padding: 4px;
     height: 35px;
@@ -674,6 +688,14 @@ datalist {
   }
 
   .share-button {
+    left: 45px;
+  }
+
+  .export-button {
+    right: 45px;
+  }
+
+  .import-button {
     right: 5px;
   }
 
