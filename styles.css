@@ -74,11 +74,11 @@ h1 {
 }
 
 .export-button {
-  right: 60px;
+  right: 10px;
 }
 
 .import-button {
-  right: 10px;
+  right: 60px;
 }
 
 .theme-toggle:hover,
@@ -88,6 +88,10 @@ h1 {
   background: var(--accent);
   color: #0A0A0A;
   transform: scale(1.1);
+}
+
+#importFileInput {
+  display: none;
 }
 
 #currentStationInfo {
@@ -332,8 +336,9 @@ h1 {
 .tabs-wrapper {
   overflow-x: auto;
   margin: 2px 0;
-  position: static;
-  z-index: 9;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
   background: transparent;
 }
 
@@ -688,15 +693,15 @@ datalist {
   }
 
   .share-button {
-    left: 45px;
+    left: 50px;
   }
 
   .export-button {
-    right: 45px;
+    right: 5px;
   }
 
   .import-button {
-    right: 5px;
+    right: 50px;
   }
 
   .tabs-wrapper {
@@ -704,7 +709,9 @@ datalist {
     margin: 2px 0;
     padding: 0 5px;
     background: transparent;
-    position: static;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
   }
 
   .tab-btn,
