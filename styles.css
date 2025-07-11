@@ -1,4 +1,4 @@
-/* Updated on June 23, 2025 */
+/* Updated on July 11, 2025 */
 :root {
   --body-bg: #0A0A0A;
   --container-bg: #121212;
@@ -96,7 +96,7 @@ h1 {
 
 #currentStationInfo {
   background: linear-gradient(45deg, var(--container-bg), var(--accent-gradient));
-  padding: 20px; /* Відновлено зі старого файлу */
+  padding: 20px;
   border-radius: 12px;
   margin: 5px 0;
   color: var(--text);
@@ -108,7 +108,7 @@ h1 {
   align-items: center;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 15;
   box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
   transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -121,7 +121,7 @@ h1 {
 .station-info-content {
   display: flex;
   align-items: center;
-  gap: 15px; /* Відновлено зі старого файлу */
+  gap: 15px;
   width: 100%;
 }
 
@@ -172,15 +172,15 @@ h1 {
   justify-content: center;
   margin-left: auto;
   order: 3;
-  width: 150px; /* Відновлено зі старого файлу */
-  height: 80px; /* Відновлено зі старого файлу */
+  width: 150px;
+  height: 80px;
   position: relative;
   overflow: hidden;
 }
 
 .wave-line {
   position: absolute;
-  height: 2px; /* Відновлено зі старого файлу */
+  height: 2px;
   background: var(--accent);
   animation: wavePulse 1.5s infinite;
   animation-play-state: paused;
@@ -188,7 +188,7 @@ h1 {
   transform-origin: left;
 }
 
-.wave-line:nth-child(1) { top: 10%; width: 20%; animation-delay: 0s; } /* Відновлено зі старого файлу */
+.wave-line:nth-child(1) { top: 10%; width: 20%; animation-delay: 0s; }
 .wave-line:nth-child(2) { top: 20%; width: 30%; animation-delay: 0.2s; }
 .wave-line:nth-child(3) { top: 30%; width: 40%; animation-delay: 0.4s; }
 .wave-line:nth-child(4) { top: 40%; width: 50%; animation-delay: 0.6s; }
@@ -221,6 +221,7 @@ h1 {
   flex-grow: 1;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: border-color 0.4s ease;
+  margin-top: 50px; /* Додано відступ для уникнення перекриття вкладками */
 }
 
 .station-list::-webkit-scrollbar {
@@ -335,11 +336,12 @@ h1 {
 
 .tabs-wrapper {
   overflow-x: auto;
-  margin: 2px 0;
+  margin: 5px 0;
   position: sticky;
-  bottom: 0;
-  z-index: 10;
-  background: transparent;
+  top: 120px; /* Розташовано нижче #currentStationInfo (висота ~100px + відступи) */
+  z-index: 12; /* Вище .controls-container, але нижче #currentStationInfo і модальних вікон */
+  background: var(--container-bg); /* Фон для уникнення прозорості */
+  padding: 5px 0;
 }
 
 .tabs-wrapper::-webkit-scrollbar {
@@ -651,6 +653,7 @@ datalist {
     padding: 6px;
     border-width: 1px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-top: 50px; /* Додано для медіа-запиту */
   }
 
   .station-item {
@@ -708,10 +711,10 @@ datalist {
     overflow-x: auto;
     margin: 2px 0;
     padding: 0 5px;
-    background: transparent;
+    background: var(--container-bg);
     position: sticky;
-    bottom: 0;
-    z-index: 10;
+    top: 120px; /* Залишено для мобільних пристроїв */
+    z-index: 12;
   }
 
   .tab-btn,
@@ -734,11 +737,11 @@ datalist {
   }
 
   #currentStationInfo {
-    padding: 12px; /* Відновлено зі старого файлу */
+    padding: 12px;
     min-height: 100px;
     max-height: 350px;
     align-items: center;
-    gap: 10px; /* Відновлено зі старого файлу */
+    gap: 10px;
   }
 
   .station-info-content {
@@ -764,12 +767,12 @@ datalist {
   }
 
   .wave-visualizer {
-    width: 120px; /* Відновлено зі старого файлу */
-    height: 65px; /* Відновлено зі старого файлу */
+    width: 120px;
+    height: 65px;
   }
 
   .wave-line {
-    height: 1px; /* Відновлено зі старого файлу */
+    height: 1px;
   }
 
   #searchInput {
@@ -837,5 +840,6 @@ datalist {
 
   .station-list {
     max-height: 450px;
+    margin-top: 50px; /* Додано для медіа-запиту */
   }
 }
