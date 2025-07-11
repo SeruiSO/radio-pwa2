@@ -69,6 +69,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePastSearches();
     populateSearchSuggestions();
     renderTabs();
+    loadStations().then(() => {
+      switchTab(currentTab); // Викликаємо switchTab після завершення loadStations
+    });
 
     shareButton.addEventListener("click", () => {
       const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
@@ -352,7 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("currentTab", currentTab);
         }
         currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
-        switchTab(currentTab);
+        updateStationList(); // Явно викликаємо updateStationList після оновлення stationLists
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error("Error loading stations:", error);
@@ -1132,7 +1135,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationNameElement = currentStationInfo.querySelector(".station-name");
       const stationGenreElement = currentStationInfo.querySelector(".station-genre");
       const stationCountryElement = currentStationInfo.querySelector(".station-country");
-      const stationIconElement = currentStationInfo.querySelector(".station-icon");
+      const stationIconElement = document.querySelector(".station-icon");
 
       if (stationNameElement) stationNameElement.textContent = station.dataset.name || "Unknown";
       if (stationGenreElement) stationGenreElement.textContent = `genre: ${station.dataset.genre || "Unknown"}`;
@@ -1160,6 +1163,7 @@ document.addEventListener("DOMContentLoaded", () => {
         isPlaying = false;
         localStorage.setItem("isPlaying", isPlaying);
         document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+        playPauseBtn.textContent = "▶";
       }
       playPauseBtn.textContent = intendedPlaying ? "⏸" : "▶";
     }
