@@ -221,7 +221,7 @@ h1 {
   flex-grow: 1;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: border-color 0.4s ease;
-  margin-top: 50px; /* Додано відступ для уникнення перекриття вкладками */
+  margin-top: 8px; /* Зменшено для мінімального відступу від вкладок */
 }
 
 .station-list::-webkit-scrollbar {
@@ -336,11 +336,9 @@ h1 {
 
 .tabs-wrapper {
   overflow-x: auto;
-  margin: 5px 0;
-  position: sticky;
-  top: 120px; /* Розташовано нижче #currentStationInfo (висота ~100px + відступи) */
-  z-index: 12; /* Вище .controls-container, але нижче #currentStationInfo і модальних вікон */
-  background: var(--container-bg); /* Фон для уникнення прозорості */
+  margin: 5px 0 8px 0; /* Додано margin-bottom для відступу від .station-list */
+  position: static; /* Змінено на static для статичного розташування */
+  background: var(--container-bg); /* Фон для узгодженості */
   padding: 5px 0;
 }
 
@@ -653,7 +651,7 @@ datalist {
     padding: 6px;
     border-width: 1px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    margin-top: 50px; /* Додано для медіа-запиту */
+    margin-top: 8px; /* Зменшено для мінімального відступу */
   }
 
   .station-item {
@@ -709,12 +707,10 @@ datalist {
 
   .tabs-wrapper {
     overflow-x: auto;
-    margin: 2px 0;
+    margin: 2px 0 8px 0; /* Додано margin-bottom для відступу */
     padding: 0 5px;
     background: var(--container-bg);
-    position: sticky;
-    top: 120px; /* Залишено для мобільних пристроїв */
-    z-index: 12;
+    position: static; /* Змінено на static */
   }
 
   .tab-btn,
@@ -741,6 +737,11 @@ datalist {
     min-height: 100px;
     max-height: 350px;
     align-items: center;
+    gap: 10px;
+  }
+
+  .station-info-content {
+    flex-direction: row;
     gap: 10px;
   }
 
@@ -840,6 +841,6 @@ datalist {
 
   .station-list {
     max-height: 450px;
-    margin-top: 50px; /* Додано для медіа-запиту */
+    margin-top: 8px; /* Зменшено для мінімального відступу */
   }
 }
