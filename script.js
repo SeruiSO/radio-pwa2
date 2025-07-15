@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function exportSettings() {
       const settings = {
-        selectedTheme: localStorage.getItem("selectedTheme") || "neon-pulse",
+        selectedTheme: localStorage.getItem("selectedTheme") || "cyber-dusk",
         customTabs: JSON.parse(localStorage.getItem("customTabs")) || [],
         userAddedStations: JSON.parse(localStorage.getItem("userAddedStations")) || {},
         favoriteStations: JSON.parse(localStorage.getItem("favoriteStations")) || [],
@@ -158,9 +158,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
           const validThemes = [
-            "neon-pulse", "lime-surge", "flamingo-flash", "violet-vortex",
-            "aqua-glow", "cosmic-indigo", "mystic-jade", "aurora-haze",
-            "starlit-amethyst", "lunar-frost"
+            "cyber-dusk", "neon-vibe", "solar-flare", "emerald-glow",
+            "midnight-aurora", "retro-wave", "arctic-fusion", "cosmic-dream",
+            "golden-haze", "velvet-twilight"
           ];
           if (settings.selectedTheme && validThemes.includes(settings.selectedTheme)) {
             localStorage.setItem("selectedTheme", settings.selectedTheme);
@@ -712,87 +712,87 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const themes = {
-      "neon-pulse": {
-        bodyBg: "#0A0A0A",
-        containerBg: "#121212",
-        accent: "#00F0FF",
-        text: "#F0F0F0",
-        accentGradient: "#003C4B"
+      "cyber-dusk": {
+        bodyBg: "#1C2526",
+        containerBg: "#2E3B3E",
+        accent: "#00D4FF",
+        text: "#E0E7E9",
+        accentGradient: "linear-gradient(45deg, #0077B6, #00D4FF)"
       },
-      "lime-surge": {
-        bodyBg: "#0A0A0A",
-        containerBg: "#121212",
-        accent: "#B2FF59",
-        text: "#E8F5E9",
-        accentGradient: "#2E4B2F"
+      "neon-vibe": {
+        bodyBg: "#0F0F1A",
+        containerBg: "#1A1A2E",
+        accent: "#FF2E63",
+        text: "#F5F6F5",
+        accentGradient: "linear-gradient(45deg, #D0004D, #FF2E63)"
       },
-      "flamingo-flash": {
-        bodyBg: "#0A0A0A",
-        containerBg: "#121212",
-        accent: "#FF4081",
-        text: "#FCE4EC",
-        accentGradient: "#4B1A2E"
+      "solar-flare": {
+        bodyBg: "#2B1E1E",
+        containerBg: "#3C2F2F",
+        accent: "#FF9F1C",
+        text: "#FFF1E9",
+        accentGradient: "linear-gradient(45deg, #D76F00, #FF9F1C)"
       },
-      "violet-vortex": {
-        bodyBg: "#121212",
-        containerBg: "#1A1A1A",
-        accent: "#7C4DFF",
-        text: "#EDE7F6",
-        accentGradient: "#2E1A47"
+      "emerald-glow": {
+        bodyBg: "#1A2E2B",
+        containerBg: "#2A3F3C",
+        accent: "#2EC4B6",
+        text: "#E6F0EA",
+        accentGradient: "linear-gradient(45deg, #1B998B, #2EC4B6)"
       },
-      "aqua-glow": {
-        bodyBg: "#0A0A0A",
-        containerBg: "#121212",
-        accent: "#26C6DA",
-        text: "#B2EBF2",
-        accentGradient: "#1A3C4B"
+      "midnight-aurora": {
+        bodyBg: "#12121C",
+        containerBg: "#1E1E2D",
+        accent: "#8A4AF3",
+        text: "#E5E0F8",
+        accentGradient: "linear-gradient(45deg, #5A2E99, #8A4AF3)"
       },
-      "cosmic-indigo": {
-        bodyBg: "#121212",
-        containerBg: "#1A1A1A",
-        accent: "#3F51B5",
-        text: "#BBDEFB",
-        accentGradient: "#1A2A5A"
+      "retro-wave": {
+        bodyBg: "#1A0B2E",
+        containerBg: "#2B1A4D",
+        accent: "#FF69B4",
+        text: "#F8E1F4",
+        accentGradient: "linear-gradient(45deg, #C71585, #FF69B4)"
       },
-      "mystic-jade": {
-        bodyBg: "#0A0A0A",
-        containerBg: "#121212",
-        accent: "#26A69A",
-        text: "#B2DFDB",
-        accentGradient: "#1A3C4B"
+      "arctic-fusion": {
+        bodyBg: "#E6ECEF",
+        containerBg: "#F4F7FA",
+        accent: "#00B4D8",
+        text: "#2B2D42",
+        accentGradient: "linear-gradient(45deg, #0077B6, #00B4D8)"
       },
-      "aurora-haze": {
-        bodyBg: "#121212",
-        containerBg: "#1A1A1A",
-        accent: "#64FFDA",
-        text: "#E0F7FA",
-        accentGradient: "#1A4B4B"
+      "cosmic-dream": {
+        bodyBg: "#0B132B",
+        containerBg: "#1C2541",
+        accent: "#5BC0EB",
+        text: "#D9E1E8",
+        accentGradient: "linear-gradient(45deg, #3A86FF, #5BC0EB)"
       },
-      "starlit-amethyst": {
-        bodyBg: "#0A0A0A",
-        containerBg: "#121212",
-        accent: "#B388FF",
-        text: "#E1BEE7",
-        accentGradient: "#2E1A47"
+      "golden-haze": {
+        bodyBg: "#2C231E",
+        containerBg: "#3F352D",
+        accent: "#FFD60A",
+        text: "#FFF3D9",
+        accentGradient: "linear-gradient(45deg, #CC9B00, #FFD60A)"
       },
-      "lunar-frost": {
-        bodyBg: "#F5F7FA",
-        containerBg: "#FFFFFF",
-        accent: "#40C4FF",
-        text: "#212121",
-        accentGradient: "#B3E5FC"
+      "velvet-twilight": {
+        bodyBg: "#1E1B2D",
+        containerBg: "#2D2A4A",
+        accent: "#9B59B6",
+        text: "#E8DAF0",
+        accentGradient: "linear-gradient(45deg, #663399, #9B59B6)"
       }
     };
-    let currentTheme = localStorage.getItem("selectedTheme") || "neon-pulse";
+    let currentTheme = localStorage.getItem("selectedTheme") || "cyber-dusk";
     if (!themes[currentTheme]) {
-      currentTheme = "neon-pulse";
+      currentTheme = "cyber-dusk";
       localStorage.setItem("selectedTheme", currentTheme);
     }
 
     function applyTheme(theme) {
       if (!themes[theme]) {
-        console.warn(`Theme ${theme} not found, using 'neon-pulse'`);
-        theme = "neon-pulse";
+        console.warn(`Theme ${theme} not found, using 'cyber-dusk'`);
+        theme = "cyber-dusk";
         localStorage.setItem("selectedTheme", theme);
       }
       const root = document.documentElement;
@@ -812,9 +812,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function toggleTheme() {
       const themesOrder = [
-        "neon-pulse", "lime-surge", "flamingo-flash", "violet-vortex",
-        "aqua-glow", "cosmic-indigo", "mystic-jade", "aurora-haze",
-        "starlit-amethyst", "lunar-frost"
+        "cyber-dusk", "neon-vibe", "solar-flare", "emerald-glow",
+        "midnight-aurora", "retro-wave", "arctic-fusion", "cosmic-dream",
+        "golden-haze", "velvet-twilight"
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
       applyTheme(nextTheme);
