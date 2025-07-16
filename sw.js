@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v293.1.20250984';
+const CACHE_NAME = 'radio-cache-v238.1.20250984';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -9,7 +9,8 @@ self.addEventListener('install', (event) => {
         '/styles.css',
         '/script.js',
         '/stations.json',
-        '/manifest.json'
+        '/manifest.json',
+        '/ping.txt'
       ]).then(() => {
         caches.keys().then((cacheNames) => {
           return Promise.all(cacheNames.map((cacheName) => {
@@ -85,4 +86,4 @@ setInterval(() => {
         });
       }
     });
-}, 2000);
+}, 2000); // Збільшено інтервал до 2 секунд
