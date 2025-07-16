@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v291.1.20250984';
+const CACHE_NAME = 'radio-cache-v293.1.20250984';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

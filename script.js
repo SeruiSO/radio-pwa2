@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadStations();
     applyTheme(localStorage.getItem('selectedTheme') || 'deep-obsidian');
     updateMarquee();
+    switchTab(currentTab); // Ініціалізація видимості searchInput
 
     // Обробка вкладок
     tabsButton.addEventListener('click', () => {
@@ -143,6 +144,29 @@ document.addEventListener('DOMContentLoaded', () => {
     prevButton.addEventListener('click', prevStation);
     nextButton.addEventListener('click', nextStation);
     playButton.addEventListener('click', togglePlayPause);
+
+    // Обробка списку станцій
+    stationList.addEventListener('click', (e) => {
+      const item = e.target.closest('.station-item');
+      if (item && !item.classList.contains('empty')) {
+        const addBtn = e.target.closest('.add-btn');
+        const favoriteBtn = e.target.closest('.favorite-btn');
+        const deleteBtn = e.target.closest('.delete-btn');
+        if (addBtn) {
+          e.stopPropagation();
+          showTabModal(item);
+        } else if (favoriteBtn) {
+          e.stopPropagation();
+          toggleFavorite(item.dataset.name);
+        } else if (deleteBtn) {
+          e.stopPropagation();
+          deleteStation(item.dataset.name);
+        } else {
+          currentIndex = Array.from(stationItems).indexOf(item);
+          changeStation(currentIndex);
+        }
+      }
+    });
 
     // Обробка пошуку
     searchButton.addEventListener('click', () => {
@@ -560,7 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
       params.append('order', 'clickcount');
       params.append('reverse', 'true');
       params.append('limit', '2000');
-      const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
+      const url = `https://de1.api.radio-browser.info/json/stations arm/search?${params.toString()}`;
       console.log('API request:', url);
       const response = await fetch(url, { signal: abortController.signal });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -606,18 +630,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stationItems.length && currentIndex < stationItems.length) {
       changeStation(currentIndex);
     }
-    stationList.onclick = e => {
-      const item = e.target.closest('.station-item');
-      if (item && !item.classList.contains('empty')) {
-        currentIndex = Array.from(stationItems).indexOf(item);
-        changeStation(currentIndex);
-      }
-      const addBtn = e.target.closest('.add-btn');
-      if (addBtn) {
-        e.stopPropagation();
-        showTabModal(item);
-      }
-    };
   }
 
   function shortenGenre(tags) {
@@ -1184,10 +1196,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
     const maxIndex = tab === 'best' ? favoriteStations.length - 1 : tab === 'search' ? 0 : stationLists[tab]?.length - 1 || 0;
     currentIndex = savedIndex <= maxIndex && savedIndex >= 0 ? savedIndex : 0;
-    searchInput.style.display = tab === 'search' ? 'flex' : 'none';
+    searchInput.classList.toggle('show', tab === 'search');
     searchQuery.value = '';
     searchCountry.value = '';
     searchGenre.value = '';
+    clearSearch.style.display = 'none';
     if (tab === 'search') populateSearchSuggestions();
     updateStationList();
     renderTabs();
@@ -1205,45 +1218,110 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function toggleTheme() {
-    const themes = ['deep-obsidian', 'void-nexus', 'shadow-pulse', 'dark-abyss', 'cosmic-dream', 'midnight-aurora', 'emerald-glow', 'retro-wave', 'arctic-fusion', 'golden-haze'];
-    const currentTheme = document.body.dataset.theme || 'deep-obsidian';
-    const nextTheme = themes[(themes.indexOf(currentTheme) + 1) % themes.length];
+    const themes = [
+      'deep-obsidian', 'void-nexus', 'shadow-pulse', 'dark-abyss', 'cosmic-dream',
+      'midnight-aurora', 'emerald-glow', 'retro-wave', 'arctic-fusion', 'golden-haze'
+    ];
+    const currentTheme = localStorage.getItem('selectedTheme') || 'deep-obsidian';
+    const currentIndex = themes.indexOf(currentTheme);
+    const nextTheme = themes[(currentIndex + 1) % themes.length];
     applyTheme(nextTheme);
     menuDropdown.classList.remove('show');
   }
 
   function applyTheme(theme) {
-    const themes = {
-      'deep-obsidian': { bodyBg: 'linear-gradient(180deg, #1A1A1A, #000000)', containerBg: '#1A1A1A', accent: '#00A3CC', text: '#F0F0F0', accentGradient: 'linear-gradient(45deg, #006D8F, #00A3CC)', shadow: 'rgba(0, 163, 204, 0.4)' },
-      'void-nexus': { bodyBg: 'linear-gradient(180deg, #1A0D0D, #000000)', containerBg: '#0D0D0D', accent: '#FF4500', text: '#F5F6F5', accentGradient: 'linear-gradient(45deg, #B71C1C, #FF4500)', shadow: 'rgba(255, 69, 0, 0.4)' },
-      'shadow-pulse': { bodyBg: 'linear-gradient(180deg, #102020, #000000)', containerBg: '#102020', accent: '#00FF7F', text: '#F0F0F0', accentGradient: 'linear-gradient(45deg, #00B248, #00FF7F)', shadow: 'rgba(0, 255, 127, 0.4)' },
-      'dark-abyss': { bodyBg: 'linear-gradient(180deg, #1C2526, #000000)', containerBg: '#1C2526', accent: '#8B00FF', text: '#F0F0F0', accentGradient: 'linear-gradient(45deg, #6A1B9A, #8B00FF)', shadow: 'rgba(139, 0, 255, 0.4)' },
-      'cosmic-dream': { bodyBg: 'linear-gradient(180deg, #1F252A, #000000)', containerBg: '#1F252A', accent: '#4DA8DA', text: '#F0F0F0', accentGradient: 'linear-gradient(45deg, #3A86FF, #4DA8DA)', shadow: 'rgba(77, 168, 218, 0.4)' },
-      'midnight-aurora': { bodyBg: 'linear-gradient(180deg, #0F1620, #000000)', containerBg: '#0F1620', accent: '#9B59B6', text: '#F0F0F0', accentGradient: 'linear-gradient(45deg, #5A2E99, #9B59B6)', shadow: 'rgba(155, 89, 182, 0.4)' },
-      'emerald-glow': { bodyBg: 'linear-gradient(180deg, #1A2421, #000000)', containerBg: '#1A2421', accent: '#1ABC9C', text: '#F0F0F0', accentGradient: 'linear-gradient(45deg, #1B998B, #1ABC9C)', shadow: 'rgba(26, 188, 156, 0.4)' },
-      'retro-wave': { bodyBg: 'linear-gradient(180deg, #1C1124, #000000)', containerBg: '#1C1124', accent: '#FF1493', text: '#F0F0F0', accentGradient: 'linear-gradient(45deg, #C71585, #FF1493)', shadow: 'rgba(255, 20, 147, 0.4)' },
-      'arctic-fusion': { bodyBg: 'linear-gradient(180deg, #25292D, #000000)', containerBg: '#25292D', accent: '#00B7EB', text: '#F0F0F0', accentGradient: 'linear-gradient(45deg, #0077B6, #00B7EB)', shadow: 'rgba(0, 183, 235, 0.4)' },
-      'golden-haze': { bodyBg: 'linear-gradient(180deg, #2A2117, #000000)', containerBg: '#2A2117', accent: '#FFC107', text: '#F0F0F0', accentGradient: 'linear-gradient(45deg, #CC9B00, #FFC107)', shadow: 'rgba(255, 193, 7, 0.4)' }
+    const themeStyles = {
+      'deep-obsidian': {
+        '--body-bg': 'linear-gradient(180deg, #1A1A1A, #000000)',
+        '--container-bg': '#1A1A1A',
+        '--accent': '#00A3CC',
+        '--text': '#F0F0F0',
+        '--accent-gradient': 'linear-gradient(45deg, #006D8F, #00A3CC)',
+        '--shadow': 'rgba(0, 163, 204, 0.4)'
+      },
+      'void-nexus': {
+        '--body-bg': 'linear-gradient(180deg, #0D0D0D, #000000)',
+        '--container-bg': '#0D0D0D',
+        '--accent': '#FF2E63',
+        '--text': '#E0E0E0',
+        '--accent-gradient': 'linear-gradient(45deg, #C724B1, #FF2E63)',
+        '--shadow': 'rgba(255, 46, 99, 0.4)'
+      },
+      'shadow-pulse': {
+        '--body-bg': 'linear-gradient(180deg, #1C2526, #000000)',
+        '--container-bg': '#1C2526',
+        '--accent': '#4B0082',
+        '--text': '#D3D3D3',
+        '--accent-gradient': 'linear-gradient(45deg, #2F004F, #4B0082)',
+        '--shadow': 'rgba(75, 0, 130, 0.4)'
+      },
+      'dark-abyss': {
+        '--body-bg': 'linear-gradient(180deg, #121212, #000000)',
+        '--container-bg': '#121212',
+        '--accent': '#008080',
+        '--text': '#E8E8E8',
+        '--accent-gradient': 'linear-gradient(45deg, #005F5F, #008080)',
+        '--shadow': 'rgba(0, 128, 128, 0.4)'
+      },
+      'cosmic-dream': {
+        '--body-bg': 'linear-gradient(180deg, #1B263B, #000000)',
+        '--container-bg': '#1B263B',
+        '--accent': '#FF6347',
+        '--text': '#F5F5F5',
+        '--accent-gradient': 'linear-gradient(45deg, #C73E1D, #FF6347)',
+        '--shadow': 'rgba(255, 99, 71, 0.4)'
+      },
+      'midnight-aurora': {
+        '--body-bg': 'linear-gradient(180deg, #0B1622, #000000)',
+        '--container-bg': '#0B1622',
+        '--accent': '#00CED1',
+        '--text': '#E6E6E6',
+        '--accent-gradient': 'linear-gradient(45deg, #008B8B, #00CED1)',
+        '--shadow': 'rgba(0, 206, 209, 0.4)'
+      },
+      'emerald-glow': {
+        '--body-bg': 'linear-gradient(180deg, #1A3C34, #000000)',
+        '--container-bg': '#1A3C34',
+        '--accent': '#32CD32',
+        '--text': '#F0FFF0',
+        '--accent-gradient': 'linear-gradient(45deg, #228B22, #32CD32)',
+        '--shadow': 'rgba(50, 205, 50, 0.4)'
+      },
+      'retro-wave': {
+        '--body-bg': 'linear-gradient(180deg, #2A213A, #000000)',
+        '--container-bg': '#2A213A',
+        '--accent': '#FF69B4',
+        '--text': '#F8F8FF',
+        '--accent-gradient': 'linear-gradient(45deg, #C71585, #FF69B4)',
+        '--shadow': 'rgba(255, 105, 180, 0.4)'
+      },
+      'arctic-fusion': {
+        '--body-bg': 'linear-gradient(180deg, #E6F0FA, #B0C4DE)',
+        '--container-bg': '#E6F0FA',
+        '--accent': '#4682B4',
+        '--text': '#000000',
+        '--accent-gradient': 'linear-gradient(45deg, #2F4F4F, #4682B4)',
+        '--shadow': 'rgba(70, 130, 180, 0.4)'
+      },
+      'golden-haze': {
+        '--body-bg': 'linear-gradient(180deg, #3C2F2F, #000000)',
+        '--container-bg': '#3C2F2F',
+        '--accent': '#FFD700',
+        '--text': '#FFF8DC',
+        '--accent-gradient': 'linear-gradient(45deg, #DAA520, #FFD700)',
+        '--shadow': 'rgba(255, 215, 0, 0.4)'
+      }
     };
-    if (!themes[theme]) {
-      theme = 'deep-obsidian';
-      localStorage.setItem('selectedTheme', theme);
-    }
-    document.body.dataset.theme = theme;
-    const root = document.documentElement;
-    root.style.setProperty('--body-bg', themes[theme].bodyBg);
-    root.style.setProperty('--container-bg', themes[theme].containerBg);
-    root.style.setProperty('--accent', themes[theme].accent);
-    root.style.setProperty('--text', themes[theme].text);
-    root.style.setProperty('--accent-gradient', themes[theme].accentGradient);
-    root.style.setProperty('--shadow', themes[theme].shadow);
-    localStorage.setItem('selectedTheme', theme);
-    const themeColorMeta = document.querySelector('meta[name="theme-color"]') || document.createElement('meta');
-    themeColorMeta.name = 'theme-color';
-    themeColorMeta.content = themes[theme].accent;
-    document.head.appendChild(themeColorMeta);
-  }
 
-  // Обробка зміни розміру вікна для бегучої строки
-  window.addEventListener('resize', updateMarquee);
+    if (themeStyles[theme]) {
+      Object.entries(themeStyles[theme]).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(key, value);
+      });
+      localStorage.setItem('selectedTheme', theme);
+      console.log(`Theme applied: ${theme}`);
+    } else {
+      console.warn(`Theme ${theme} not found, applying default`);
+      applyTheme('deep-obsidian');
+    }
+  }
 });
