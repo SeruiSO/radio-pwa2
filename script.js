@@ -22,7 +22,7 @@ customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab ===
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("audioPlayer");
   const stationList = document.getElementById("stationList");
-  const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
+  const playPauseBtn = document.querySelector(".controls-container .control-btn:nth-child(2)");
   const currentStationInfo = document.getElementById("currentStationInfo");
   const themeToggle = document.querySelector(".theme-toggle");
   const shareButton = document.querySelector(".share-button");
@@ -36,8 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBtn = document.querySelector(".search-btn");
   const pastSearchesList = document.getElementById("pastSearches");
   const tabsContainer = document.getElementById("tabs");
+  const menuBtn = document.querySelector(".menu-btn");
+  const sidebar = document.querySelector(".sidebar");
+  const closeSidebar = document.querySelector(".close-sidebar");
 
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer || !menuBtn || !sidebar || !closeSidebar) {
     console.error("One of required DOM elements not found", {
       audio: !!audio,
       stationList: !!stationList,
@@ -54,11 +57,38 @@ document.addEventListener("DOMContentLoaded", () => {
       searchGenre: !!searchGenre,
       searchBtn: !!searchBtn,
       pastSearchesList: !!pastSearchesList,
-      tabsContainer: !!tabsContainer
+      tabsContainer: !!tabsContainer,
+      menuBtn: !!menuBtn,
+      sidebar: !!sidebar,
+      closeSidebar: !!closeSidebar
     });
     setTimeout(initializeApp, 100);
     return;
   }
+
+  // Sidebar toggle
+  menuBtn.addEventListener("click", () => {
+    sidebar.classList.add("active");
+  });
+
+  closeSidebar.addEventListener("click", () => {
+    sidebar.classList.remove("active");
+  });
+
+  // Swipe gesture for sidebar
+  let touchStartX = 0;
+  let touchEndX = 0;
+  document.addEventListener("touchstart", e => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+  document.addEventListener("touchend", e => {
+    touchEndX = e.changedTouches[0].screenX;
+    if (touchStartX - touchEndX > 50) {
+      sidebar.classList.remove("active");
+    } else if (touchEndX - touchStartX > 50 && touchStartX < 50) {
+      sidebar.classList.add("active");
+    }
+  });
 
   initializeApp();
 
@@ -71,10 +101,10 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTabs();
 
     shareButton.addEventListener("click", () => {
-      const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
+      const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio Music";
       const shareData = {
-        title: "Radio S O",
-        text: `Listening to ${stationName} on Radio S O! Join my favorite radio stations!`,
+        title: "Radio Music",
+        text: `Listening to ${stationName} on Radio Music! Join my favorite radio stations!`,
         url: window.location.href
       };
       if (navigator.share) {
@@ -89,9 +119,9 @@ document.addEventListener("DOMContentLoaded", () => {
     importButton.addEventListener("click", () => importFileInput.click());
     importFileInput.addEventListener("change", importSettings);
 
-    document.querySelector(".controls .control-btn:nth-child(1)").addEventListener("click", prevStation);
-    document.querySelector(".controls .control-btn:nth-child(2)").addEventListener("click", togglePlayPause);
-    document.querySelector(".controls .control-btn:nth-child(3)").addEventListener("click", nextStation);
+    document.querySelector(".controls-container .control-btn:nth-child(1)").addEventListener("click", prevStation);
+    document.querySelector(".controls-container .control-btn:nth-child(2)").addEventListener("click", togglePlayPause);
+    document.querySelector(".controls-container .control-btn:nth-child(3)").addEventListener("click", nextStation);
 
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
@@ -449,7 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
-        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '">` : "🎵 ";
+        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" onerror="this.outerHTML='🎵 '">` : "🎵 ";
         item.innerHTML = `${iconHtml}<span class="station-name">${station.name}</span><button class="add-btn">ADD</button>`;
         fragment.appendChild(item);
       });
@@ -714,7 +744,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const themes = {
       "shadow-pulse": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#00E676",
         text: "#E6E6E6",
         accentGradient: "linear-gradient(45deg, #00B248, #00E676)",
@@ -722,7 +752,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "dark-abyss": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#AA00FF",
         text: "#E5E0F8",
         accentGradient: "linear-gradient(45deg, #6A1B9A, #AA00FF)",
@@ -730,7 +760,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "emerald-glow": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#2EC4B6",
         text: "#E6F0EA",
         accentGradient: "linear-gradient(45deg, #1B998B, #2EC4B6)",
@@ -738,7 +768,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "retro-wave": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#FF69B4",
         text: "#F8E1F4",
         accentGradient: "linear-gradient(45deg, #C71585, #FF69B4)",
@@ -746,7 +776,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "neon-pulse": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#00F0FF",
         text: "#F0F0F0",
         accentGradient: "linear-gradient(45deg, #0077B6, #00F0FF)",
@@ -754,7 +784,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "lime-surge": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#B2FF59",
         text: "#E8F5E9",
         accentGradient: "linear-gradient(45deg, #00B248, #B2FF59)",
@@ -762,7 +792,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "flamingo-flash": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#FF4081",
         text: "#FCE4EC",
         accentGradient: "linear-gradient(45deg, #C71585, #FF4081)",
@@ -770,7 +800,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "aqua-glow": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#26C6DA",
         text: "#B2EBF2",
         accentGradient: "linear-gradient(45deg, #0077B6, #26C6DA)",
@@ -778,7 +808,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "aurora-haze": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#64FFDA",
         text: "#E0F7FA",
         accentGradient: "linear-gradient(45deg, #1B998B, #64FFDA)",
@@ -786,7 +816,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "starlit-amethyst": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#B388FF",
         text: "#E1BEE7",
         accentGradient: "linear-gradient(45deg, #6A1B9A, #B388FF)",
@@ -794,9 +824,9 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       "lunar-frost": {
         bodyBg: "#000000",
-        containerBg: "#000000",
+        containerBg: "rgba(0, 0, 0, 0.9)",
         accent: "#40C4FF",
-        text: "#212121",
+        text: "#B0BEC5",
         accentGradient: "linear-gradient(45deg, #0077B6, #40C4FF)",
         shadow: "rgba(64, 196, 255, 0.3)"
       }
@@ -1069,7 +1099,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.genre = shortenGenre(station.genre);
         item.dataset.country = station.country;
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
-        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '; console.warn('Error loading favicon:', '${item.dataset.favicon}');">` : "🎵 ";
+        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" onerror="this.outerHTML='🎵 '; console.warn('Error loading favicon:', '${item.dataset.favicon}');">` : "🎵 ";
         const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
           ? `<button class="delete-btn">🗑</button>`
           : "";
@@ -1224,7 +1254,7 @@ document.addEventListener("DOMContentLoaded", () => {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: item.dataset.name || "Unknown Station",
           artist: `${item.dataset.genre || ""} | ${item.dataset.country || ""}`,
-          album: "Radio Music S O",
+          album: "Radio Music",
           artwork: item.dataset.favicon && isValidUrl(item.dataset.favicon) ? [
             { src: item.dataset.favicon, sizes: "96x96", type: "image/png" },
             { src: item.dataset.favicon, sizes: "128x128", type: "image/png" },

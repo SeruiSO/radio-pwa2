@@ -42,45 +42,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#00D4FF">
-  <title>Radio S O</title>
+  <meta name="theme-color" content="#00E676">
+  <title>Radio Music</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="dynamic-bg"></div>
   <div id="container" class="container">
-    <h1>🎧 Radio Music</h1>
-    <div class="current-station">
-      <div id="currentStationInfo">
-        <div class="station-icon">🎵</div>
-        <div class="station-text">
-          <div class="station-name">Обирайте станцію</div>
-          <div class="station-genre">жанр: -</div>
-          <div class="station-country">країна: -</div>
-        </div>
-        <div class="wave-visualizer">
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-        </div>
+    <header>
+      <button class="menu-btn">☰</button>
+      <h1>🎧 Radio Music</h1>
+    </header>
+    <div class="sidebar" id="sidebar">
+      <button class="close-sidebar">✕</button>
+      <div class="sidebar-content">
+        <button class="theme-toggle">🌙 Змінити тему</button>
+        <button class="share-button">📢 Поділитися</button>
+        <button class="export-button">📤 Експорт</button>
+        <button class="import-button">📥 Імпорт</button>
+        <input type="file" id="importFileInput" style="display: none;" accept=".json">
       </div>
     </div>
-    <div id="searchInput" style="display: none;">
-      <input id="searchQuery" list="pastSearches" placeholder="Назва станції">
-      <datalist id="pastSearches"></datalist>
-      <input id="searchCountry" list="suggestedCountries" placeholder="Країна">
-      <datalist id="suggestedCountries"></datalist>
-      <input id="searchGenre" list="suggestedGenres" placeholder="Жанр">
-      <datalist id="suggestedGenres"></datalist>
-      <button class="search-btn">🔍</button>
+    <div class="main-content">
+      <div class="current-station">
+        <div id="currentStationInfo">
+          <div class="station-icon">🎵</div>
+          <div class="station-text">
+            <div class="station-name">Обирайте станцію</div>
+            <div class="station-genre">жанр: -</div>
+            <div class="station-country">країна: -</div>
+          </div>
+          <div class="wave-visualizer">
+            <div class="wave-line"></div>
+            <div class="wave-line"></div>
+            <div class="wave-line"></div>
+            <div class="wave-line"></div>
+            <div class="wave-line"></div>
+          </div>
+        </div>
+      </div>
+      <div id="searchInput" style="display: none;">
+        <input id="searchQuery" list="pastSearches" placeholder="Назва станції">
+        <datalist id="pastSearches"></datalist>
+        <input id="searchCountry" list="suggestedCountries" placeholder="Країна">
+        <datalist id="suggestedCountries"></datalist>
+        <input id="searchGenre" list="suggestedGenres" placeholder="Жанр">
+        <datalist id="suggestedGenres"></datalist>
+        <button class="search-btn">🔍 Пошук</button>
+      </div>
+      <div id="stationList" class="station-list"></div>
     </div>
-    <div id="stationList" class="station-list"></div>
-    <div class="bottom-controls">
+    <div class="bottom-bar">
       <div class="tabs-wrapper">
         <div class="tabs" id="tabs">
           <button class="tab-btn" data-tab="best">Best</button>
@@ -92,19 +104,10 @@
           <button class="add-tab-btn">+</button>
         </div>
       </div>
-      <div class="controls-container">
-        <div class="controls">
-          <button class="control-btn">⏮</button>
-          <button class="control-btn">▶</button>
-          <button class="control-btn">⏭</button>
-        </div>
-      </div>
-      <div class="action-buttons">
-        <button class="theme-toggle">🌙</button>
-        <button class="share-button">📢</button>
-        <button class="export-button">📤</button>
-        <button class="import-button">📥</button>
-        <input type="file" id="importFileInput" style="display: none;" accept=".json">
+      <div class="controls-container" id="controls">
+        <button class="control-btn">⏮</button>
+        <button class="control-btn">▶</button>
+        <button class="control-btn">⏭</button>
       </div>
     </div>
     <div class="new-tab-modal" style="display: none;">
