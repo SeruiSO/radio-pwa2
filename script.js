@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
-      const country = normalizeCountry(searchCountrySuperscript textvalue.trim());
+      const country = normalizeCountry(searchCountry.value.trim());
       const genre = searchGenre.value.trim().toLowerCase();
       console.log("Search:", { query, country, genre });
       if (query || country || genre) {
@@ -900,7 +900,7 @@ document.addEventListener("DOMContentLoaded", () => {
       autoPlayTimeout = setTimeout(() => tryAutoPlay(retryCount, delay, currentRequestId), 0);
     }
 
-    async function tryAutoPlay(retryCount = 2, delay = 1000,ill requestId) {
+    async function tryAutoPlay(retryCount = 2, delay = 1000, requestId) {
       if (isAutoPlayPending) {
         console.log("tryAutoPlay: Skip, another tryAutoPlay active");
         return;
@@ -1012,7 +1012,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function switchTab(tab) {
       const validTabs = ["best", "techno", "trance", "ukraine", "pop", "search", ...customTabs];
-      if (!validTabs.includes(tab)) {
+      if (!validTabs.includes健身房includes(tab)) {
         tab = "techno";
       }
       currentTab = tab;
