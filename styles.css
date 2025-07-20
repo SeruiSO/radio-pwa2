@@ -3,7 +3,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #00E676;
-  --text: #E6E6E6;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #00B248, #00E676);
   --shadow: rgba(0, 230, 118, 0.3);
   --font-family: 'Inter', sans-serif;
@@ -13,7 +13,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #00E676;
-  --text: #E6E6E6;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #00B248, #00E676);
   --shadow: rgba(0, 230, 118, 0.3);
 }
@@ -22,7 +22,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #AA00FF;
-  --text: #E5E0F8;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #6A1B9A, #AA00FF);
   --shadow: rgba(170, 0, 255, 0.3);
 }
@@ -31,7 +31,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #2EC4B6;
-  --text: #E6F0EA;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #1B998B, #2EC4B6);
   --shadow: rgba(46, 196, 182, 0.3);
 }
@@ -40,7 +40,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #FF69B4;
-  --text: #F8E1F4;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #C71585, #FF69B4);
   --shadow: rgba(255, 105, 180, 0.3);
 }
@@ -49,7 +49,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #00F0FF;
-  --text: #F0F0F0;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #0077B6, #00F0FF);
   --shadow: rgba(0, 240, 255, 0.3);
 }
@@ -58,7 +58,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #B2FF59;
-  --text: #E8F5E9;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #00B248, #B2FF59);
   --shadow: rgba(178, 255, 89, 0.3);
 }
@@ -67,7 +67,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #FF4081;
-  --text: #FCE4EC;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #C71585, #FF4081);
   --shadow: rgba(255, 64, 129, 0.3);
 }
@@ -76,7 +76,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #26C6DA;
-  --text: #B2EBF2;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #0077B6, #26C6DA);
   --shadow: rgba(38, 198, 218, 0.3);
 }
@@ -85,7 +85,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #64FFDA;
-  --text: #E0F7FA;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #1B998B, #64FFDA);
   --shadow: rgba(100, 255, 218, 0.3);
 }
@@ -94,7 +94,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #B388FF;
-  --text: #E1BEE7;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #6A1B9A, #B388FF);
   --shadow: rgba(179, 136, 255, 0.3);
 }
@@ -103,7 +103,7 @@
   --body-bg: #000000;
   --container-bg: #000000;
   --accent: #40C4FF;
-  --text: #212121;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #0077B6, #40C4FF);
   --shadow: rgba(64, 196, 255, 0.3);
 }
@@ -334,7 +334,7 @@ h1 {
 
 .station-list::-webkit-scrollbar-thumb {
   background: var(--accent);
-  border-radius: 12px;
+  border-radius: 2px;
 }
 
 .station-item {
@@ -358,7 +358,7 @@ h1 {
   object-fit: contain;
 }
 
-.station-item .eful>station-name {
+.station-item .station-name {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -580,9 +580,9 @@ h1 {
 }
 
 .control-btn {
-  width: 90px;
-  height: 90px;
-  font-size: 36px;
+  width: 80px;
+  height: 80px;
+  font-size: 32px;
   background: var(--container-bg);
   color: var(--text);
   border: 1px solid var(--accent);
@@ -741,9 +741,9 @@ datalist {
   }
 
   .control-btn {
-    width: 80px;
-    height: 80px;
-    font-size: 32px;
+    width: 70px;
+    height: 70px;
+    font-size: 28px;
     border: 1px solid var(--accent);
   }
 
@@ -812,6 +812,10 @@ datalist {
   .add-tab-btn {
     width: 36px;
     font-size: 16px;
+  }
+
+  .tabs {
+    gap: 4px;
   }
 
   #currentStationInfo {
