@@ -1,50 +1,111 @@
 /* Updated on August 07, 2025 */
 :root {
-  --body-bg: #121212;
-  --container-bg: #1c1c1e;
-  --accent: #40C4FF;
-  --text: #E0E0E0;
-  --accent-gradient: linear-gradient(45deg, #0288D1, #40C4FF);
-  --shadow: rgba(64, 196, 255, 0.2);
-  --font-family: 'Inter', 'Arial', 'Helvetica', sans-serif;
-  --base-font-size: 16px;
+  --body-bg: #000000;
+  --container-bg: #000000;
+  --accent: #00E676;
+  --text: #FFFFFF;
+  --accent-gradient: linear-gradient(45deg, #00B248, #00E676);
+  --shadow: rgba(0, 230, 118, 0.3);
+  --font-family: 'Inter', sans-serif;
 }
 
 [data-theme="shadow-pulse"] {
+  --body-bg: #000000;
+  --container-bg: #000000;
   --accent: #00E676;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #00B248, #00E676);
-  --shadow: rgba(0, 230, 118, 0.2);
+  --shadow: rgba(0, 230, 118, 0.3);
 }
 
 [data-theme="dark-abyss"] {
+  --body-bg: #000000;
+  --container-bg: #000000;
   --accent: #AA00FF;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #6A1B9A, #AA00FF);
-  --shadow: rgba(170, 0, 255, 0.2);
+  --shadow: rgba(170, 0, 255, 0.3);
 }
 
 [data-theme="emerald-glow"] {
+  --body-bg: #000000;
+  --container-bg: #000000;
   --accent: #2EC4B6;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #1B998B, #2EC4B6);
-  --shadow: rgba(46, 196, 182, 0.2);
+  --shadow: rgba(46, 196, 182, 0.3);
 }
 
 [data-theme="retro-wave"] {
+  --body-bg: #000000;
+  --container-bg: #000000;
   --accent: #FF69B4;
+  --text: #FFFFFF;
   --accent-gradient: linear-gradient(45deg, #C71585, #FF69B4);
-  --shadow: rgba(255, 105, 180, 0.2);
+  --shadow: rgba(255, 105, 180, 0.3);
 }
 
 [data-theme="neon-pulse"] {
-  --accent: #40C4FF;
-  --accent-gradient: linear-gradient(45deg, #0288D1, #40C4FF);
-  --shadow: rgba(64, 196, 255, 0.2);
+  --body-bg: #000000;
+  --container-bg: #000000;
+  --accent: #00F0FF;
+  --text: #FFFFFF;
+  --accent-gradient: linear-gradient(45deg, #0077B6, #00F0FF);
+  --shadow: rgba(0, 240, 255, 0.3);
 }
 
-[data-theme="high-contrast"] {
-  --accent: #FFFFFF;
+[data-theme="lime-surge"] {
+  --body-bg: #000000;
+  --container-bg: #000000;
+  --accent: #B2FF59;
   --text: #FFFFFF;
-  --accent-gradient: linear-gradient(45deg, #E0E0E0, #FFFFFF);
-  --shadow: rgba(255, 255, 255, 0.3);
+  --accent-gradient: linear-gradient(45deg, #00B248, #B2FF59);
+  --shadow: rgba(178, 255, 89, 0.3);
+}
+
+[data-theme="flamingo-flash"] {
+  --body-bg: #000000;
+  --container-bg: #000000;
+  --accent: #FF4081;
+  --text: #FFFFFF;
+  --accent-gradient: linear-gradient(45deg, #C71585, #FF4081);
+  --shadow: rgba(255, 64, 129, 0.3);
+}
+
+[data-theme="aqua-glow"] {
+  --body-bg: #000000;
+  --container-bg: #000000;
+  --accent: #26C6DA;
+  --text: #FFFFFF;
+  --accent-gradient: linear-gradient(45deg, #0077B6, #26C6DA);
+  --shadow: rgba(38, 198, 218, 0.3);
+}
+
+[data-theme="aurora-haze"] {
+  --body-bg: #000000;
+  --container-bg: #000000;
+  --accent: #64FFDA;
+  --text: #FFFFFF;
+  --accent-gradient: linear-gradient(45deg, #1B998B, #64FFDA);
+  --shadow: rgba(100, 255, 218, 0.3);
+}
+
+[data-theme="starlit-amethyst"] {
+  --body-bg: #000000;
+  --container-bg: #000000;
+  --accent: #B388FF;
+  --text: #FFFFFF;
+  --accent-gradient: linear-gradient(45deg, #6A1B9A, #B388FF);
+  --shadow: rgba(179, 136, 255, 0.3);
+}
+
+[data-theme="lunar-frost"] {
+  --body-bg: #000000;
+  --container-bg: #000000;
+  --accent: #40C4FF;
+  --text: #FFFFFF;
+  --accent-gradient: linear-gradient(45deg, #0077B6, #40C4FF);
+  --shadow: rgba(64, 196, 255, 0.3);
 }
 
 body {
@@ -58,30 +119,30 @@ body {
   justify-content: center;
   align-items: flex-start;
   overflow-x: hidden;
-  padding-top: 12px;
+  padding-top: 10px;
   box-sizing: border-box;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
 .container {
-  max-width: 95%;
+  max-width: 91%;
   width: 100%;
   background: var(--container-bg);
-  padding: 16px;
-  border-radius: 16px;
+  padding: 15px;
+  border-radius: 12px;
   border: 1px solid var(--accent);
-  margin: 0 auto;
+  margin: 0 2%;
   min-height: 85vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  box-shadow: 0 8px 24px var(--shadow);
+  box-shadow: 0 8px 32px var(--shadow);
   transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 h1 {
-  font-size: clamp(1.8rem, 5vw, 2.2rem);
-  margin: 8px 0;
+  font-size: 2.2em;
+  margin: 5px 0;
   text-align: center;
   color: var(--accent);
   font-weight: 700;
@@ -92,9 +153,10 @@ h1 {
 .theme-toggle,
 .share-button,
 .export-button,
-.import-button {
-  position: fixed;
-  top: 12px;
+.import-button,
+.equalizer-button {
+  position: absolute;
+  top: 10px;
   background: var(--container-bg);
   border: 2px solid var(--accent);
   border-radius: 12px;
@@ -109,15 +171,31 @@ h1 {
   font-size: 18px;
 }
 
-.theme-toggle { left: 12px; }
-.share-button { left: 64px; }
-.import-button { right: 64px; }
-.export-button { right: 12px; }
+.theme-toggle {
+  left: 10px;
+}
+
+.share-button {
+  left: 60px;
+}
+
+.export-button {
+  right: 10px;
+}
+
+.import-button {
+  right: 60px;
+}
+
+.equalizer-button {
+  right: 110px;
+}
 
 .theme-toggle:hover,
 .share-button:hover,
 .export-button:hover,
-.import-button:hover {
+.import-button:hover,
+.equalizer-button:hover {
   background: var(--accent-gradient);
   color: var(--body-bg);
   transform: scale(1.1);
@@ -129,9 +207,9 @@ h1 {
 
 #currentStationInfo {
   background: var(--container-bg);
-  padding: 12px;
+  padding: 15px;
   border-radius: 12px;
-  margin: 8px 0;
+  margin: 4px 0;
   color: var(--text);
   border: 1px solid var(--accent);
   text-align: left;
@@ -165,100 +243,90 @@ h1 {
 }
 
 #currentStationInfo .station-name {
-  font-size: clamp(0.9rem, 4vw, 1rem);
+  font-size: 16px;
   font-weight: 600;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.4;
-}
-
-#currentStationInfo .station-genre,
-#currentStationInfo .station-country {
-  font-size: clamp(0.8rem, 3.5vw, 0.9rem);
-  font-weight: 400;
-  opacity: 0.85;
-  margin-top: 4px;
+  line-height: 1.3;
 }
 
 .station-icon {
   width: 80px;
   height: 80px;
-  order: 1;
-  font-size: 40px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  font-size: 40px;
+  order: 1;
 }
 
 .wave-visualizer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
-  order: 3;
   width: 100px;
   height: 60px;
-  position: relative;
-  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  order: 3;
 }
 
 .wave-line {
-  position: absolute;
   width: 8px;
-  background: var(--accent-gradient);
+  height: 10px;
+  background: var(--accent);
   border-radius: 4px;
-  bottom: 0;
-  animation: wavePulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  animation-play-state: paused;
+  transition: height 0.2s ease;
 }
 
-.wave-line:nth-child(1) { left: 10%; animation-delay: 0s; }
-.wave-line:nth-child(2) { left: 30%; animation-delay: 0.2s; }
-.wave-line:nth-child(3) { left: 50%; animation-delay: 0.4s; }
-.wave-line:nth-child(4) { left: 70%; animation-delay: 0.6s; }
-.wave-line:nth-child(5) { left: 90%; animation-delay: 0.8s; }
-
-.wave-line.playing {
-  animation-play-state: running;
+.wave-line.playing:nth-child(1) {
+  animation: wave 0.5s ease-in-out infinite;
 }
 
-@keyframes wavePulse {
-  0% { height: 10%; }
-  50% { height: 80%; }
-  100% { height: 10%; }
+.wave-line.playing:nth-child(2) {
+  animation: wave 0.5s ease-in-out 0.1s infinite;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .wave-line, .modal, .control-btn, .tab-btn {
-    animation: none;
-    transition: none;
-  }
+.wave-line.playing:nth-child(3) {
+  animation: wave 0.5s ease-in-out 0.2s infinite;
+}
+
+.wave-line.playing:nth-child(4) {
+  animation: wave 0.5s ease-in-out 0.3s infinite;
+}
+
+.wave-line.playing:nth-child(5) {
+  animation: wave 0.5s ease-in-out 0.4s infinite;
+}
+
+@keyframes wave {
+  0%, 100% { height: 10px; }
+  50% { height: 60px; }
 }
 
 .station-list {
-  max-height: 55vh;
+  max-height: 60vh;
   overflow-y: auto;
-  margin: 8px 0;
+  margin: 5px 0;
   padding: 8px;
   border: 1px solid var(--accent);
   border-radius: 12px;
-  transition: border-color 0.3s ease;
+  box-shadow: 0 4px 15px var(--shadow);
+  transition: all 0.3s ease;
 }
 
 .station-item {
   display: flex;
   align-items: center;
+  gap: 12px;
   padding: 10px;
   margin: 4px 0;
+  border-radius: 12px;
   background: var(--container-bg);
   border: 1px solid var(--accent);
-  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -269,29 +337,37 @@ h1 {
   transform: translateY(-2px);
 }
 
+.station-item.empty {
+  justify-content: center;
+  font-style: italic;
+}
+
 .station-item img {
   width: 40px;
   height: 40px;
-  margin-right: 10px;
   border-radius: 8px;
 }
 
 .station-item .station-name {
-  flex: 1;
-  font-size: clamp(0.9rem, 4vw, 1rem);
-  font-weight: 500;
-  line-height: 1.4;
+  font-size: 15px;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .station-item .station-genre,
 .station-item .station-country {
-  font-size: clamp(0.8rem, 3.5vw, 0.9rem);
-  opacity: 0.85;
+  font-size: 13px;
+  opacity: 0.8;
 }
 
 .tabs-wrapper {
-  margin: 8px 0;
-  padding: 0 8px;
+  margin: 5px 0;
+  padding: 0 10px;
   overflow-x: auto;
 }
 
@@ -309,16 +385,11 @@ h1 {
   border: 1px solid var(--accent);
   border-radius: 12px;
   color: var(--text);
-  font-size: clamp(0.9rem, 4vw, 1rem);
+  font-size: 14px;
   cursor: pointer;
   text-align: center;
+  white-space: nowrap;
   transition: all 0.2s ease;
-}
-
-.tab-btn.active {
-  background: var(--accent-gradient);
-  color: var(--body-bg);
-  box-shadow: 0 4px 12px var(--shadow);
 }
 
 .tab-btn:hover,
@@ -326,6 +397,11 @@ h1 {
   background: var(--accent-gradient);
   color: var(--body-bg);
   transform: translateY(-2px);
+}
+
+.tab-btn.active {
+  background: var(--accent-gradient);
+  color: var(--body-bg);
 }
 
 .add-tab-btn {
@@ -337,77 +413,55 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin: 5px 0;
   padding: 8px;
-  margin: 8px 0;
-  background: var(--container-bg);
   border: 1px solid var(--accent);
   border-radius: 12px;
-}
-
-#searchQuery,
-#searchCountry,
-#searchGenre,
-#searchBitrate,
-#searchLanguage {
-  min-width: 100%;
-  background: var(--container-bg);
-  border: 1px solid var(--accent);
-  border-radius: 12px;
-  color: var(--text);
-  font-size: clamp(0.9rem, 4vw, 1rem);
-  padding: 8px;
-  outline: none;
-}
-
-#searchQuery::placeholder,
-#searchCountry::placeholder,
-#searchGenre::placeholder,
-#searchBitrate::placeholder,
-#searchLanguage::placeholder {
-  color: var(--text);
-  opacity: 0.5;
+  box-shadow: 0 4px 15px var(--shadow);
 }
 
 #searchInput button.search-btn {
+  padding: 10px;
   background: var(--container-bg);
   border: 1px solid var(--accent);
   border-radius: 12px;
-  padding: 10px;
   color: var(--text);
+  font-size: 14px;
   cursor: pointer;
-  font-size: clamp(0.9rem, 4vw, 1rem);
-  width: 100%;
-  box-sizing: border-box;
+  text-align: center;
   transition: all 0.2s ease;
 }
 
 #searchInput button.search-btn:hover {
   background: var(--accent-gradient);
   color: var(--body-bg);
-  transform: scale(1.05);
+  transform: translateY(-2px);
 }
 
 .controls-container {
-  position: sticky;
-  bottom: 0;
-  background: var(--container-bg);
   border-top: 1px solid var(--accent);
-  padding: 16px;
+  padding: 10px 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px;
+  gap: 40px;
   z-index: 10;
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
 .control-btn {
-  width: 80px;
-  height: 80px;
-  font-size: 28px;
-  background: var(--accent-gradient);
-  color: var(--body-bg);
-  border: 2px solid var(--accent);
+  width: 90px;
+  height: 90px;
+  font-size: 32px;
+  background: var(--container-bg);
+  color: var(--text);
+  border: 1px solid var(--accent);
   border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 4px 12px var(--shadow);
@@ -418,11 +472,26 @@ h1 {
 }
 
 .control-btn:hover {
-  transform: scale(1.15);
-  box-shadow: 0 6px 20px var(--shadow);
+  background: var(--accent-gradient);
+  color: var(--body-bg);
+  transform: scale(1.1);
 }
 
 .control-btn:active {
+  transform: scale(0.95);
+}
+
+.control-btn.small-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+}
+
+.control-btn.small-btn:hover {
+  transform: scale(1.1);
+}
+
+.control-btn.small-btn:active {
   transform: scale(0.95);
 }
 
@@ -435,6 +504,13 @@ h1 {
   background: rgba(0, 0, 0, 0.7);
   z-index: 20;
   transition: opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .modal {
@@ -444,26 +520,27 @@ h1 {
   transform: translate(-50%, -50%);
   background: var(--container-bg);
   border: 1px solid var(--accent);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 15px;
   z-index: 21;
   width: 90%;
-  max-width: 500px;
+  max-width: 400px;
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 8px 24px var(--shadow);
-  transition: all 0.3s ease;
-  animation: fadeIn 0.3s ease-in-out;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  transform: translate(-50%, -60%);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translate(-50%, -60%); }
-  to { opacity: 1; transform: translate(-50%, -50%); }
+.modal.active {
+  opacity: 1;
+  transform: translate(-50%, -50%);
 }
 
 .modal h2 {
   color: var(--accent);
-  font-size: clamp(1.2rem, 4vw, 1.4rem);
+  font-size: 1.4em;
   margin: 0 0 12px;
   text-align: center;
 }
@@ -481,7 +558,7 @@ h1 {
   border: 1px solid var(--accent);
   border-radius: 12px;
   color: var(--text);
-  font-size: clamp(0.9rem, 4vw, 1rem);
+  font-size: 15px;
   cursor: pointer;
   text-align: center;
   transition: all 0.2s ease;
@@ -505,7 +582,9 @@ h1 {
 }
 
 .new-tab-modal input,
-.edit-tab-modal input {
+.edit-tab-modal input,
+.equalizer-container input,
+.volume-container input {
   width: 100%;
   padding: 10px;
   margin-bottom: 12px;
@@ -513,16 +592,32 @@ h1 {
   border: 1px solid var(--accent);
   border-radius: 12px;
   color: var(--text);
-  font-size: clamp(0.9rem, 4vw, 1rem);
+  font-size: 15px;
   box-sizing: border-box;
   transition: all 0.3s ease;
 }
 
 .new-tab-modal input:focus,
-.edit-tab-modal input:focus {
+.edit-tab-modal input:focus,
+.equalizer-container input:focus,
+.volume-container input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 8px var(--shadow);
   outline: none;
+}
+
+.equalizer-container label,
+.volume-container label {
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.sleep-timer-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 input[list]::-webkit-calendar-picker-indicator {
@@ -539,9 +634,7 @@ datalist {
 
 #searchQuery[list],
 #searchCountry[list],
-#searchGenre[list],
-#searchBitrate[list],
-#searchLanguage[list] {
+#searchGenre[list] {
   background: var(--container-bg);
   border: 1px solid var(--accent);
   border-radius: 12px;
@@ -552,252 +645,280 @@ datalist {
 
 #searchQuery[list]:focus,
 #searchCountry[list]:focus,
-#searchGenre[list]:focus,
-#searchBitrate[list]:focus,
-#searchLanguage[list]:focus {
+#searchGenre[list]:focus {
   border-color: var(--accent);
   box-shadow: 0 0 8px var(--shadow);
 }
 
-/* Малі екрани (до 720px), портретний режим */
 @media (max-width: 720px) {
   h1 {
-    font-size: clamp(1.5rem, 4vw, 1.8rem);
+    font-size: 1.8em;
+    line-height: 1.2;
+    margin: 5px 0;
   }
+
   .container {
-    padding: 12px;
+    padding: 10px;
     min-height: 80vh;
   }
+
   .control-btn {
-    width: 70px;
-    height: 70px;
-    font-size: 24px;
+    width: 80px;
+    height: 80px;
+    font-size: 28px;
+    border: 1px solid var(--accent);
   }
+
+  .control-btn.small-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
   .station-list {
     max-height: 50vh;
     margin: 4px 0;
     padding: 6px;
+    border-width: 1px;
   }
+
   .station-item {
     padding: 8px;
     margin: 3px 0;
+    border-radius: 12px;
   }
+
   .station-item .station-name {
-    font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+    font-size: 14px;
+    line-height: 1.3;
   }
+
   .station-item img {
     width: 32px;
     height: 32px;
   }
+
   .theme-toggle,
   .share-button,
   .export-button,
-  .import-button {
+  .import-button,
+  .equalizer-button {
     top: 8px;
     height: 36px;
     width: 36px;
     font-size: 16px;
   }
-  .theme-toggle { left: 8px; }
-  .share-button { left: 52px; }
-  .export-button { right: 8px; }
-  .import-button { right: 52px; }
+
+  .theme-toggle {
+    left: 8px;
+  }
+
+  .share-button {
+    left: 52px;
+  }
+
+  .export-button {
+    right: 8px;
+  }
+
+  .import-button {
+    right: 52px;
+  }
+
+  .equalizer-button {
+    right: 96px;
+  }
+
   .tabs-wrapper {
     margin: 3px 0;
     padding: 0 5px;
   }
+
   .tab-btn,
   .add-tab-btn {
     min-width: 60px;
     padding: 8px;
-    font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+    font-size: 12px;
+    border-radius: 12px;
   }
+
   .add-tab-btn {
     width: 36px;
     font-size: 16px;
   }
+
   .tabs {
     gap: 4px;
   }
+
   #currentStationInfo {
     padding: 10px;
     height: 90px;
   }
+
   .station-info-content {
     gap: 8px;
   }
+
   #currentStationInfo .station-name {
-    font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+    font-size: 14px;
   }
+
   .station-icon {
     width: 70px;
     height: 70px;
     font-size: 36px;
   }
+
   .wave-visualizer {
     width: 80px;
     height: 50px;
   }
+
   .wave-line {
     width: 6px;
   }
+
   #searchInput {
     padding: 6px;
     gap: 6px;
   }
+
   #searchQuery,
   #searchCountry,
-  #searchGenre,
-  #searchBitrate,
-  #searchLanguage {
-    font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+  #searchGenre {
+    font-size: 13px;
     padding: 6px;
   }
+
   #searchInput button.search-btn {
     padding: 8px;
-    font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+    font-size: 13px;
   }
+
   .modal {
     padding: 12px;
   }
+
   .modal h2 {
-    font-size: clamp(1rem, 3.5vw, 1.2rem);
+    font-size: 1.2em;
   }
+
   .modal-tab-btn,
   .modal-cancel-btn {
-    font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+    font-size: 13px;
     padding: 8px;
   }
+
   .new-tab-modal input,
-  .edit-tab-modal input {
-    font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+  .edit-tab-modal input,
+  .equalizer-container input,
+  .volume-container input {
+    font-size: 13px;
     padding: 8px;
   }
 }
 
-/* Малі екрани (до 720px), альбомний режим */
-@media (max-width: 720px) and (orientation: landscape) {
-  .container {
-    max-width: 95%;
-    min-height: 70vh;
-    padding: 8px;
-  }
-  h1 {
-    font-size: clamp(1.4rem, 3.5vw, 1.6rem);
-  }
-  .control-btn {
-    width: 60px;
-    height: 60px;
-    font-size: 22px;
-  }
-  .controls-container {
-    gap: 20px;
-    padding: 10px;
-  }
-  .station-list {
-    max-height: 40vh;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 8px;
-  }
-  .station-item {
-    padding: 6px;
-    font-size: clamp(0.8rem, 3.5vw, 0.9rem);
-  }
-  .station-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 28px;
-  }
-  #currentStationInfo {
-    height: 80px;
-    padding: 8px;
-  }
-  .theme-toggle,
-  .share-button,
-  .export-button,
-  .import-button {
-    top: 8px;
-    height: 32px;
-    width: 32px;
-    font-size: 14px;
-  }
-  .theme-toggle { left: 5px; }
-  .share-button { left: 45px; }
-  .export-button { right: 5px; }
-  .import-button { right: 45px; }
-  .tabs-wrapper {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-  }
-  .tab-btn,
-  .add-tab-btn {
-    min-width: 50px;
-    padding: 6px;
-    font-size: clamp(0.7rem, 3vw, 0.8rem);
-  }
-  .modal {
-    max-width: 80%;
-    max-height: 70vh;
-  }
-}
-
-/* Середні та великі екрани (від 721px), портретний або альбомний режим */
 @media (min-width: 721px) {
-  .container {
-    max-width: 90%;
-    min-height: 80vh;
-    padding: 16px;
-  }
-  .station-list {
-    max-height: 60vh;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 10px;
-  }
-  .control-btn {
-    width: 80px;
-    height: 80px;
-    font-size: 28px;
-  }
-  .tabs-wrapper {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-  }
-  .tab-btn,
-  .add-tab-btn {
-    min-width: 80px;
-    padding: 10px;
-    font-size: clamp(0.9rem, 4vw, 1rem);
-  }
   #searchInput {
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 10px;
-  }
-  #currentStationInfo {
-    height: 100px;
-    padding: 12px;
-  }
-  .modal {
-    max-width: 600px;
-    max-height: 80vh;
   }
 }
 
-/* Високі екрани (до 1600px), альбомний режим */
-@media (max-height: 1600px) and (orientation: landscape) {
+@media (max-height: 1600px) {
   .container {
-    min-height: 70vh;
+    min-height: 80vh;
   }
+
   .station-list {
     max-height: 50vh;
   }
+}
+
+@media (orientation: landscape) {
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  #currentStationInfo {
+    grid-column: 1;
+    grid-row: 1;
+    height: auto;
+    max-height: 200px;
+  }
+
+  .controls-container {
+    grid-column: 1;
+    grid-row: 2;
+    position: relative;
+    border-top: none;
+    border-right: 1px solid var(--accent);
+  }
+
+  .station-list {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .tabs-wrapper {
+    grid-column: 1 / 3;
+    grid-row: 3;
+    margin-top: 10px;
+  }
+
+  #searchInput {
+    grid-column: 1 / 3;
+    grid-row: 4;
+  }
+
+  .theme-toggle,
+  .share-button,
+  .export-button,
+  .import-button,
+  .equalizer-button {
+    top: 10px;
+    right: auto;
+    left: 10px;
+  }
+
+  .share-button { left: 60px; }
+  .import-button { left: 110px; }
+  .export-button { left: 160px; }
+  .equalizer-button { left: 210px; }
+
+  .controls {
+    flex-direction: column;
+    gap: 20px;
+  }
+
   .control-btn {
     width: 70px;
     height: 70px;
-    font-size: 26px;
+    font-size: 24px;
+  }
+
+  .control-btn.small-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .wave-visualizer {
+    width: 150px;
+    height: 100px;
+  }
+
+  .wave-line {
+    width: 10px;
+  }
+
+  .container.landscape {
+    transition: all 0.3s ease;
   }
 }

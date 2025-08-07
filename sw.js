@@ -1,97 +1,64 @@
-```javascript
-// Версія кешу для Radio S O
-const CACHE_NAME = 'radio-cache-v79'; // Оновлено версію
-const CACHE_LIFETIME = 30 * 24 * 60 * 60 * 1000; // 30 днів
+const CACHE_NAME = 'radio-cache-v744';
 
-// Файли для кешування
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/script.js',
-  '/stations.json',
-  '/manifest.json',
-  '/ping.txt',
-  '/icon-192.png',
-  '/icon-512.png'
-];
-
-// Подія встановлення Service Worker
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).then(() => {
-        console.log(`Service Worker: Cache ${CACHE_NAME} initialized`);
-        return self.skipWaiting();
-      }).catch((error) => {
-        console.error('Service Worker: Cache initialization failed:', error);
+      return cache.addAll([
+        '/',
+        '/index.html',
+        '/styles.css',
+        '/script.js',
+        '/stations.json',
+        '/manifest.json',
+        '/ping.txt'
+      ]).then(() => {
+        caches.keys().then((cacheNames) => {
+          return Promise.all(cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              return caches.delete(cacheName);
+            }
+          }));
+        });
       });
     })
   );
 });
 
-// Подія активації Service Worker
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      if (event.request.url.endsWith('stations.json')) {
+        return fetch(event.request, { cache: 'no-store', signal: new AbortController().signal }).then((networkResponse) => {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+          });
+          return networkResponse;
+        }).catch(() => caches.match('/index.html'));
+      }
+      return response || fetch(event.request).then((networkResponse) => {
+        return networkResponse;
+      }).catch(() => caches.match('/index.html'));
+    })
+  );
+});
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log(`Service Worker: Deleting old cache ${cacheName}`);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => {
-      console.log(`Service Worker: Activated with cache ${CACHE_NAME}`);
-      // Повідомляємо клієнтів про оновлення кешу
-      return self.clients.claim().then(() => {
-        self.clients.matchAll().then((clients) => {
-          clients.forEach((client) => {
-            client.postMessage({ type: 'CACHE_UPDATED', cacheVersion: CACHE_NAME });
-          });
-        });
-      });
-    }).catch((error) => {
-      console.error('Service Worker: Activation failed:', error);
     })
   );
-});
-
-// Подія отримання ресурсів
-self.addEventListener('fetch', (event) => {
-  const requestUrl = new URL(event.request.url);
-
-  // Обробка stations.json з стратегією stale-while-revalidate
-  if (requestUrl.pathname.endsWith('stations.json')) {
-    event.respondWith(
-      caches.open(CACHE_NAME).then((cache) => {
-        return cache.match(event.request).then((cachedResponse) => {
-          const fetchPromise = fetch(event.request, { cache: 'no-store' })
-            .then((networkResponse) => {
-              cache.put(event.request, networkResponse.clone());
-              return networkResponse;
-            })
-            .catch(() => cachedResponse || caches.match('/index.html'));
-          return cachedResponse || fetchPromise;
-        });
-      })
-    );
-  } else {
-    // Для інших ресурсів використовуємо cache-first
-    event.respondWith(
-      caches.match(event.request).then((response) => {
-        return response || fetch(event.request).then((networkResponse) => {
-          if (networkResponse.ok && STATIC_ASSETS.some(asset => requestUrl.pathname.includes(asset))) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse.clone());
-            });
-          }
-          return networkResponse;
-        }).catch(() => caches.match('/index.html'));
-      })
-    );
-  }
+  self.clients.matchAll().then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({ type: 'CACHE_UPDATED', cacheVersion: CACHE_NAME });
+    });
+  });
 });
 
 // Моніторинг стану мережі
@@ -101,22 +68,29 @@ let checkInterval = null;
 function startNetworkCheck() {
   if (!checkInterval) {
     checkInterval = setInterval(() => {
-      fetch('/ping.txt', { method: 'HEAD', cache: 'no-store' })
+      fetch("/ping.txt", { method: "HEAD", cache: "no-store" })
         .then(() => {
           if (!wasOnline) {
             wasOnline = true;
-            notifyClients({ type: 'NETWORK_STATUS', online: true });
-            stopNetworkCheck();
+            self.clients.matchAll().then(clients => {
+              clients.forEach(client => {
+                client.postMessage({ type: "NETWORK_STATUS", online: true });
+              });
+            });
+            stopNetworkCheck(); // Stop polling once online
           }
         })
-        .catch((error) => {
+        .catch(error => {
           if (wasOnline) {
             wasOnline = false;
-            notifyClients({ type: 'NETWORK_STATUS', online: false });
+            self.clients.matchAll().then(clients => {
+              clients.forEach(client => {
+                client.postMessage({ type: "NETWORK_STATUS", online: false });
+              });
+            });
           }
-          console.error('Network check failed:', error);
         });
-    }, 5000); // Перевірка кожні 5 секунд
+    }, 2000); // Перевірка кожні 2 секунди
   }
 }
 
@@ -127,34 +101,32 @@ function stopNetworkCheck() {
   }
 }
 
-function notifyClients(message) {
-  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-    clients.forEach((client) => {
-      client.postMessage(message);
-    });
-  });
-}
-
-// Події зміни статусу мережі
 self.addEventListener('online', () => {
   if (!wasOnline) {
     wasOnline = true;
-    notifyClients({ type: 'NETWORK_STATUS', online: true });
-    stopNetworkCheck();
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: "NETWORK_STATUS", online: true });
+      });
+    });
+    stopNetworkCheck(); // Stop polling when online
   }
 });
 
 self.addEventListener('offline', () => {
   if (wasOnline) {
     wasOnline = false;
-    notifyClients({ type: 'NETWORK_STATUS', online: false });
-    startNetworkCheck();
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: "NETWORK_STATUS", online: false });
+      });
+    });
+    startNetworkCheck(); // Start polling when offline
   }
 });
 
-// Початкова перевірка, якщо офлайн
+// Start initial check if already offline
 if (!navigator.onLine && wasOnline) {
   wasOnline = false;
   startNetworkCheck();
 }
-```
