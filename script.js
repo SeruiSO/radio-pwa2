@@ -16,7 +16,7 @@ let isAutoPlayPending = false;
 let lastSuccessfulPlayTime = 0;
 let streamAbortController = null;
 let errorTimeout = null;
-let autoPlayRequestId = 0; // Unique ID for autoplay requests
+let autoPlayRequestId = 0;
 let audioContext = null;
 let equalizerFilters = null;
 let sleepTimer = null;
@@ -171,28 +171,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function setupEqualizer() {
       if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.createMediaElementSource(audio);
-        equalizerFilters = [
-          { frequency: 100, type: 'lowshelf' },
-          { frequency: 1000, type: 'peaking' },
-          { frequency: 6000, type: 'highshelf' }
-        ].map(band => {
-          const filter = audioContext.createBiquadFilter();
-          filter.type = band.type;
-          filter.frequency.setValueAtTime(band.frequency, audioContext.currentTime);
-          filter.gain.setValueAtTime(parseFloat(localStorage.getItem(`eq${band.type.charAt(0).toUpperCase() + band.type.slice(1)}`) || 0), audioContext.currentTime);
-          return filter;
-        });
+        try {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const source = audioContext.createMediaElementSource(audio);
+          equalizerFilters = [
+            { frequency: 100, type: 'lowshelf' },
+            { frequency: 1000, type: 'peaking' },
+            { frequency: 6000, type: 'highshelf' }
+          ].map(band => {
+            const filter = audioContext.createBiquadFilter();
+            filter.type = band.type;
+            filter.frequency.setValueAtTime(band.frequency, audioContext.currentTime);
+            filter.gain.setValueAtTime(parseFloat(localStorage.getItem(`eq${band.type.charAt(0).toUpperCase() + band.type.slice(1)}`) || 0), audioContext.currentTime);
+            return filter;
+          });
 
-        source.connect(equalizerFilters[0]);
-        equalizerFilters[0].connect(equalizerFilters[1]);
-        equalizerFilters[1].connect(equalizerFilters[2]);
-        equalizerFilters[2].connect(audioContext.destination);
+          source.connect(equalizerFilters[0]);
+          equalizerFilters[0].connect(equalizerFilters[1]);
+          equalizerFilters[1].connect(equalizerFilters[2]);
+          equalizerFilters[2].connect(audioContext.destination);
 
-        document.getElementById("lowshelf").value = localStorage.getItem("eqLowShelf") || 0;
-        document.getElementById("peaking").value = localStorage.getItem("eqPeaking") || 0;
-        document.getElementById("highshelf").value = localStorage.getItem("eqHighShelf") || 0;
+          document.getElementById("lowshelf").value = localStorage.getItem("eqLowShelf") || 0;
+          document.getElementById("peaking").value = localStorage.getItem("eqPeaking") || 0;
+          document.getElementById("highshelf").value = localStorage.getItem("eqHighShelf") || 0;
+        } catch (error) {
+          console.error("Error setting up equalizer:", error);
+        }
       }
     }
 
@@ -259,9 +263,9 @@ document.addEventListener("DOMContentLoaded", () => {
         deletedStations: JSON.parse(localStorage.getItem("deletedStations")) || [],
         currentTab: localStorage.getItem("currentTab") || "techno",
         volume: parseFloat(localStorage.getItem("volume")) || 0.9,
-        eqLowShelf: parseFloat(localStorage.getItem("eqLowShelf")) || 0,
-        eqPeaking: parseFloat(localStorage.getItem("eqPeaking")) || 0,
-        eqHighShelf: parseFloat(localStorage.getItem("eqHighShelf")) || 0
+        eqLowShelf: parseFloat(localStorage.getItem("eqLowShelf") || 0),
+        eqPeaking: parseFloat(localStorage.getItem("eqPeaking") || 0),
+        eqHighShelf: parseFloat(localStorage.getItem("eqHighShelf") || 0)
       };
       const blob = new Blob([JSON.stringify(settings, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -349,7 +353,13 @@ document.addEventListener("DOMContentLoaded", () => {
         "united kingdom": "UK",
         "russia": "Russia",
         "ukraine": "Ukraine",
-        // Add more mappings as needed
+        "німеччина": "Germany",
+        "швейцарія": "Switzerland",
+        "австрія": "Austria",
+        "італія": "Italy",
+        "іспанія": "Spain",
+        "туреччина": "Turkey",
+        "велика британія": "UK"
       };
       return countryMap[country.toLowerCase()] || country;
     }
@@ -358,8 +368,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!url) return "";
       try {
         const parsedUrl = new URL(url);
-        return parsedUrl.origin + parsedUrl.pathname;
+        if (parsedUrl.protocol === "http:") {
+          parsedUrl.protocol = "https:";
+        }
+        return parsedUrl.toString();
       } catch (e) {
+        console.warn("Invalid URL:", url, e);
         return url;
       }
     }
@@ -380,15 +394,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function populateSearchSuggestions() {
       fetch("/stations.json")
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          return response.json();
+        })
         .then(data => {
           const queries = new Set();
           const countries = new Set();
           const genres = new Set();
-          data.forEach(station => {
-            if (station.name) queries.add(station.name);
-            if (station.country) countries.add(station.country);
-            if (station.genre) genres.add(station.genre);
+          Object.values(data).forEach(tabStations => {
+            if (Array.isArray(tabStations)) {
+              tabStations.forEach(station => {
+                if (station.name) queries.add(station.name);
+                if (station.country) countries.add(station.country);
+                if (station.genre) genres.add(station.genre);
+              });
+            }
           });
           const queryDatalist = document.getElementById("querySuggestions");
           const countryDatalist = document.getElementById("countrySuggestions");
@@ -506,15 +527,25 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       searchInput.style.display = "none";
-      const url = currentTab === "favorites" ? "/stations.json" : `/stations-${currentTab}.json`;
-      fetch(url, { signal: abortController.signal })
-        .then(response => response.json())
+      fetch("/stations.json", { signal: abortController.signal })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then(data => {
-          let stations = data;
+          let stations = [];
           if (currentTab === "favorites") {
             stations = favoriteStations;
           } else if (customTabs.includes(currentTab)) {
             stations = stationLists[currentTab] || [];
+          } else if (data[currentTab] && Array.isArray(data[currentTab])) {
+            stations = data[currentTab];
+          } else {
+            console.warn(`No stations found for tab: ${currentTab}`);
+            stationList.innerHTML = "<div class='station-item empty'>No stations available</div>";
+            return;
           }
           stations = stations.filter(station => !deletedStations.includes(normalizeUrl(station.value)));
           if (Object.keys(userAddedStations).includes(currentTab)) {
@@ -529,9 +560,9 @@ document.addEventListener("DOMContentLoaded", () => {
             item.className = "station-item";
             item.dataset.index = index;
             item.dataset.name = station.name;
-            item.dataset.value = station.value;
+            item.dataset.value = normalizeUrl(station.value);
             item.innerHTML = `
-              <div class="station-icon">🎵</div>
+              <div class="station-icon">${station.emoji || '🎵'}</div>
               <div class="station-text">
                 <div class="station-name">${station.name}</div>
                 <div class="station-genre">genre: ${station.genre || '-'}</div>
@@ -617,9 +648,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const station = stationItems[currentIndex];
       if (!station) return;
       currentStationInfo.querySelector(".station-name").textContent = station.dataset.name;
-      currentStationInfo.querySelector(".station-genre").textContent = `genre: ${stationItems[currentIndex].querySelector(".station-genre").textContent.split(": ")[1]}`;
-      currentStationInfo.querySelector(".station-country").textContent = `country: ${stationItems[currentIndex].querySelector(".station-country").textContent.split(": ")[1]}`;
-      audio.src = station.dataset.value;
+      currentStationInfo.querySelector(".station-genre").textContent = `genre: ${station.querySelector(".station-genre").textContent.split(": ")[1]}`;
+      currentStationInfo.querySelector(".station-country").textContent = `country: ${station.querySelector(".station-country").textContent.split(": ")[1]}`;
+      audio.src = normalizeUrl(station.dataset.value);
       if (intendedPlaying) {
         isAutoPlayPending = false;
         debouncedTryAutoPlay();
@@ -671,12 +702,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function searchStations(query, country, genre) {
       fetch("/stations.json", { signal: abortController.signal })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          return response.json();
+        })
         .then(data => {
-          const results = data.filter(station => {
+          let allStations = [];
+          Object.values(data).forEach(tabStations => {
+            if (Array.isArray(tabStations)) {
+              allStations = allStations.concat(tabStations);
+            }
+          });
+          const results = allStations.filter(station => {
             const matchesQuery = query ? station.name.toLowerCase().includes(query.toLowerCase()) : true;
             const matchesCountry = country ? normalizeCountry(station.country).toLowerCase() === country.toLowerCase() : true;
-            const matchesGenre = genre ? station.genre.toLowerCase() === genre.toLowerCase() : true;
+            const matchesGenre = genre ? station.genre.toLowerCase().includes(genre.toLowerCase()) : true;
             return matchesQuery && matchesCountry && matchesGenre && !deletedStations.includes(normalizeUrl(station.value));
           });
           stationList.innerHTML = "";
@@ -690,9 +730,9 @@ document.addEventListener("DOMContentLoaded", () => {
             item.className = "station-item";
             item.dataset.index = index;
             item.dataset.name = station.name;
-            item.dataset.value = station.value;
+            item.dataset.value = normalizeUrl(station.value);
             item.innerHTML = `
-              <div class="station-icon">🎵</div>
+              <div class="station-icon">${station.emoji || '🎵'}</div>
               <div class="station-text">
                 <div class="station-name">${station.name}</div>
                 <div class="station-genre">genre: ${station.genre || '-'}</div>
@@ -736,7 +776,7 @@ document.addEventListener("DOMContentLoaded", () => {
           streamAbortController.abort();
         }
         streamAbortController = new AbortController();
-        audio.src = stationItems[currentIndex].dataset.value;
+        audio.src = normalizedCurrentUrl;
         audio.play().then(() => {
           lastSuccessfulPlayTime = Date.now();
           errorCount = 0;
