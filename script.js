@@ -173,10 +173,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Події для кнопок
     shareButton.addEventListener("click", () => {
-      const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
+      const stationName = currentStationInfo.querySelector(".station-name")?.textContent || "Radio S O";
       const shareData = {
         title: "Radio S O",
-        text: `Listening to ${stationName} on Radio S O!`,
+        text: `Слухаю ${stationName} на Radio S O!`,
         url: window.location.href
       };
       if (navigator.share) {
@@ -467,7 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Перемикання вкладок
     function switchTab(tab) {
       currentTab = tab;
-      localStorage.setItem("currentTab", currentTab);
+      localStorage.setItem("currentTab", tab);
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
       document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add("active");
       if (tab === "podcasts") {

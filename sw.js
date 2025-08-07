@@ -1,6 +1,6 @@
 ```javascript
 // Версія кешу для Radio S O
-const CACHE_NAME = 'radio-cache-v74';
+const CACHE_NAME = 'radio-cache-v79'; // Оновлено версію
 const CACHE_LIFETIME = 30 * 24 * 60 * 60 * 1000; // 30 днів
 
 // Файли для кешування
@@ -21,18 +21,12 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS).then(() => {
-        // Видаляємо старі кеші після встановлення нового
-        return caches.keys().then((cacheNames) => {
-          return Promise.all(
-            cacheNames.map((cacheName) => {
-              if (cacheName !== CACHE_NAME) {
-                return caches.delete(cacheName);
-              }
-            })
-          );
-        });
+        console.log(`Service Worker: Cache ${CACHE_NAME} initialized`);
+        return self.skipWaiting();
+      }).catch((error) => {
+        console.error('Service Worker: Cache initialization failed:', error);
       });
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
@@ -43,11 +37,13 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
+            console.log(`Service Worker: Deleting old cache ${cacheName}`);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
+      console.log(`Service Worker: Activated with cache ${CACHE_NAME}`);
       // Повідомляємо клієнтів про оновлення кешу
       return self.clients.claim().then(() => {
         self.clients.matchAll().then((clients) => {
@@ -56,6 +52,8 @@ self.addEventListener('activate', (event) => {
           });
         });
       });
+    }).catch((error) => {
+      console.error('Service Worker: Activation failed:', error);
     })
   );
 });
