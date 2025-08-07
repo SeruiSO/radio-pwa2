@@ -42,9 +42,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Radio S O</title>
+  <meta name="description" content="Radio Music - Your favorite radio stations">
+  <meta name="theme-color" content="#000000">
+  <title>Radio Music</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.ico">
 </head>
 <body>
   <div class="container">
@@ -53,9 +56,8 @@
     <button class="export-button">📤</button>
     <button class="import-button">📥</button>
     <button class="equalizer-button">🎚️</button>
-
+    <input type="file" id="importFileInput" accept=".json" style="display: none;">
     <h1>🎧 Radio Music</h1>
-
     <div id="currentStationInfo">
       <div class="station-info-content">
         <div class="station-icon">🎵</div>
@@ -73,29 +75,6 @@
         </div>
       </div>
     </div>
-
-    <audio id="audioPlayer"></audio>
-
-    <div class="tabs-wrapper">
-      <div class="tabs" id="tabs">
-        <button class="tab-btn active" data-tab="techno">Techno</button>
-        <button class="tab-btn" data-tab="trance">Trance</button>
-        <button class="tab-btn" data-tab="ukraine">UA</button>
-        <button class="tab-btn" data-tab="pop">Pop</button>
-        <button class="tab-btn" data-tab="search">Search</button>
-        <button class="add-tab-btn">+</button>
-      </div>
-    </div>
-
-    <div id="searchInput">
-      <input id="searchQuery" placeholder="Назва станції">
-      <input id="searchCountry" placeholder="Країна">
-      <input id="searchGenre" placeholder="Жанр">
-      <button class="search-btn">🔍</button>
-    </div>
-
-    <div id="stationList" class="station-list"></div>
-
     <div class="controls-container">
       <div class="controls">
         <button class="control-btn small-btn sleep-timer-button">⏰</button>
@@ -105,8 +84,29 @@
         <button class="control-btn small-btn volume-button">🔊</button>
       </div>
     </div>
-
-    <div class="modal-overlay new-tab-modal hidden">
+    <div id="searchInput" style="display: none;">
+      <input type="text" id="searchQuery" list="querySuggestions" placeholder="Назва станції">
+      <input type="text" id="searchCountry" list="countrySuggestions" placeholder="Країна">
+      <input type="text" id="searchGenre" list="genreSuggestions" placeholder="Жанр">
+      <button class="search-btn">🔍</button>
+      <ul id="pastSearches"></ul>
+    </div>
+    <datalist id="querySuggestions"></datalist>
+    <datalist id="countrySuggestions"></datalist>
+    <datalist id="genreSuggestions"></datalist>
+    <div class="tabs-wrapper">
+      <div id="tabs" class="tabs">
+        <button class="tab-btn active" data-tab="techno">Techno</button>
+        <button class="tab-btn" data-tab="trance">Trance</button>
+        <button class="tab-btn" data-tab="ukraine">UA</button>
+        <button class="tab-btn" data-tab="pop">Pop</button>
+        <button class="tab-btn" data-tab="search">Search</button>
+        <button class="add-tab-btn">+</button>
+      </div>
+    </div>
+    <div id="stationList" class="station-list"></div>
+    <audio id="audioPlayer"></audio>
+    <div class="modal-overlay new-tab-modal">
       <div class="modal new-tab-modal">
         <h2>Створити нову вкладку</h2>
         <input type="text" id="newTabName" placeholder="Назва вкладки (макс. 10 символів)">
@@ -116,11 +116,10 @@
         </div>
       </div>
     </div>
-
-    <div class="modal-overlay edit-tab-modal hidden">
+    <div class="modal-overlay edit-tab-modal">
       <div class="modal edit-tab-modal">
         <h2>Дії з вкладкою</h2>
-        <input type="text" id="editTabName" placeholder="Нова назва вкладки">
+        <input type="text" id="editTabName" placeholder="Нова назва вкладки (макс. 10 символів)">
         <div class="modal-tabs">
           <button class="modal-tab-btn" onclick="renameTab()">Перейменувати</button>
           <button class="modal-tab-btn" onclick="deleteTab()">Видалити</button>
@@ -128,37 +127,37 @@
         </div>
       </div>
     </div>
-
-    <div class="modal-overlay equalizer-modal hidden">
+    <div class="modal-overlay equalizer-modal">
       <div class="modal equalizer-modal">
         <h2>Еквалайзер</h2>
         <div class="equalizer-container">
           <label for="lowshelf">Баси (100 Hz)</label>
-          <input type="range" id="lowshelf" min="-20" max="20" value="0">
+          <input type="range" id="lowshelf" min="-40" max="40" value="0">
           <label for="peaking">Середні (1 kHz)</label>
-          <input type="range" id="peaking" min="-20" max="20" value="0">
+          <input type="range" id="peaking" min="-40" max="40" value="0">
           <label for="highshelf">Високі (6 kHz)</label>
-          <input type="range" id="highshelf" min="-20" max="20" value="0">
+          <input type="range" id="highshelf" min="-40" max="40" value="0">
         </div>
         <div class="modal-tabs">
           <button class="modal-cancel-btn" onclick="closeModal()">Закрити</button>
         </div>
       </div>
     </div>
-
-    <div class="modal-overlay sleep-timer-modal hidden">
+    <div class="modal-overlay sleep-timer-modal">
       <div class="modal sleep-timer-modal">
         <h2>Таймер сну</h2>
         <div class="sleep-timer-container">
           <button class="modal-tab-btn" onclick="setSleepTimer(15)">15 хвилин</button>
           <button class="modal-tab-btn" onclick="setSleepTimer(30)">30 хвилин</button>
           <button class="modal-tab-btn" onclick="setSleepTimer(60)">60 хвилин</button>
-          <button class="modal-cancel-btn" onclick="clearSleepTimer()">Скасувати</button>
+          <button class="modal-tab-btn" onclick="clearSleepTimer()">Скасувати</button>
+        </div>
+        <div class="modal-tabs">
+          <button class="modal-cancel-btn" onclick="closeModal()">Закрити</button>
         </div>
       </div>
     </div>
-
-    <div class="modal-overlay volume-modal hidden">
+    <div class="modal-overlay volume-modal">
       <div class="modal volume-modal">
         <h2>Гучність</h2>
         <div class="volume-container">
@@ -170,10 +169,7 @@
         </div>
       </div>
     </div>
-
-    <input type="file" id="importFileInput" accept=".json" style="display: none;">
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
