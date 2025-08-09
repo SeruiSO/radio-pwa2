@@ -778,9 +778,7 @@ datalist {
   .theme-toggle,
   .share-button,
   .export-button,
-  .import-button,
-  .volume-btn,
-  .equalizer-btn {
+  .import-button {
     top: 8px;
     height: 36px;
     width: 36px;
