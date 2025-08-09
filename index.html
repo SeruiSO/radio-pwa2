@@ -38,26 +38,27 @@
         return gk_fileData[filename] || "";
         }
         </script><!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Radio Music - Your favorite radio stations">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#00F0FF">
   <title>Radio Music</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="favicon.ico">
+  <script src="script.js" defer></script>
 </head>
-<body>
+<body data-theme="shadow-pulse">
+  <button class="theme-toggle">🌙</button>
+  <button class="share-button">📢</button>
+  <button class="export-button">📤</button>
+  <button class="import-button">📥</button>
+  <input type="file" id="importFileInput" accept=".json">
+
   <div class="container">
-    <button class="theme-toggle">🌙</button>
-    <button class="share-button">📢</button>
-    <button class="export-button">📤</button>
-    <button class="import-button">📥</button>
-    <button class="equalizer-button">🎚️</button>
-    <input type="file" id="importFileInput" accept=".json" style="display: none;">
     <h1>🎧 Radio Music</h1>
+    <audio id="audioPlayer"></audio>
+
     <div id="currentStationInfo">
       <div class="station-info-content">
         <div class="station-icon">🎵</div>
@@ -75,28 +76,11 @@
         </div>
       </div>
     </div>
-    <div class="controls-container">
-      <div class="controls">
-        <button class="control-btn small-btn sleep-timer-button">⏰</button>
-        <button class="control-btn">⏮</button>
-        <button class="control-btn">▶</button>
-        <button class="control-btn">⏭</button>
-        <button class="control-btn small-btn volume-button">🔊</button>
-      </div>
-    </div>
-    <div id="searchInput" style="display: none;">
-      <input type="text" id="searchQuery" list="querySuggestions" placeholder="Назва станції">
-      <input type="text" id="searchCountry" list="countrySuggestions" placeholder="Країна">
-      <input type="text" id="searchGenre" list="genreSuggestions" placeholder="Жанр">
-      <button class="search-btn">🔍</button>
-      <ul id="pastSearches"></ul>
-    </div>
-    <datalist id="querySuggestions"></datalist>
-    <datalist id="countrySuggestions"></datalist>
-    <datalist id="genreSuggestions"></datalist>
+
     <div class="tabs-wrapper">
-      <div id="tabs" class="tabs">
-        <button class="tab-btn active" data-tab="techno">Techno</button>
+      <div class="tabs" id="tabs">
+        <button class="tab-btn" data-tab="best">Best</button>
+        <button class="tab-btn" data-tab="techno">Techno</button>
         <button class="tab-btn" data-tab="trance">Trance</button>
         <button class="tab-btn" data-tab="ukraine">UA</button>
         <button class="tab-btn" data-tab="pop">Pop</button>
@@ -104,72 +88,79 @@
         <button class="add-tab-btn">+</button>
       </div>
     </div>
-    <div id="stationList" class="station-list"></div>
-    <audio id="audioPlayer"></audio>
-    <div class="modal-overlay new-tab-modal">
-      <div class="modal new-tab-modal">
+
+    <div class="station-list" id="stationList"></div>
+
+    <div id="searchInput">
+      <input type="text" id="searchQuery" placeholder="Назва станції" list="pastSearches">
+      <input type="text" id="searchCountry" placeholder="Країна" list="countrySuggestions">
+      <input type="text" id="searchGenre" placeholder="Жанр" list="genreSuggestions">
+      <button class="search-btn">🔍</button>
+      <datalist id="pastSearches"></datalist>
+      <datalist id="countrySuggestions"></datalist>
+      <datalist id="genreSuggestions"></datalist>
+    </div>
+
+    <div class="controls-container">
+      <div class="controls">
+        <button class="control-btn equalizer-btn">🎚️</button>
+        <button class="control-btn">⏮</button>
+        <button class="control-btn">▶</button>
+        <button class="control-btn">⏭</button>
+        <button class="control-btn volume-btn">🔊</button>
+      </div>
+    </div>
+
+    <div class="modal-overlay new-tab-modal" style="display: none;">
+      <div class="modal">
         <h2>Створити нову вкладку</h2>
-        <input type="text" id="newTabName" placeholder="Назва вкладки (макс. 10 символів)">
+        <input type="text" id="newTabInput" placeholder="Назва вкладки (макс. 10 символів)">
         <div class="modal-tabs">
-          <button class="modal-tab-btn" onclick="createTab()">Створити</button>
-          <button class="modal-cancel-btn" onclick="closeModal()">Відміна</button>
+          <button class="modal-tab-btn">Створити</button>
+          <button class="modal-cancel-btn">Відміна</button>
         </div>
       </div>
     </div>
-    <div class="modal-overlay edit-tab-modal">
-      <div class="modal edit-tab-modal">
+
+    <div class="modal-overlay edit-tab-modal" style="display: none;">
+      <div class="modal">
         <h2>Дії з вкладкою</h2>
-        <input type="text" id="editTabName" placeholder="Нова назва вкладки (макс. 10 символів)">
+        <input type="text" id="editTabInput" placeholder="Нова назва вкладки">
         <div class="modal-tabs">
-          <button class="modal-tab-btn" onclick="renameTab()">Перейменувати</button>
-          <button class="modal-tab-btn" onclick="deleteTab()">Видалити</button>
-          <button class="modal-cancel-btn" onclick="closeModal()">Відміна</button>
+          <button class="modal-tab-btn rename-btn">Перейменувати</button>
+          <button class="modal-tab-btn delete-btn">Видалити</button>
+          <button class="modal-cancel-btn">Відміна</button>
         </div>
       </div>
     </div>
-    <div class="modal-overlay equalizer-modal">
-      <div class="modal equalizer-modal">
-        <h2>Еквалайзер</h2>
-        <div class="equalizer-container">
-          <label for="lowshelf">Баси (100 Hz)</label>
-          <input type="range" id="lowshelf" min="-40" max="40" value="0">
-          <label for="peaking">Середні (1 kHz)</label>
-          <input type="range" id="peaking" min="-40" max="40" value="0">
-          <label for="highshelf">Високі (6 kHz)</label>
-          <input type="range" id="highshelf" min="-40" max="40" value="0">
-        </div>
-        <div class="modal-tabs">
-          <button class="modal-cancel-btn" onclick="closeModal()">Закрити</button>
-        </div>
-      </div>
-    </div>
-    <div class="modal-overlay sleep-timer-modal">
-      <div class="modal sleep-timer-modal">
-        <h2>Таймер сну</h2>
-        <div class="sleep-timer-container">
-          <button class="modal-tab-btn" onclick="setSleepTimer(15)">15 хвилин</button>
-          <button class="modal-tab-btn" onclick="setSleepTimer(30)">30 хвилин</button>
-          <button class="modal-tab-btn" onclick="setSleepTimer(60)">60 хвилин</button>
-          <button class="modal-tab-btn" onclick="clearSleepTimer()">Скасувати</button>
-        </div>
-        <div class="modal-tabs">
-          <button class="modal-cancel-btn" onclick="closeModal()">Закрити</button>
-        </div>
-      </div>
-    </div>
-    <div class="modal-overlay volume-modal">
-      <div class="modal volume-modal">
+
+    <div class="modal-overlay volume-modal" style="display: none;">
+      <div class="modal">
         <h2>Гучність</h2>
-        <div class="volume-container">
-          <label for="volume">Рівень гучності</label>
-          <input type="range" id="volume" min="0" max="1" step="0.01" value="0.9">
-        </div>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.9">
         <div class="modal-tabs">
-          <button class="modal-cancel-btn" onclick="closeModal()">Закрити</button>
+          <button class="modal-cancel-btn">Закрити</button>
         </div>
       </div>
     </div>
+
+    <div class="modal-overlay equalizer-modal" style="display: none;">
+      <div class="modal">
+        <h2>Еквалайзер</h2>
+        <div id="equalizerSettings">
+          <label for="bassSlider">Баси:</label>
+          <input type="range" id="bassSlider" min="-12" max="12" step="0.1" value="0">
+          <label for="midSlider">Середні:</label>
+          <input type="range" id="midSlider" min="-12" max="12" step="0.1" value="0">
+          <label for="trebleSlider">Високі:</label>
+          <input type="range" id="trebleSlider" min="-12" max="12" step="0.1" value="0">
+        </div>
+        <div class="modal-tabs">
+          <button class="modal-cancel-btn">Закрити</button>
+        </div>
+      </div>
+    </div>
+
   </div>
-  <script src="script.js"></script>
 </body>
 </html>
