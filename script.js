@@ -36,12 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBtn = document.querySelector(".search-btn");
   const pastSearchesList = document.getElementById("pastSearches");
   const tabsContainer = document.getElementById("tabs");
-  const newTabModal = document.getElementById("newTabModal");
-  const newTabInput = document.getElementById("newTabInput");
-  const createTabBtn = document.querySelector(".new-tab-modal .modal-tab-btn");
-  const cancelTabBtn = document.querySelector(".new-tab-modal .modal-cancel-btn");
 
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer || !newTabModal || !newTabInput || !createTabBtn || !cancelTabBtn) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
     console.error("One of required DOM elements not found", {
       audio: !!audio,
       stationList: !!stationList,
@@ -58,11 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
       searchGenre: !!searchGenre,
       searchBtn: !!searchBtn,
       pastSearchesList: !!pastSearchesList,
-      tabsContainer: !!tabsContainer,
-      newTabModal: !!newTabModal,
-      newTabInput: !!newTabInput,
-      createTabBtn: !!createTabBtn,
-      cancelTabBtn: !!cancelTabBtn
+      tabsContainer: !!tabsContainer
     });
     setTimeout(initializeApp, 100);
     return;
@@ -132,22 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") searchBtn.click();
     });
 
-    createTabBtn.addEventListener("click", () => {
-      const tabName = newTabInput.value.trim();
-      if (tabName && !customTabs.includes(tabName)) {
-        customTabs.push(tabName);
-        localStorage.setItem("customTabs", JSON.stringify(customTabs));
-        renderTabs();
-        newTabModal.style.display = "none";
-        newTabInput.value = "";
-      }
-    });
-
-    cancelTabBtn.addEventListener("click", () => {
-      newTabModal.style.display = "none";
-      newTabInput.value = "";
-    });
-
     function exportSettings() {
       const settings = {
         selectedTheme: localStorage.getItem("selectedTheme") || "shadow-pulse",
@@ -170,202 +146,1107 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Settings exported:", settings);
     }
 
-    function importSettings(e) {
-      const file = e.target.files[0];
+    function importSettings(event) {
+      const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = (e) => {
         try {
-          const settings = JSON.parse(event.target.result);
-          localStorage.setItem("selectedTheme", settings.selectedTheme || "shadow-pulse");
-          localStorage.setItem("customTabs", JSON.stringify(settings.customTabs || []));
-          localStorage.setItem("userAddedStations", JSON.stringify(settings.userAddedStations || {}));
-          localStorage.setItem("favoriteStations", JSON.stringify(settings.favoriteStations || []));
-          localStorage.setItem("pastSearches", JSON.stringify(settings.pastSearches || []));
-          localStorage.setItem("deletedStations", JSON.stringify(settings.deletedStations || []));
-          localStorage.setItem("currentTab", settings.currentTab || "techno");
-          location.reload();
+          const settings = JSON.parse(e.target.result);
+          if (!settings || typeof settings !== "object") {
+            alert("Invalid settings file!");
+            return;
+          }
+          const validThemes = [
+            "shadow-pulse", "dark-abyss", "emerald-glow", "retro-wave",
+            "neon-pulse", "lime-surge", "flamingo-flash", "aqua-glow",
+            "aurora-haze", "starlit-amethyst", "lunar-frost"
+          ];
+          if (settings.selectedTheme && validThemes.includes(settings.selectedTheme)) {
+            localStorage.setItem("selectedTheme", settings.selectedTheme);
+            applyTheme(settings.selectedTheme);
+          }
+          if (Array.isArray(settings.customTabs)) {
+            const validTabs = settings.customTabs.filter(tab => 
+              typeof tab === "string" && 
+              tab.trim() && 
+              tab.length <= 10 && 
+              /^[a-z0-9_-]+$/.test(tab) && 
+              !["best", "techno", "trance", "ukraine", "pop", "search"].includes(tab) &&
+              !customTabs.includes(tab)
+            );
+            if (validTabs.length + customTabs.length <= 7) {
+              customTabs = validTabs;
+              localStorage.setItem("customTabs", JSON.stringify(customTabs));
+            } else {
+              console.warn("Imported custom tabs exceed limit of 7, skipping");
+            }
+          }
+          if (settings.userAddedStations && typeof settings.userAddedStations === "object") {
+            const validStations = {};
+            Object.keys(settings.userAddedStations).forEach(tab => {
+              if (["techno", "trance", "ukraine", "pop", ...customTabs].includes(tab)) {
+                const stations = Array.isArray(settings.userAddedStations[tab]) 
+                  ? settings.userAddedStations[tab].filter(s => 
+                      s && typeof s === "object" && 
+                      s.name && typeof s.name === "string" && 
+                      s.value && isValidUrl(s.value) && 
+                      s.genre && typeof s.genre === "string" && 
+                      s.country && typeof s.country === "string"
+                    )
+                  : [];
+                validStations[tab] = stations;
+              }
+            });
+            userAddedStations = validStations;
+            localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+          }
+          if (Array.isArray(settings.favoriteStations)) {
+            favoriteStations = settings.favoriteStations.filter(name => typeof name === "string");
+            localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+          }
+          if (Array.isArray(settings.pastSearches)) {
+            pastSearches = settings.pastSearches.filter(search => typeof search === "string").slice(0, 5);
+            localStorage.setItem("pastSearches", JSON.stringify(pastSearches));
+            updatePastSearches();
+          }
+          if (Array.isArray(settings.deletedStations)) {
+            deletedStations = settings.deletedStations.filter(name => typeof name === "string");
+            localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
+          }
+          if (settings.currentTab && typeof settings.currentTab === "string") {
+            const validTabs = ["best", "techno", "trance", "ukraine", "pop", "search", ...customTabs];
+            if (validTabs.includes(settings.currentTab)) {
+              currentTab = settings.currentTab;
+              localStorage.setItem("currentTab", currentTab);
+            }
+          }
+          loadStations();
+          switchTab(currentTab);
+          console.log("Settings imported:", settings);
+          alert("Settings imported successfully!");
         } catch (error) {
           console.error("Error importing settings:", error);
-          alert("Invalid settings file");
+          alert("Error importing settings. Please check the file format.");
         }
+        importFileInput.value = "";
       };
       reader.readAsText(file);
+    }
+
+    function populateSearchSuggestions() {
+      const suggestedCountries = [
+        "Germany", "France", "United Kingdom", "Italy", "Spain", "Netherlands",
+        "Switzerland", "Belgium", "Sweden", "Norway", "Denmark", "Austria",
+        "Poland", "Ukraine", "Canada", "United States", "Australia", "Japan",
+        "South Korea", "New Zealand"
+      ];
+      const suggestedGenres = [
+        "Pop", "Rock", "Dance", "Electronic", "Techno", "Trance", "House",
+        "EDM", "Hip-Hop", "Rap", "Jazz", "Classical", "Country", "Reggae",
+        "Blues", "Folk", "Metal", "R&B", "Soul", "Ambient"
+      ];
+
+      const countryDatalist = document.getElementById("suggestedCountries");
+      const genreDatalist = document.getElementById("suggestedGenres");
+
+      countryDatalist.innerHTML = suggestedCountries.map(country => `<option value="${country}">`).join("");
+      genreDatalist.innerHTML = suggestedGenres.map(genre => `<option value="${genre}">`).join("");
     }
 
     function updatePastSearches() {
       pastSearchesList.innerHTML = "";
       pastSearches.forEach(search => {
-        const div = document.createElement("div");
-        div.classList.add("past-search");
-        div.textContent = search;
-        div.addEventListener("click", () => {
-          searchQuery.value = search;
-          searchBtn.click();
-        });
-        pastSearchesList.appendChild(div);
+        const option = document.createElement("option");
+        option.value = search;
+        pastSearchesList.appendChild(option);
       });
     }
 
-    function populateSearchSuggestions() {
-      const countries = ["USA", "Ukraine", "UK", "Germany"];
-      const genres = ["Pop", "Rock", "Techno", "Trance"];
-      countries.forEach(country => {
-        const option = document.createElement("option");
-        option.value = country;
-        searchCountry.list.appendChild(option);
+    function normalizeCountry(country) {
+      if (!country) return "";
+      const countryMap = {
+        "ukraine": "Ukraine", "italy": "Italy", "german": "Germany",
+        "germany": "Germany", "france": "France", "spain": "Spain",
+        "usa": "United States", "united states": "United States",
+        "uk": "United Kingdom", "united kingdom": "United Kingdom",
+        "netherlands": "Netherlands", "canada": "Canada", "australia": "Australia",
+        "switzerland": "Switzerland", "belgium": "Belgium", "poland": "Poland",
+        "austria": "Austria", "sweden": "Sweden", "norway": "Norway",
+        "denmark": "Denmark", "japan": "Japan", "south korea": "South Korea",
+        "new zealand": "New Zealand"
+      };
+      const normalized = country.toLowerCase();
+      return countryMap[normalized] || country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
+    }
+
+    function isValidUrl(url) {
+      if (!url) return false;
+      try {
+        new URL(url);
+        return /^https:\/\/[^\s/$.?#].[^\s]*$/i.test(url);
+      } catch {
+        return false;
+      }
+    }
+
+    function normalizeUrl(url) {
+      if (!url) return "";
+      try {
+        const urlObj = new URL(url);
+        return urlObj.origin + urlObj.pathname;
+      } catch {
+        return url;
+      }
+    }
+
+    function resetStationInfo() {
+      const stationNameElement = currentStationInfo.querySelector(".station-name");
+      const stationGenreElement = currentStationInfo.querySelector(".station-genre");
+      const stationCountryElement = currentStationInfo.querySelector(".station-country");
+      const stationIconElement = currentStationInfo.querySelector(".station-icon");
+      if (stationNameElement) stationNameElement.textContent = "Select station";
+      else console.error(".station-name element not found");
+      if (stationGenreElement) stationGenreElement.textContent = "genre: -";
+      else console.error(".station-genre element not found");
+      if (stationCountryElement) stationCountryElement.textContent = "country: -";
+      else console.error(".station-country element not found");
+      if (stationIconElement) {
+        stationIconElement.innerHTML = "🎵";
+        stationIconElement.style.backgroundImage = "none";
+      } else console.error(".station-icon element not found");
+    }
+
+    async function loadStations() {
+      console.time("loadStations");
+      stationList.innerHTML = "<div class='station-item empty'>Loading...</div>";
+      try {
+        abortController.abort();
+        abortController = new AbortController();
+        const response = await fetch(`stations.json?t=${Date.now()}`, {
+          cache: "no-store",
+          signal: abortController.signal
+        });
+        console.log(`Response status: ${response.status}`);
+        const mergedStationLists = {};
+        if (response.ok) {
+          const newStations = await response.json();
+          Object.keys(newStations).forEach(tab => {
+            const uniqueStations = new Map();
+            (userAddedStations[tab] || []).forEach(s => {
+              if (!deletedStations.includes(s.name)) {
+                uniqueStations.set(s.name, s);
+              }
+            });
+            newStations[tab].forEach(s => {
+              if (!deletedStations.includes(s.name)) {
+                uniqueStations.set(s.name, s);
+              }
+            });
+            mergedStationLists[tab] = Array.from(uniqueStations.values());
+            console.log(`Added to ${tab}:`, mergedStationLists[tab].map(s => s.name));
+          });
+        } else {
+          console.warn("Failed to load stations.json, using cached data");
+        }
+        customTabs.forEach(tab => {
+          const uniqueStations = new Map();
+          (userAddedStations[tab] || []).forEach(s => {
+            if (!deletedStations.includes(s.name)) {
+              uniqueStations.set(s.name, s);
+            }
+          });
+          (stationLists[tab] || []).forEach(s => {
+            if (!deletedStations.includes(s.name)) {
+              uniqueStations.set(s.name, s);
+            }
+          });
+          mergedStationLists[tab] = Array.from(uniqueStations.values());
+          console.log(`Saved for custom tab ${tab}:`, mergedStationLists[tab].map(s => s.name));
+        });
+        stationLists = mergedStationLists;
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        favoriteStations = favoriteStations.filter(name => 
+          Object.values(stationLists).flat().some(s => s.name === name)
+        );
+        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+        const validTabs = [...Object.keys(stationLists), "best", "search", ...customTabs];
+        if (!validTabs.includes(currentTab)) {
+          currentTab = validTabs[0] || "techno";
+          localStorage.setItem("currentTab", currentTab);
+        }
+        currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
+        switchTab(currentTab);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error("Error loading stations:", error);
+          customTabs.forEach(tab => {
+            const uniqueStations = new Map();
+            (userAddedStations[tab] || []).forEach(s => {
+              if (!deletedStations.includes(s.name)) {
+                uniqueStations.set(s.name, s);
+              }
+            });
+            (stationLists[tab] || []).forEach(s => {
+              if (!deletedStations.includes(s.name)) {
+                uniqueStations.set(s.name, s);
+              }
+            });
+            stationLists[tab] = Array.from(uniqueStations.values());
+          });
+          localStorage.setItem("stationLists", JSON.stringify(stationLists));
+          stationList.innerHTML = "<div class='station-item empty'>Failed to load stations</div>";
+        }
+      } finally {
+        console.timeEnd("loadStations");
+      }
+    }
+
+    async function searchStations(query, country, genre) {
+      stationList.innerHTML = "<div class='station-item empty'>Searching...</div>";
+      try {
+        abortController.abort();
+        abortController = new AbortController();
+        const params = new URLSearchParams();
+        if (query) params.append("name", query);
+        if (country) params.append("country", country);
+        if (genre) params.append("tag", genre);
+        params.append("order", "clickcount");
+        params.append("reverse", "true");
+        params.append("limit", "2000");
+        const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
+        console.log("API request:", url);
+        const response = await fetch(url, {
+          signal: abortController.signal
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        let stations = await response.json();
+        stations = stations.filter(station => station.url_resolved && isValidUrl(station.url_resolved));
+        console.log("Received stations (after HTTPS filter):", stations.length);
+        renderSearchResults(stations);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error("Error searching stations:", error);
+          stationList.innerHTML = "<div class='station-item empty'>Failed to find stations</div>";
+        }
+      }
+    }
+
+    function renderSearchResults(stations) {
+      if (!stations.length) {
+        stationList.innerHTML = "<div class='station-item empty'>Nothing found</div>";
+        stationItems = [];
+        return;
+      }
+      const fragment = document.createDocumentFragment();
+      stations.forEach((station, index) => {
+        const item = document.createElement("div");
+        item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
+        item.dataset.value = station.url || station.url_resolved;
+        item.dataset.name = station.name || "Unknown";
+        item.dataset.genre = shortenGenre(station.tags || "Unknown");
+        item.dataset.country = station.country || "Unknown";
+        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
+        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '">` : "🎵 ";
+        item.innerHTML = `${iconHtml}<span class="station-name">${station.name}</span><button class="add-btn">ADD</button>`;
+        fragment.appendChild(item);
       });
-      genres.forEach(genre => {
-        const option = document.createElement("option");
-        option.value = genre;
-        searchGenre.list.appendChild(option);
+      stationList.innerHTML = "";
+      stationList.appendChild(fragment);
+      stationItems = document.querySelectorAll(".station-item");
+      if (stationItems.length && currentIndex < stationItems.length) {
+        changeStation(currentIndex);
+      }
+      stationList.onclick = e => {
+        const item = e.target.closest(".station-item");
+        const addBtn = e.target.closest(".add-btn");
+        if (item && !item.classList.contains("empty")) {
+          currentIndex = Array.from(stationItems).indexOf(item);
+          changeStation(currentIndex);
+        }
+        if (addBtn) {
+          e.stopPropagation();
+          showTabModal(item);
+        }
+      };
+    }
+
+    function shortenGenre(tags) {
+      const genres = tags.split(",").map(g => g.trim()).filter(g => g);
+      return genres.length > 4 ? genres.slice(0, 4).join(", ") + "..." : genres.join(", ");
+    }
+
+    function showTabModal(item) {
+      const overlay = document.createElement("div");
+      overlay.className = "modal-overlay";
+      const modal = document.createElement("div");
+      modal.className = "modal";
+      modal.innerHTML = `
+        <h2>Select tab</h2>
+        <div class="modal-tabs">
+          <button class="modal-tab-btn" data-tab="techno">TECHNO</button>
+          <button class="modal-tab-btn" data-tab="trance">TRANCE</button>
+          <button class="modal-tab-btn" data-tab="ukraine">UA</button>
+          <button class="modal-tab-btn" data-tab="pop">POP</button>
+          ${customTabs.map(tab => `<button class="modal-tab-btn" data-tab="${tab}">${tab.toUpperCase()}</button>`).join('')}
+          <button class="modal-cancel-btn">Cancel</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      document.body.appendChild(modal);
+      const closeModal = () => {
+        overlay.remove();
+        modal.remove();
+      };
+      overlay.addEventListener("click", closeModal);
+      modal.querySelectorAll(".modal-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const targetTab = btn.dataset.tab;
+          saveStation(item, targetTab);
+          closeModal();
+        });
       });
+      modal.querySelector(".modal-cancel-btn").addEventListener("click", closeModal);
+    }
+
+    function saveStation(item, targetTab) {
+      const stationName = item.dataset.name;
+      if (!stationLists[targetTab]) stationLists[targetTab] = [];
+      if (!userAddedStations[targetTab]) userAddedStations[targetTab] = [];
+      if (!stationLists[targetTab].some(s => s.name === stationName)) {
+        const newStation = {
+          value: item.dataset.value,
+          name: item.dataset.name,
+          genre: item.dataset.genre,
+          country: item.dataset.country,
+          favicon: item.dataset.favicon || "",
+          isFromSearch: currentTab === "search"
+        };
+        stationLists[targetTab].unshift(newStation);
+        userAddedStations[targetTab].unshift(newStation);
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+        console.log(`Added station ${stationName} to ${targetTab}:`, newStation);
+        if (currentTab !== "search") {
+          updateStationList();
+        }
+      } else {
+        alert("This station is already added to the selected tab!");
+      }
     }
 
     function renderTabs() {
+      const fixedTabs = ["best", "techno", "trance", "ukraine", "pop", "search"];
       tabsContainer.innerHTML = "";
-      const tabs = ["Best", "Techno", "Trance", "UA", "Pop", "Search", ...customTabs];
-      tabs.forEach(tab => {
+      fixedTabs.forEach(tab => {
         const btn = document.createElement("button");
-        btn.classList.add("tab-btn");
-        btn.textContent = tab;
-        btn.addEventListener("click", () => switchTab(tab));
+        btn.className = `tab-btn ${currentTab === tab ? "active" : ""}`;
+        btn.dataset.tab = tab;
+        btn.textContent = tab === "best" ? "Best" : tab === "ukraine" ? "UA" : tab === "search" ? "Search" : tab.charAt(0).toUpperCase() + tab.slice(1);
         tabsContainer.appendChild(btn);
       });
-      const addTabBtn = document.createElement("button");
-      addTabBtn.classList.add("add-tab-btn");
-      addTabBtn.textContent = "+";
-      addTabBtn.addEventListener("click", openNewTabModal);
-      tabsContainer.appendChild(addTabBtn);
+      customTabs.forEach(tab => {
+        if (typeof tab !== "string" || !tab.trim()) return;
+        const btn = document.createElement("button");
+        btn.className = `tab-btn ${currentTab === tab ? "active" : ""}`;
+        btn.dataset.tab = tab;
+        btn.textContent = tab.toUpperCase();
+        tabsContainer.appendChild(btn);
+      });
+      const addBtn = document.createElement("button");
+      addBtn.className = "add-tab-btn";
+      addBtn.textContent = "+";
+      tabsContainer.appendChild(addBtn);
+
+      tabsContainer.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+        if (customTabs.includes(btn.dataset.tab)) {
+          let longPressTimer;
+          btn.addEventListener("pointerdown", () => {
+            longPressTimer = setTimeout(() => showEditTabModal(btn.dataset.tab), 500);
+          });
+          btn.addEventListener("pointerup", () => clearTimeout(longPressTimer));
+          btn.addEventListener("pointerleave", () => clearTimeout(longPressTimer));
+        }
+      });
+
+      addBtn.addEventListener("click", showNewTabModal);
     }
 
-    function openNewTabModal() {
-      newTabModal.style.display = "block";
+    function showNewTabModal() {
+      const overlay = document.querySelector(".new-tab-modal");
+      const modal = overlay.querySelector(".modal");
+      const input = document.getElementById("newTabName");
+      const createBtn = document.getElementById("createTabBtn");
+      const cancelBtn = modal.querySelector(".modal-cancel-btn");
+
+      overlay.style.display = "block";
+      input.value = "";
+      input.focus();
+
+      const closeModal = () => {
+        overlay.style.display = "none";
+        createBtn.removeEventListener("click", createTabHandler);
+        cancelBtn.removeEventListener("click", closeModal);
+        overlay.removeEventListener("click", closeModal);
+        input.removeEventListener("keypress", keypressHandler);
+      };
+
+      const createTabHandler = () => {
+        const tabName = input.value.trim().toLowerCase();
+        if (!tabName) {
+          alert("Enter tab name!");
+          return;
+        }
+        if (["best", "techno", "trance", "ukraine", "pop", "search"].includes(tabName) || customTabs.includes(tabName)) {
+          alert("This tab name already exists!");
+          return;
+        }
+        if (tabName.length > 10 || !/^[a-z0-9_-]+$/.test(tabName)) {
+          alert("Tab name cannot exceed 10 characters and must contain only Latin letters, numbers, hyphen or underscore.");
+          return;
+        }
+        if (customTabs.length >= 7) {
+          alert("Maximum of 7 custom tabs reached!");
+          return;
+        }
+        customTabs.push(tabName);
+        stationLists[tabName] = [];
+        userAddedStations[tabName] = [];
+        localStorage.setItem("customTabs", JSON.stringify(customTabs));
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+        console.log(`Created new tab ${tabName}`);
+        renderTabs();
+        switchTab(tabName);
+        closeModal();
+      };
+
+      const keypressHandler = (e) => {
+        if (e.key === "Enter") createBtn.click();
+      };
+
+      createBtn.addEventListener("click", createTabHandler);
+      cancelBtn.addEventListener("click", closeModal);
+      overlay.addEventListener("click", closeModal);
+      input.addEventListener("keypress", keypressHandler);
+    }
+
+    function showEditTabModal(tab) {
+      const overlay = document.querySelector(".edit-tab-modal");
+      const modal = overlay.querySelector(".modal");
+      const input = document.getElementById("renameTabName");
+      const renameBtn = document.getElementById("renameTabBtn");
+      const deleteBtn = document.getElementById("deleteTabBtn");
+      const cancelBtn = modal.querySelector(".modal-cancel-btn");
+
+      overlay.style.display = "block";
+      input.value = tab;
+      input.focus();
+
+      const closeModal = () => {
+        overlay.style.display = "none";
+        renameBtn.removeEventListener("click", renameTabHandler);
+        deleteBtn.removeEventListener("click", deleteTabHandler);
+        cancelBtn.removeEventListener("click", closeModal);
+        overlay.removeEventListener("click", closeModal);
+        input.removeEventListener("keypress", keypressHandler);
+      };
+
+      const renameTabHandler = () => {
+        const newName = input.value.trim().toLowerCase();
+        if (!newName) {
+          alert("Enter new tab name!");
+          return;
+        }
+        if (["best", "techno", "trance", "ukraine", "pop", "search"].includes(newName) || customTabs.includes(newName)) {
+          alert("This tab name already exists!");
+          return;
+        }
+        if (newName.length > 10 || !/^[a-z0-9_-]+$/.test(newName)) {
+          alert("Tab name cannot exceed 10 characters and must contain only Latin letters, numbers, hyphen or underscore!");
+          return;
+        }
+        const index = customTabs.indexOf(tab);
+        customTabs[index] = newName;
+        stationLists[newName] = stationLists[tab] || [];
+        userAddedStations[newName] = userAddedStations[tab] || [];
+        delete stationLists[tab];
+        delete userAddedStations[tab];
+        localStorage.setItem("customTabs", JSON.stringify(customTabs));
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+        if (currentTab === tab) switchTab(newName);
+        renderTabs();
+        closeModal();
+      };
+
+      const deleteTabHandler = () => {
+        if (confirm(`Are you sure you want to delete the "${tab.toUpperCase()}" tab?`)) {
+          customTabs = customTabs.filter(t => t !== tab);
+          delete stationLists[tab];
+          delete userAddedStations[tab];
+          localStorage.setItem("customTabs", JSON.stringify(customTabs));
+          localStorage.setItem("stationLists", JSON.stringify(stationLists));
+          localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+          if (currentTab === tab) {
+            const newTab = customTabs.length > 0 ? customTabs[0] : "techno";
+            switchTab(newTab);
+          }
+          renderTabs();
+          closeModal();
+        }
+      };
+
+      const keypressHandler = (e) => {
+        if (e.key === "Enter") renameBtn.click();
+      };
+
+      renameBtn.addEventListener("click", renameTabHandler);
+      deleteBtn.addEventListener("click", deleteTabHandler);
+      cancelBtn.addEventListener("click", closeModal);
+      overlay.addEventListener("click", closeModal);
+      input.addEventListener("keypress", keypressHandler);
+    }
+
+    const themes = {
+      "shadow-pulse": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#00E676",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #00B248, #00E676)",
+        shadow: "rgba(0, 230, 118, 0.3)"
+      },
+      "dark-abyss": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#AA00FF",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #6A1B9A, #AA00FF)",
+        shadow: "rgba(170, 0, 255, 0.3)"
+      },
+      "emerald-glow": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#2EC4B6",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #1B998B, #2EC4B6)",
+        shadow: "rgba(46, 196, 182, 0.3)"
+      },
+      "retro-wave": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#FF69B4",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #C71585, #FF69B4)",
+        shadow: "rgba(255, 105, 180, 0.3)"
+      },
+      "neon-pulse": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#00F0FF",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #0077B6, #00F0FF)",
+        shadow: "rgba(0, 240, 255, 0.3)"
+      },
+      "lime-surge": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#B2FF59",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #00B248, #B2FF59)",
+        shadow: "rgba(178, 255, 89, 0.3)"
+      },
+      "flamingo-flash": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#FF4081",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #C71585, #FF4081)",
+        shadow: "rgba(255, 64, 129, 0.3)"
+      },
+      "aqua-glow": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#26C6DA",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #0077B6, #26C6DA)",
+        shadow: "rgba(38, 198, 218, 0.3)"
+      },
+      "aurora-haze": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#64FFDA",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #1B998B, #64FFDA)",
+        shadow: "rgba(100, 255, 218, 0.3)"
+      },
+      "starlit-amethyst": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#B388FF",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #6A1B9A, #B388FF)",
+        shadow: "rgba(179, 136, 255, 0.3)"
+      },
+      "lunar-frost": {
+        bodyBg: "#000000",
+        containerBg: "#000000",
+        accent: "#40C4FF",
+        text: "#FFFFFF",
+        accentGradient: "linear-gradient(45deg, #0077B6, #40C4FF)",
+        shadow: "rgba(64, 196, 255, 0.3)"
+      }
+    };
+    let currentTheme = localStorage.getItem("selectedTheme") || "shadow-pulse";
+    if (!themes[currentTheme]) {
+      currentTheme = "shadow-pulse";
+      localStorage.setItem("selectedTheme", currentTheme);
+    }
+
+    function applyTheme(theme) {
+      if (!themes[theme]) {
+        console.warn(`Theme ${theme} not found, using 'shadow-pulse'`);
+        theme = "shadow-pulse";
+        localStorage.setItem("selectedTheme", theme);
+      }
+      const root = document.documentElement;
+      root.style.setProperty("--body-bg", themes[theme].bodyBg);
+      root.style.setProperty("--container-bg", themes[theme].containerBg);
+      root.style.setProperty("--accent", themes[theme].accent);
+      root.style.setProperty("--text", themes[theme].text);
+      root.style.setProperty("--accent-gradient", themes[theme].accentGradient);
+      root.style.setProperty("--shadow", themes[theme].shadow);
+      localStorage.setItem("selectedTheme", theme);
+      currentTheme = theme;
+      document.documentElement.setAttribute("data-theme", theme);
+      const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+      if (themeColorMeta) {
+        themeColorMeta.setAttribute("content", themes[theme].accent);
+      }
+    }
+
+    function toggleTheme() {
+      const themesOrder = [
+        "shadow-pulse", "dark-abyss", "emerald-glow", "retro-wave",
+        "neon-pulse", "lime-surge", "flamingo-flash", "aqua-glow",
+        "aurora-haze", "starlit-amethyst", "lunar-frost"
+      ];
+      const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
+      applyTheme(nextTheme);
+    }
+
+    themeToggle.addEventListener("click", toggleTheme);
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").then(registration => {
+        registration.update();
+        registration.addEventListener("updatefound", () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener("statechange", () => {
+              if (newWorker.state === "activated" && navigator.serviceWorker.controller) {
+                if (window.confirm("New version of radio available. Update?")) {
+                  window.location.reload();
+                }
+              }
+            });
+          }
+        });
+      });
+
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data.type === "CACHE_UPDATED") {
+          console.log("Received cache update, updating stationLists");
+          const currentCacheVersion = localStorage.getItem("cacheVersion") || "0";
+          if (currentCacheVersion !== event.data.cacheVersion) {
+            favoriteStations = favoriteStations.filter((name) =>
+              Object.values(stationLists).flat().some((s) => s.name === name)
+            );
+            localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+            localStorage.setItem("cacheVersion", event.data.cacheVersion);
+            loadStations();
+          }
+        }
+        if (event.data.type === "NETWORK_STATUS" && event.data.online && intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
+          console.log("Network restored (SW), trying to play");
+          debouncedTryAutoPlay();
+        }
+        if (event.data.type === "RESUME_PLAYBACK" && intendedPlaying) {
+          console.log("Received RESUME_PLAYBACK from SW, attempting to play");
+          debouncedTryAutoPlay();
+        }
+      });
+    }
+
+    let autoPlayTimeout = null;
+    function debouncedTryAutoPlay(retryCount = 2, delay = 500) {
+      if (isAutoPlayPending) {
+        console.log("debouncedTryAutoPlay: Skip, previous tryAutoPlay still active");
+        return;
+      }
+      const now = Date.now();
+      const currentStationUrl = stationItems?.[currentIndex]?.dataset?.value;
+      const normalizedCurrentUrl = normalizeUrl(currentStationUrl);
+      const normalizedAudioSrc = normalizeUrl(audio.src);
+      if (now - lastSuccessfulPlayTime < 500 && normalizedAudioSrc === normalizedCurrentUrl) {
+        console.log("debouncedTryAutoPlay: Skip, recently played successfully for same station");
+        return;
+      }
+      if (autoPlayTimeout) {
+        clearTimeout(autoPlayTimeout);
+      }
+      autoPlayRequestId++;
+      const currentRequestId = autoPlayRequestId;
+      autoPlayTimeout = setTimeout(() => tryAutoPlay(retryCount, delay, currentRequestId), 0);
+    }
+
+    async function tryAutoPlay(retryCount = 2, delay = 500, requestId) {
+      if (isAutoPlayPending) {
+        console.log("tryAutoPlay: Skip, another tryAutoPlay active");
+        return;
+      }
+      if (requestId !== autoPlayRequestId) {
+        console.log("tryAutoPlay: Skip, outdated request ID", { requestId, current: autoPlayRequestId });
+        return;
+      }
+      isAutoPlayPending = true;
+
+      try {
+        if (!navigator.onLine) {
+          console.log("Device offline: skipping playback");
+          return;
+        }
+        if (!intendedPlaying || !stationItems?.length || currentIndex >= stationItems.length) {
+          console.log("Skip tryAutoPlay: invalid state", { intendedPlaying, hasStationItems: !!stationItems?.length, isIndexValid: currentIndex < stationItems.length });
+          document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+          return;
+        }
+        const currentStationUrl = stationItems[currentIndex].dataset.value;
+        const initialStationUrl = currentStationUrl;
+        const normalizedCurrentUrl = normalizeUrl(currentStationUrl);
+        const normalizedAudioSrc = normalizeUrl(audio.src);
+        if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
+          console.log("Skip tryAutoPlay: audio already playing with correct src, no errors and active stream");
+          return;
+        }
+        if (!isValidUrl(currentStationUrl)) {
+          console.error("Invalid URL:", currentStationUrl);
+          errorCount++;
+          if (errorCount >= ERROR_LIMIT) {
+            console.error("Reached playback error limit");
+            resetStationInfo();
+          }
+          return;
+        }
+
+        const attemptPlay = async (attemptsLeft) => {
+          if (streamAbortController) {
+            streamAbortController.abort();
+            console.log("Previous audio stream canceled");
+            streamAbortController = null;
+          }
+          if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
+            console.log("tryAutoPlay: Station changed, canceling playback for", initialStationUrl);
+            return;
+          }
+          if (requestId !== autoPlayRequestId) {
+            console.log("tryAutoPlay: Skip attempt, outdated request ID", { requestId, current: autoPlayRequestId });
+            return;
+          }
+
+          streamAbortController = new AbortController();
+          audio.pause();
+          audio.src = null;
+          audio.load();
+          audio.src = currentStationUrl + "?nocache=" + Date.now();
+          console.log(`Playback attempt (${attemptsLeft} left):`, audio.src);
+
+          try {
+            await audio.play();
+            errorCount = 0;
+            isPlaying = true;
+            lastSuccessfulPlayTime = Date.now();
+            console.log("Playback started successfully");
+            document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
+            localStorage.setItem("isPlaying", isPlaying);
+            if (stationItems[currentIndex]) {
+              updateCurrentStation(stationItems[currentIndex]);
+            }
+          } catch (error) {
+            if (error.name === 'AbortError') {
+              console.log("Stream request canceled");
+              return;
+            }
+            console.error("Playback error:", error);
+            document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+            if (attemptsLeft > 1) {
+              if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
+                console.log("tryAutoPlay: Station changed during retry, canceling");
+                return;
+              }
+              if (requestId !== autoPlayRequestId) {
+                console.log("tryAutoPlay: Skip retry, outdated request ID", { requestId, current: autoPlayRequestId });
+                return;
+              }
+              console.log(`Retrying in ${delay}ms`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              await attemptPlay(attemptsLeft - 1);
+            } else {
+              errorCount++;
+              if (errorCount >= ERROR_LIMIT) {
+                console.error("Reached playback error limit");
+                resetStationInfo();
+              }
+            }
+          } finally {
+            streamAbortController = null;
+          }
+        };
+
+        await attemptPlay(retryCount);
+      } finally {
+        isAutoPlayPending = false;
+        streamAbortController = null;
+      }
     }
 
     function switchTab(tab) {
+      const validTabs = ["best", "techno", "trance", "ukraine", "pop", "search", ...customTabs];
+      if (!validTabs.includes(tab)) {
+        tab = "techno";
+      }
       currentTab = tab;
       localStorage.setItem("currentTab", tab);
-      loadStations();
+      const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
+      const maxIndex = tab === "best" ? favoriteStations.length - 1 : tab === "search" ? 0 : stationLists[tab]?.length - 1 || 0;
+      currentIndex = savedIndex <= maxIndex && savedIndex >= 0 ? savedIndex : 0;
+      searchInput.style.display = tab === "search" ? "flex" : "none";
+      searchQuery.value = "";
+      searchCountry.value = "";
+      searchGenre.value = "";
+      if (tab === "search") populateSearchSuggestions();
+      updateStationList();
+      renderTabs();
+      if (stationItems?.length && currentIndex < stationItems.length && intendedPlaying) {
+        const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
+        const normalizedAudioSrc = normalizeUrl(audio.src);
+        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
+          console.log("switchTab: Starting playback after tab change");
+          isAutoPlayPending = false;
+          debouncedTryAutoPlay();
+        } else {
+          console.log("switchTab: Skip playback, station already playing");
+        }
+      } else {
+        console.log("switchTab: Skip playback, invalid state");
+      }
     }
 
-    function loadStations() {
-      fetch("/stations.json").then(response => response.json()).then(data => {
-        stationLists = data;
-        renderStationList();
-      }).catch(error => {
-        console.error("Error loading stations:", error);
-        stationList.innerHTML = "<div class='station-item empty'>Failed to load stations</div>";
-      });
-    }
-
-    function renderStationList() {
-      stationList.innerHTML = "";
-      const stations = stationLists[currentTab] || [];
-      if (stations.length === 0) {
-        stationList.innerHTML = "<div class='station-item empty'>No stations available</div>";
+    function updateStationList() {
+      if (!stationList) {
+        console.error("stationList not found");
         return;
       }
-      stations.forEach(station => {
+      let stations = currentTab === "best"
+        ? favoriteStations
+            .map(name => Object.values(stationLists).flat().find(s => s.name === name))
+            .filter(s => s)
+        : stationLists[currentTab] || [];
+
+      if (!stations.length) {
+        currentIndex = 0;
+        stationItems = [];
+        stationList.innerHTML = `<div class="station-item empty">${currentTab === "best" ? "No favorite stations" : "No stations in this category"}</div>`;
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      stations.forEach((station, index) => {
         const item = document.createElement("div");
-        item.classList.add("station-item");
-        item.textContent = station.name;
-        item.dataset.value = station.url;
-        item.addEventListener("click", () => changeStation(stationItems.indexOf(item)));
-        stationList.appendChild(item);
+        item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
+        item.dataset.value = station.value;
+        item.dataset.name = station.name;
+        item.dataset.genre = shortenGenre(station.genre);
+        item.dataset.country = station.country;
+        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
+        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '; console.warn('Error loading favicon:', '${item.dataset.favicon}');">` : "🎵 ";
+        const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
+          ? `<button class="delete-btn">🗑</button>`
+          : "";
+        item.innerHTML = `
+          ${iconHtml}
+          <span class="station-name">${station.name}</span>
+          <div class="buttons-container">
+            ${deleteButton}
+            <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>
+          </div>`;
+        fragment.appendChild(item);
       });
-      stationItems = Array.from(stationList.children);
-      if (intendedPlaying && currentIndex < stationItems.length) {
+      stationList.innerHTML = "";
+      stationList.appendChild(fragment);
+      stationItems = stationList.querySelectorAll(".station-item");
+
+      if (stationItems.length && currentIndex < stationItems.length && !stationItems[currentIndex].classList.contains("empty")) {
+        stationItems[currentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      stationList.onclick = e => {
+        const item = e.target.closest(".station-item");
+        const favoriteBtn = e.target.closest(".favorite-btn");
+        const deleteBtn = e.target.closest(".delete-btn");
+        if (item && !item.classList.contains("empty")) {
+          currentIndex = Array.from(stationItems).indexOf(item);
+          changeStation(currentIndex);
+        }
+        if (favoriteBtn) {
+          e.stopPropagation();
+          toggleFavorite(item.dataset.name);
+        }
+        if (deleteBtn) {
+          e.stopPropagation();
+          if (confirm(`Are you sure you want to delete station "${item.dataset.name}" from the list?`)) {
+            deleteStation(item.dataset.name);
+          }
+        }
+      };
+
+      if (stationItems.length && currentIndex < stationItems.length) {
         changeStation(currentIndex);
       }
     }
 
-    function changeStation(index) {
-      if (index < 0 || index >= stationItems.length) return;
-      currentIndex = index;
-      audio.src = stationItems[index].dataset.value;
-      audio.preload = "auto";
-      if (intendedPlaying) {
-        debouncedTryAutoPlay();
+    function toggleFavorite(stationName) {
+      if (favoriteStations.includes(stationName)) {
+        favoriteStations = favoriteStations.filter(name => name !== stationName);
+      } else {
+        favoriteStations.unshift(stationName);
       }
-      const stationName = stationItems[index].textContent;
-      currentStationInfo.querySelector(".station-name").textContent = stationName;
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: stationName,
-          artist: "Radio S O",
-          album: currentTab
-        });
+      localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+      if (currentTab === "best") switchTab("best");
+      else updateStationList();
+    }
+
+    function deleteStation(stationName) {
+      if (Array.isArray(stationLists[currentTab])) {
+        const station = stationLists[currentTab].find(s => s.name === stationName);
+        if (!station) {
+          console.warn(`Station ${stationName} not found in ${currentTab}`);
+          return;
+        }
+        stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
+        userAddedStations[currentTab] = userAddedStations[currentTab]?.filter(s => s.name !== stationName) || [];
+        if (!station.isFromSearch && !deletedStations.includes(stationName)) {
+          if (!Array.isArray(deletedStations)) deletedStations = [];
+          deletedStations.push(stationName);
+          localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
+          console.log(`Added ${stationName} to deletedStations:`, deletedStations);
+        }
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+        favoriteStations = favoriteStations.filter(name => name !== stationName);
+        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+        console.log(`Deleted station ${stationName} from ${currentTab}`);
+        if (stationLists[currentTab].length === 0) {
+          currentIndex = 0;
+        } else if (currentIndex >= stationLists[currentTab].length) {
+          currentIndex = stationLists[currentTab].length - 1;
+        }
+        switchTab(currentTab);
       }
     }
 
-    function searchStations(query, country, genre) {
-      const filteredStations = Object.values(stationLists).flat().filter(station => {
-        const matchesQuery = query ? station.name.toLowerCase().includes(query.toLowerCase()) : true;
-        const matchesCountry = country ? station.country?.toUpperCase() === country : true;
-        const matchesGenre = genre ? station.genre?.toLowerCase() === genre : true;
-        return matchesQuery && matchesCountry && matchesGenre;
-      });
-      stationList.innerHTML = "";
-      if (filteredStations.length === 0) {
-        stationList.innerHTML = "<div class='station-item empty'>No stations found</div>";
+    function changeStation(index) {
+      if (!stationItems || index < 0 || index >= stationItems.length || stationItems[index].classList.contains("empty")) return;
+      const item = stationItems[index];
+      stationItems.forEach(i => i.classList.remove("selected"));
+      item.classList.add("selected");
+      currentIndex = index;
+      audio.src = item.dataset.value;
+      audio.preload = "auto";
+      updateCurrentStation(item);
+      localStorage.setItem(`lastStation_${currentTab}`, index);
+      if (intendedPlaying) {
+        const normalizedCurrentUrl = normalizeUrl(item.dataset.value);
+        const normalizedAudioSrc = normalizeUrl(audio.src);
+        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
+          console.log("changeStation: Starting playback after station change");
+          isAutoPlayPending = false;
+          debouncedTryAutoPlay();
+        } else {
+          console.log("changeStation: Skip playback, station already playing");
+        }
+      } else {
+        console.log("changeStation: Skip playback, invalid state");
+      }
+    }
+
+    function updateCurrentStation(item) {
+      if (!currentStationInfo || !item.dataset) {
+        console.error("currentStationInfo or item.dataset not found");
+        resetStationInfo();
         return;
       }
-      filteredStations.forEach(station => {
-        const item = document.createElement("div");
-        item.classList.add("station-item");
-        item.textContent = station.name;
-        item.dataset.value = station.url;
-        item.addEventListener("click", () => changeStation(stationItems.indexOf(item)));
-        stationList.appendChild(item);
-      });
-      stationItems = Array.from(stationList.children);
-    }
+      const stationNameElement = currentStationInfo.querySelector(".station-name");
+      const stationGenreElement = currentStationInfo.querySelector(".station-genre");
+      const stationCountryElement = currentStationInfo.querySelector(".station-country");
+      const stationIconElement = currentStationInfo.querySelector(".station-icon");
 
-    function applyTheme(theme) {
-      document.body.setAttribute("data-theme", theme);
-      localStorage.setItem("selectedTheme", theme);
-    }
+      console.log("Updating currentStationInfo with data:", item.dataset);
 
-    function resetStationInfo() {
-      currentStationInfo.querySelector(".station-name").textContent = "Обирайте станцію";
-      currentStationInfo.querySelector(".station-genre").textContent = "жанр: -";
-      currentStationInfo.querySelector(".station-country").textContent = "країна: -";
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.metadata = null;
+      if (stationNameElement) {
+        stationNameElement.textContent = item.dataset.name || "";
+      } else {
+        console.error(".station-name element not found");
       }
-    }
-
-    const debouncedTryAutoPlay = debounce(tryAutoPlay, 300);
-
-    function debounce(func, delay) {
-      let timeout;
-      return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func(...args), delay);
-      };
-    }
-
-    function tryAutoPlay() {
-      if (!intendedPlaying || audio.readyState >= 2) return;
-      audio.load();
-      audio.play().catch(error => {
-        console.error("Auto-play error:", error);
-      });
-    }
-
-    function normalizeUrl(url) {
-      return url.toLowerCase().replace(/\/$/, "");
-    }
-
-    function normalizeCountry(country) {
-      return country.toUpperCase();
+      if (stationGenreElement) {
+        stationGenreElement.textContent = `genre: ${item.dataset.genre || ""}`;
+      } else {
+        console.error(".station-genre element not found");
+      }
+      if (stationCountryElement) {
+        stationCountryElement.textContent = `country: ${item.dataset.country || ""}`;
+      } else {
+        console.error(".station-country element not found");
+      }
+      if (stationIconElement) {
+        if (item.dataset.favicon && isValidUrl(item.dataset.favicon)) {
+          stationIconElement.innerHTML = "";
+          stationIconElement.style.backgroundImage = `url(${item.dataset.favicon})`;
+          stationIconElement.style.backgroundSize = "contain";
+          stationIconElement.style.backgroundRepeat = "no-repeat";
+          stationIconElement.style.backgroundPosition = "center";
+        } else {
+          stationIconElement.innerHTML = "🎵";
+          stationIconElement.style.backgroundImage = "none";
+        }
+      } else {
+        console.error(".station-icon element not found");
+      }
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: item.dataset.name || "Unknown Station",
+          artist: `${item.dataset.genre || ""} | ${item.dataset.country || ""}`,
+          album: "Radio Music S O",
+          artwork: item.dataset.favicon && isValidUrl(item.dataset.favicon) ? [
+            { src: item.dataset.favicon, sizes: "96x96", type: "image/png" },
+            { src: item.dataset.favicon, sizes: "128x128", type: "image/png" },
+            { src: item.dataset.favicon, sizes: "192x192", type: "image/png" },
+            { src: item.dataset.favicon, sizes: "256x256", type: "image/png" },
+            { src: item.dataset.favicon, sizes: "384x384", type: "image/png" },
+            { src: item.dataset.favicon, sizes: "512x512", type: "image/png" }
+          ] : []
+        });
+      }
     }
 
     function prevStation() {
       if (!stationItems?.length) return;
       currentIndex = currentIndex > 0 ? currentIndex - 1 : stationItems.length - 1;
-      if (stationItems[currentIndex].classList.contains("empty")) currentIndex = stationItems.length - 1;
+      if (stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
       changeStation(currentIndex);
     }
 
@@ -392,7 +1273,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Зупинка відтворення");
         audio.pause();
         isPlaying = false;
-        intendedPlaying = false;  // Скидаємо намір при ручній паузі
+        intendedPlaying = false;
         playPauseBtn.textContent = "▶";
         document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       }
@@ -422,6 +1303,9 @@ document.addEventListener("DOMContentLoaded", () => {
           console.log("visibilitychange: Starting playback after visibility change");
           isAutoPlayPending = false;
           debouncedTryAutoPlay();
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'RESUME_PLAYBACK' });
+          }
         }
       },
       resume: () => {
@@ -485,7 +1369,7 @@ document.addEventListener("DOMContentLoaded", () => {
         errorTimeout = setTimeout(() => {
           debouncedTryAutoPlay();
           errorTimeout = null;
-        }, 500);
+        }, 500); // Reduced timeout for faster retries
       } else if (errorCount >= ERROR_LIMIT) {
         console.error("Reached playback error limit");
         resetStationInfo();
@@ -522,31 +1406,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if ("mediaSession" in navigator) {
       navigator.mediaSession.setActionHandler("play", () => {
         if (audio.paused && intendedPlaying) {
-          console.log("MediaSession play викликано (наприклад, від Bluetooth) - відновлення останньої станції");
+          console.log("MediaSession play triggered (e.g., from Bluetooth) - resuming last station");
           debouncedTryAutoPlay();
         }
       });
-
       navigator.mediaSession.setActionHandler("pause", () => {
         if (!audio.paused) {
-          console.log("MediaSession pause викликано - зупинка відтворення");
+          console.log("MediaSession pause triggered - stopping playback");
           audio.pause();
           intendedPlaying = false;
           localStorage.setItem("intendedPlaying", intendedPlaying);
         }
       });
-
       navigator.mediaSession.setActionHandler("previoustrack", prevStation);
       navigator.mediaSession.setActionHandler("nexttrack", nextStation);
     }
 
     if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
       navigator.mediaDevices.addEventListener("devicechange", async () => {
-        console.log("Зміна медіапристрою (можливе повторне підключення Bluetooth)");
+        console.log("Media device change detected (possible Bluetooth reconnection)");
         const devices = await navigator.mediaDevices.enumerateDevices();
         const hasAudioOutput = devices.some(device => device.kind === "audiooutput" && device.label.includes("Bluetooth"));
         if (intendedPlaying && audio.paused && hasAudioOutput) {
-          console.log("Виявлено пристрій, схожий на Bluetooth - спроба автовідновлення");
+          console.log("Bluetooth-like device detected - attempting auto-resume");
           debouncedTryAutoPlay();
           if (navigator.serviceWorker.controller) {
             navigator.serviceWorker.controller.postMessage({ type: 'RESUME_PLAYBACK' });
@@ -555,10 +1437,11 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => console.warn("Дозвіл на медіа відхилено:", err));
+    navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => console.warn("Media permission denied:", err));
 
     navigator.serviceWorker.addEventListener('message', (event) => {
       if (event.data.type === "RESUME_PLAYBACK" && intendedPlaying) {
+        console.log("Received RESUME_PLAYBACK from SW, attempting to play");
         debouncedTryAutoPlay();
       }
     });
