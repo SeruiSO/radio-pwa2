@@ -36,8 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBtn = document.querySelector(".search-btn");
   const pastSearchesList = document.getElementById("pastSearches");
   const tabsContainer = document.getElementById("tabs");
+  const newTabModal = document.getElementById("newTabModal");
+  const newTabInput = document.getElementById("newTabInput");
+  const createTabBtn = document.querySelector(".new-tab-modal .modal-tab-btn");
+  const cancelTabBtn = document.querySelector(".new-tab-modal .modal-cancel-btn");
 
-  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
+  if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer || !newTabModal || !newTabInput || !createTabBtn || !cancelTabBtn) {
     console.error("One of required DOM elements not found", {
       audio: !!audio,
       stationList: !!stationList,
@@ -54,7 +58,11 @@ document.addEventListener("DOMContentLoaded", () => {
       searchGenre: !!searchGenre,
       searchBtn: !!searchBtn,
       pastSearchesList: !!pastSearchesList,
-      tabsContainer: !!tabsContainer
+      tabsContainer: !!tabsContainer,
+      newTabModal: !!newTabModal,
+      newTabInput: !!newTabInput,
+      createTabBtn: !!createTabBtn,
+      cancelTabBtn: !!cancelTabBtn
     });
     setTimeout(initializeApp, 100);
     return;
@@ -124,6 +132,22 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") searchBtn.click();
     });
 
+    createTabBtn.addEventListener("click", () => {
+      const tabName = newTabInput.value.trim();
+      if (tabName && !customTabs.includes(tabName)) {
+        customTabs.push(tabName);
+        localStorage.setItem("customTabs", JSON.stringify(customTabs));
+        renderTabs();
+        newTabModal.style.display = "none";
+        newTabInput.value = "";
+      }
+    });
+
+    cancelTabBtn.addEventListener("click", () => {
+      newTabModal.style.display = "none";
+      newTabInput.value = "";
+    });
+
     function exportSettings() {
       const settings = {
         selectedTheme: localStorage.getItem("selectedTheme") || "shadow-pulse",
@@ -184,16 +208,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function populateSearchSuggestions() {
-      // Assuming you have lists for countries and genres
-      const countries = ["USA", "Ukraine", "UK", "Germany"]; // Example
-      const genres = ["Pop", "Rock", "Techno", "Trance"]; // Example
-
+      const countries = ["USA", "Ukraine", "UK", "Germany"];
+      const genres = ["Pop", "Rock", "Techno", "Trance"];
       countries.forEach(country => {
         const option = document.createElement("option");
         option.value = country;
         searchCountry.list.appendChild(option);
       });
-
       genres.forEach(genre => {
         const option = document.createElement("option");
         option.value = genre;
@@ -218,6 +239,10 @@ document.addEventListener("DOMContentLoaded", () => {
       tabsContainer.appendChild(addTabBtn);
     }
 
+    function openNewTabModal() {
+      newTabModal.style.display = "block";
+    }
+
     function switchTab(tab) {
       currentTab = tab;
       localStorage.setItem("currentTab", tab);
@@ -225,18 +250,68 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function loadStations() {
-      // Placeholder for loading stations from stations.json or localStorage
-      // For example:
       fetch("/stations.json").then(response => response.json()).then(data => {
         stationLists = data;
         renderStationList();
+      }).catch(error => {
+        console.error("Error loading stations:", error);
+        stationList.innerHTML = "<div class='station-item empty'>Failed to load stations</div>";
       });
     }
 
     function renderStationList() {
       stationList.innerHTML = "";
       const stations = stationLists[currentTab] || [];
+      if (stations.length === 0) {
+        stationList.innerHTML = "<div class='station-item empty'>No stations available</div>";
+        return;
+      }
       stations.forEach(station => {
+        const item = document.createElement("div");
+        item.classList.add("station-item");
+        item.textContent = station.name;
+        item.dataset.value = station.url;
+        item.addEventListener("click", () => changeStation(stationItems.indexOf(item)));
+        stationList.appendChild(item);
+      });
+      stationItems = Array.from(stationList.children);
+      if (intendedPlaying && currentIndex < stationItems.length) {
+        changeStation(currentIndex);
+      }
+    }
+
+    function changeStation(index) {
+      if (index < 0 || index >= stationItems.length) return;
+      currentIndex = index;
+      audio.src = stationItems[index].dataset.value;
+      audio.preload = "auto";
+      if (intendedPlaying) {
+        debouncedTryAutoPlay();
+      }
+      const stationName = stationItems[index].textContent;
+      currentStationInfo.querySelector(".station-name").textContent = stationName;
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: stationName,
+          artist: "Radio S O",
+          album: currentTab
+        });
+      }
+    }
+
+    function searchStations(query, country, genre) {
+      const filteredStations = Object.values(stationLists).flat().filter(station => {
+        const matchesQuery = query ? station.name.toLowerCase().includes(query.toLowerCase()) : true;
+        const matchesCountry = country ? station.country?.toUpperCase() === country : true;
+        const matchesGenre = genre ? station.genre?.toLowerCase() === genre : true;
+        return matchesQuery && matchesCountry && matchesGenre;
+      });
+      stationList.innerHTML = "";
+      if (filteredStations.length === 0) {
+        stationList.innerHTML = "<div class='station-item empty'>No stations found</div>";
+        return;
+      }
+      filteredStations.forEach(station => {
         const item = document.createElement("div");
         item.classList.add("station-item");
         item.textContent = station.name;
@@ -247,16 +322,18 @@ document.addEventListener("DOMContentLoaded", () => {
       stationItems = Array.from(stationList.children);
     }
 
-    function changeStation(index) {
-      currentIndex = index;
-      audio.src = stationItems[index].dataset.value;
-      audio.preload = "auto";
-      if (intendedPlaying) {
-        debouncedTryAutoPlay();
+    function applyTheme(theme) {
+      document.body.setAttribute("data-theme", theme);
+      localStorage.setItem("selectedTheme", theme);
+    }
+
+    function resetStationInfo() {
+      currentStationInfo.querySelector(".station-name").textContent = "Обирайте станцію";
+      currentStationInfo.querySelector(".station-genre").textContent = "жанр: -";
+      currentStationInfo.querySelector(".station-country").textContent = "країна: -";
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = null;
       }
-      // Update current station info
-      const stationName = stationItems[index].textContent;
-      currentStationInfo.querySelector(".station-name").textContent = stationName;
     }
 
     const debouncedTryAutoPlay = debounce(tryAutoPlay, 300);
@@ -282,27 +359,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function normalizeCountry(country) {
-      // Placeholder for country normalization
       return country.toUpperCase();
     }
-
-    function searchStations(query, country, genre) {
-      // Placeholder for searching stations
-      console.log("Searching for", query, country, genre);
-      // Update stationList accordingly
-    }
-
-    function resetStationInfo() {
-      currentStationInfo.querySelector(".station-name").textContent = "Обирайте станцію";
-      // Reset other info
-    }
-
-    function applyTheme(theme) {
-      document.body.setAttribute("data-theme", theme);
-    }
-
-    const currentTheme = localStorage.getItem("selectedTheme") || "shadow-pulse";
-    // More functions in the truncated part, assuming they are unchanged...
 
     function prevStation() {
       if (!stationItems?.length) return;
@@ -463,21 +521,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if ("mediaSession" in navigator) {
       navigator.mediaSession.setActionHandler("play", () => {
-        if (audio.paused && intendedPlaying) {  // Відтворюємо, якщо користувач мав намір
+        if (audio.paused && intendedPlaying) {
           console.log("MediaSession play викликано (наприклад, від Bluetooth) - відновлення останньої станції");
-          debouncedTryAutoPlay();  // Використовуємо вашу логіку автовідтворення
+          debouncedTryAutoPlay();
         }
       });
-      
+
       navigator.mediaSession.setActionHandler("pause", () => {
         if (!audio.paused) {
           console.log("MediaSession pause викликано - зупинка відтворення");
           audio.pause();
-          intendedPlaying = false;  // Вважаємо, що зовнішня пауза означає відсутність наміру
+          intendedPlaying = false;
           localStorage.setItem("intendedPlaying", intendedPlaying);
         }
       });
-      
+
       navigator.mediaSession.setActionHandler("previoustrack", prevStation);
       navigator.mediaSession.setActionHandler("nexttrack", nextStation);
     }
@@ -486,7 +544,7 @@ document.addEventListener("DOMContentLoaded", () => {
       navigator.mediaDevices.addEventListener("devicechange", async () => {
         console.log("Зміна медіапристрою (можливе повторне підключення Bluetooth)");
         const devices = await navigator.mediaDevices.enumerateDevices();
-        const hasAudioOutput = devices.some(device => device.kind === "audiooutput" && device.label.includes("Bluetooth"));  // Грубая перевірка; мітки потребують дозволу
+        const hasAudioOutput = devices.some(device => device.kind === "audiooutput" && device.label.includes("Bluetooth"));
         if (intendedPlaying && audio.paused && hasAudioOutput) {
           console.log("Виявлено пристрій, схожий на Bluetooth - спроба автовідновлення");
           debouncedTryAutoPlay();
