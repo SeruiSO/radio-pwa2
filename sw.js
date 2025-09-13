@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v72';
+const CACHE_NAME = 'radio-cache-v72541';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -130,3 +130,14 @@ if (!navigator.onLine && wasOnline) {
   wasOnline = false;
   startNetworkCheck();
 }
+
+self.addEventListener('message', (event) => {
+  if (event.data.type === 'RESUME_PLAYBACK') {
+    // Транслюємо всім клієнтам для відновлення
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: "RESUME_PLAYBACK" });
+      });
+    });
+  }
+});
