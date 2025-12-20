@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v731212'; // Updated cache version
+const CACHE_NAME = 'radio-cache-v72';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -12,39 +12,15 @@ self.addEventListener('install', (event) => {
         '/manifest.json',
         '/ping.txt'
       ]).then(() => {
-        return caches.keys().then((cacheNames) => {
-          return Promise.all(
-            cacheNames.map((cacheName) => {
-              if (cacheName !== CACHE_NAME) {
-                return caches.delete(cacheName);
-              }
-            })
-          );
-        });
-      });
-    }).then(() => self.skipWaiting()) // Force immediate activation
-  );
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    Promise.all([
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
+        caches.keys().then((cacheNames) => {
+          return Promise.all(cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME) {
               return caches.delete(cacheName);
             }
-          })
-        );
-      }),
-      self.clients.claim(), // Take control of clients immediately
-      self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-        clients.forEach((client) => {
-          client.postMessage({ type: 'CACHE_UPDATED', cacheVersion: CACHE_NAME });
+          }));
         });
-      })
-    ])
+      });
+    })
   );
 });
 
@@ -52,54 +28,69 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (event.request.url.endsWith('stations.json')) {
-        return fetch(event.request, { cache: 'no-store', signal: new AbortController().signal })
-          .then((networkResponse) => {
-            if (networkResponse.ok) {
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, networkResponse.clone());
-              });
-            }
-            return networkResponse;
-          })
-          .catch(() => caches.match(event.request).then((cachedResponse) => {
-            return cachedResponse || caches.match('/index.html');
-          }));
-      }
-      return response || fetch(event.request).then((networkResponse) => {
-        if (networkResponse.ok && event.request.method === 'GET') {
+        return fetch(event.request, { cache: 'no-store', signal: new AbortController().signal }).then((networkResponse) => {
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, networkResponse.clone());
           });
-        }
+          return networkResponse;
+        }).catch(() => caches.match('/index.html'));
+      }
+      return response || fetch(event.request).then((networkResponse) => {
         return networkResponse;
       }).catch(() => caches.match('/index.html'));
     })
   );
 });
 
-// Network status monitoring
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.matchAll().then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({ type: 'CACHE_UPDATED', cacheVersion: CACHE_NAME });
+    });
+  });
+});
+
+// Моніторинг стану мережі
 let wasOnline = navigator.onLine;
 let checkInterval = null;
 
 function startNetworkCheck() {
   if (!checkInterval) {
     checkInterval = setInterval(() => {
-      fetch('/ping.txt', { method: 'HEAD', cache: 'no-store' })
-        .then((response) => {
-          if (!wasOnline && response.ok) {
+      fetch("/ping.txt", { method: "HEAD", cache: "no-store" })
+        .then(() => {
+          if (!wasOnline) {
             wasOnline = true;
-            broadcastNetworkStatus(true);
+            self.clients.matchAll().then(clients => {
+              clients.forEach(client => {
+                client.postMessage({ type: "NETWORK_STATUS", online: true });
+              });
+            });
             stopNetworkCheck(); // Stop polling once online
-            broadcastResumePlayback(); // Trigger playback resumption
           }
         })
-        .catch(() => {
+        .catch(error => {
           if (wasOnline) {
             wasOnline = false;
-            broadcastNetworkStatus(false);
+            self.clients.matchAll().then(clients => {
+              clients.forEach(client => {
+                client.postMessage({ type: "NETWORK_STATUS", online: false });
+              });
+            });
           }
         });
-    }, 1500); // Reduced polling interval to 1.5 seconds for faster detection
+    }, 2000); // Перевірка кожні 2 секунди
   }
 }
 
@@ -110,43 +101,27 @@ function stopNetworkCheck() {
   }
 }
 
-function broadcastNetworkStatus(online) {
-  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-    clients.forEach((client) => {
-      client.postMessage({ type: 'NETWORK_STATUS', online });
-    });
-  });
-}
-
-function broadcastResumePlayback() {
-  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-    clients.forEach((client) => {
-      client.postMessage({ type: 'RESUME_PLAYBACK' });
-    });
-  });
-}
-
 self.addEventListener('online', () => {
   if (!wasOnline) {
     wasOnline = true;
-    broadcastNetworkStatus(true);
-    stopNetworkCheck();
-    broadcastResumePlayback(); // Trigger playback resumption on network restore
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: "NETWORK_STATUS", online: true });
+      });
+    });
+    stopNetworkCheck(); // Stop polling when online
   }
 });
 
 self.addEventListener('offline', () => {
   if (wasOnline) {
     wasOnline = false;
-    broadcastNetworkStatus(false);
-    startNetworkCheck();
-  }
-});
-
-self.addEventListener('message', (event) => {
-  if (event.data.type === 'RESUME_PLAYBACK') {
-    console.log('Service Worker: Received RESUME_PLAYBACK message');
-    broadcastResumePlayback();
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: "NETWORK_STATUS", online: false });
+      });
+    });
+    startNetworkCheck(); // Start polling when offline
   }
 });
 
