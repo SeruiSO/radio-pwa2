@@ -107,19 +107,25 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTabs();
 
     shareButton.addEventListener("click", () => {
-      const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
-      const shareData = {
-        title: "Radio S O",
-        text: `Listening to ${stationName} on Radio S O! Join my favorite radio stations!`,
-        url: window.location.href
-      };
-      if (navigator.share) {
-        navigator.share(shareData)
-          .catch(error => console.error("Error sharing:", error));
-      } else {
-        alert(`Share function not supported. Copy: ${shareData.text} ${shareData.url}`);
-      }
+  const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
+  const shareData = {
+    title: "Radio S O",
+    text: `Listening to ${stationName} on Radio S O! Join my favorite radio stations!`,
+    url: window.location.href
+  };
+  if (navigator.share) {
+    navigator.share(shareData)
+      .catch(error => console.error("Error sharing:", error));
+  } else {
+    // Fallback для WebView або старих браузерів
+    const shareText = `${shareData.text} ${shareData.url}`;
+    navigator.clipboard.writeText(shareText).then(() => {
+      alert("Посилання скопійовано в буфер обміну: " + shareText);
+    }).catch(() => {
+      alert("Поділитися: " + shareText);
     });
+  }
+});
 
     exportButton.addEventListener("click", exportSettings);
     importButton.addEventListener("click", () => importFileInput.click());
@@ -161,114 +167,62 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function exportSettings() {
-      const settings = {
-        selectedTheme: localStorage.getItem("selectedTheme") || "shadow-pulse",
-        customTabs: JSON.parse(localStorage.getItem("customTabs")) || [],
-        userAddedStations: JSON.parse(localStorage.getItem("userAddedStations")) || {},
-        favoriteStations: JSON.parse(localStorage.getItem("favoriteStations")) || [],
-        pastSearches: JSON.parse(localStorage.getItem("pastSearches")) || [],
-        deletedStations: JSON.parse(localStorage.getItem("deletedStations")) || [],
-        currentTab: localStorage.getItem("currentTab") || "techno"
-      };
-      const blob = new Blob([JSON.stringify(settings, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "radio_settings.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      console.log("Settings exported:", settings);
-    }
+  const settings = {
+    favoriteStations,
+    stationLists,
+    userAddedStations,
+    customTabs,
+    currentTab,
+    pastSearches,
+    deletedStations,
+    // Додай інші налаштування, якщо потрібно (наприклад, volume, theme)
+  };
+  const json = JSON.stringify(settings, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "radio_settings.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  console.log("Settings exported");
+}
 
-    function importSettings(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const settings = JSON.parse(e.target.result);
-          if (!settings || typeof settings !== "object") {
-            alert("Invalid settings file!");
-            return;
-          }
-          const validThemes = [
-            "shadow-pulse", "dark-abyss", "emerald-glow", "retro-wave",
-            "neon-pulse", "lime-surge", "flamingo-flash", "aqua-glow",
-            "aurora-haze", "starlit-amethyst", "lunar-frost"
-          ];
-          if (settings.selectedTheme && validThemes.includes(settings.selectedTheme)) {
-            localStorage.setItem("selectedTheme", settings.selectedTheme);
-            applyTheme(settings.selectedTheme);
-          }
-          if (Array.isArray(settings.customTabs)) {
-            const validTabs = settings.customTabs.filter(tab => 
-              typeof tab === "string" && 
-              tab.trim() && 
-              tab.length <= 10 && 
-              /^[a-z0-9_-]+$/.test(tab) && 
-              !["best", "techno", "trance", "ukraine", "pop", "search"].includes(tab) &&
-              !customTabs.includes(tab)
-            );
-            if (validTabs.length + customTabs.length <= 7) {
-              customTabs = validTabs;
-              localStorage.setItem("customTabs", JSON.stringify(customTabs));
-            } else {
-              console.warn("Imported custom tabs exceed limit of 7, skipping");
-            }
-          }
-          if (settings.userAddedStations && typeof settings.userAddedStations === "object") {
-            const validStations = {};
-            Object.keys(settings.userAddedStations).forEach(tab => {
-              if (["techno", "trance", "ukraine", "pop", ...customTabs].includes(tab)) {
-                const stations = Array.isArray(settings.userAddedStations[tab]) 
-                  ? settings.userAddedStations[tab].filter(s => 
-                      s && typeof s === "object" && 
-                      s.name && typeof s.name === "string" && 
-                      s.value && isValidUrl(s.value) && 
-                      s.genre && typeof s.genre === "string" && 
-                      s.country && typeof s.country === "string"
-                    )
-                  : [];
-                validStations[tab] = stations;
-              }
-            });
-            userAddedStations = validStations;
-            localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
-          }
-          if (Array.isArray(settings.favoriteStations)) {
-            favoriteStations = settings.favoriteStations.filter(name => typeof name === "string");
-            localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-          }
-          if (Array.isArray(settings.pastSearches)) {
-            pastSearches = settings.pastSearches.filter(search => typeof search === "string").slice(0, 5);
-            localStorage.setItem("pastSearches", JSON.stringify(pastSearches));
-            updatePastSearches();
-          }
-          if (Array.isArray(settings.deletedStations)) {
-            deletedStations = settings.deletedStations.filter(name => typeof name === "string");
-            localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
-          }
-          if (settings.currentTab && typeof settings.currentTab === "string") {
-            const validTabs = ["best", "techno", "trance", "ukraine", "pop", "search", ...customTabs];
-            if (validTabs.includes(settings.currentTab)) {
-              currentTab = settings.currentTab;
-              localStorage.setItem("currentTab", currentTab);
-            }
-          }
-          loadStations();
-          switchTab(currentTab);
-          console.log("Settings imported:", settings);
-          alert("Settings imported successfully!");
-        } catch (error) {
-          console.error("Error importing settings:", error);
-          alert("Error importing settings. Please check the file format.");
-        }
-        importFileInput.value = "";
-      };
-      reader.readAsText(file);
+    function importSettings(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      // Застосовуємо дані
+      favoriteStations = data.favoriteStations || [];
+      stationLists = data.stationLists || {};
+      userAddedStations = data.userAddedStations || {};
+      customTabs = data.customTabs || [];
+      currentTab = data.currentTab || "techno";
+      pastSearches = data.pastSearches || [];
+      deletedStations = data.deletedStations || [];
+      // Застосуй інші, якщо є
+      localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+      localStorage.setItem("stationLists", JSON.stringify(stationLists));
+      localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+      localStorage.setItem("customTabs", JSON.stringify(customTabs));
+      localStorage.setItem("currentTab", currentTab);
+      localStorage.setItem("pastSearches", JSON.stringify(pastSearches));
+      localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
+      // Перевантаж UI або станції
+      renderTabs();
+      loadStations();
+      console.log("Settings imported");
+      alert("Налаштування імпортовано успішно!");
+    } catch (err) {
+      console.error("Import error:", err);
+      alert("Помилка імпорту: " + err.message);
     }
+  };
+  reader.readAsText(file);
+}
 
     function populateSearchSuggestions() {
       const suggestedCountries = [
@@ -1213,13 +1167,18 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("changeStation: Skip playback, invalid state");
   }
 
-  // НОВА ЗМІНА: Оновлюємо метадані в native Android MediaSession (якщо в WebView)
-  if (window.Android) {
-    const stationName = item.dataset.name || "Unknown Station";
-    const genre = item.dataset.genre || "Unknown Genre";
-    const country = item.dataset.country || "Unknown Country";
-    window.Android.updateMetadata(stationName, genre, country);
-    console.log("Updated metadata for Android: ", { stationName, genre, country });
+  // Оновлюємо metadata для lock screen і дисплея авто
+  if ("mediaSession" in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: item.dataset.name || "Unknown Station",
+      artist: item.dataset.genre || "Radio",
+      album: item.dataset.country || "Online Radio",
+      artwork: [
+        { src: "icon-192.png", sizes: "192x192", type: "image/png" },
+        { src: "icon-512.png", sizes: "512x512", type: "image/png" }
+      ]
+    });
+    console.log("MediaSession metadata updated:", item.dataset.name, item.dataset.genre, item.dataset.country);
   }
 }
 
