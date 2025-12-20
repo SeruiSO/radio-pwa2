@@ -1192,27 +1192,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function changeStation(index) {
-      if (!stationItems || index < 0 || index >= stationItems.length || stationItems[index].classList.contains("empty")) return;
-      const item = stationItems[index];
-      stationItems.forEach(i => i.classList.remove("selected"));
-      item.classList.add("selected");
-      currentIndex = index;
-      updateCurrentStation(item);
-      localStorage.setItem(`lastStation_${currentTab}`, index);
-      if (intendedPlaying) {
-        const normalizedCurrentUrl = normalizeUrl(item.dataset.value);
-        const normalizedAudioSrc = normalizeUrl(audio.src);
-        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
-          console.log("changeStation: Starting playback after station change");
-          isAutoPlayPending = false;
-          debouncedTryAutoPlay();
-        } else {
-          console.log("changeStation: Skip playback, station already playing");
-        }
-      } else {
-        console.log("changeStation: Skip playback, invalid state");
-      }
+  if (!stationItems || index < 0 || index >= stationItems.length || stationItems[index].classList.contains("empty")) return;
+  const item = stationItems[index];
+  stationItems.forEach(i => i.classList.remove("selected"));
+  item.classList.add("selected");
+  currentIndex = index;
+  updateCurrentStation(item);
+  localStorage.setItem(`lastStation_${currentTab}`, index);
+  if (intendedPlaying) {
+    const normalizedCurrentUrl = normalizeUrl(item.dataset.value);
+    const normalizedAudioSrc = normalizeUrl(audio.src);
+    if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
+      console.log("changeStation: Starting playback after station change");
+      isAutoPlayPending = false;
+      debouncedTryAutoPlay();
+    } else {
+      console.log("changeStation: Skip playback, station already playing");
     }
+  } else {
+    console.log("changeStation: Skip playback, invalid state");
+  }
+
+  // НОВА ЗМІНА: Оновлюємо метадані в native Android MediaSession (якщо в WebView)
+  if (window.Android) {
+    const stationName = item.dataset.name || "Unknown Station";
+    const genre = item.dataset.genre || "Unknown Genre";
+    const country = item.dataset.country || "Unknown Country";
+    window.Android.updateMetadata(stationName, genre, country);
+    console.log("Updated metadata for Android: ", { stationName, genre, country });
+  }
+}
 
     function updateCurrentStation(item) {
       if (!currentStationInfo || !item.dataset) {
