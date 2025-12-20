@@ -60,6 +60,42 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  // === НОВИЙ КОД: Обробка Bluetooth-подій з Android-додатка ===
+  // Запуск радіо при підключенні Bluetooth (наприклад, до авто)
+  window.addEventListener('car-connected', () => {
+    console.log('Car Bluetooth connected – запускаємо радіо');
+
+    intendedPlaying = true;
+    localStorage.setItem("intendedPlaying", "true");
+
+    // Якщо є станції і індекс валідний — запускаємо відтворення
+    if (stationItems?.length && currentIndex < stationItems.length) {
+      // 3 спроби з затримкою 800 мс для надійності підключення
+      debouncedTryAutoPlay?.(3, 800);
+    }
+  });
+
+  // Зупинка радіо при відключенні Bluetooth
+  window.addEventListener('car-disconnected', () => {
+    console.log('Car Bluetooth disconnected – зупиняємо радіо');
+
+    if (audio && !audio.paused) {
+      audio.pause();
+    }
+
+    isPlaying = false;
+    intendedPlaying = false;
+    localStorage.setItem("isPlaying", "false");
+    localStorage.setItem("intendedPlaying", "false");
+
+    // Оновлюємо UI
+    if (playPauseBtn) {
+      playPauseBtn.textContent = "▶";
+    }
+    document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+  });
+  // === КІНЕЦЬ НОВОГО КОДУ ===
+
   initializeApp();
 
   function initializeApp() {
