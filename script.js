@@ -1,6 +1,6 @@
 /**
  * Radio Music - Fixed Version
- * All critical bugs resolved
+ * Critical bugs resolved: infinite autoplay loop, user interaction policy
  */
 
 // ============================================
@@ -12,8 +12,7 @@ const CONFIG = {
   RETRY_DELAY: 1000,
   MAX_RETRIES: 2,
   LONG_PRESS_DURATION: 600,
-  PULL_THRESHOLD: 80,
-  DEBOUNCE_DELAY: 100
+  PULL_THRESHOLD: 80
 };
 
 // ============================================
@@ -25,7 +24,7 @@ const state = {
   currentIndex: 0,
   favoriteStations: JSON.parse(localStorage.getItem('favoriteStations') || '[]'),
   isPlaying: false,
-  intendedPlaying: localStorage.getItem('intendedPlaying') === 'true',
+  intendedPlaying: false, // НЕ відновлюємо з localStorage!
   stationLists: JSON.parse(localStorage.getItem('stationLists') || '{}'),
   userAddedStations: JSON.parse(localStorage.getItem('userAddedStations') || '{}'),
   customTabs: JSON.parse(localStorage.getItem('customTabs') || '[]').filter(t => typeof t === 'string' && t.trim()),
@@ -34,7 +33,7 @@ const state = {
   volume: parseFloat(localStorage.getItem('volume')) || 0.9,
   selectedTheme: localStorage.getItem('selectedTheme') || 'shadow-pulse',
   
-  // Runtime
+  // Runtime only (not persisted)
   isDragging: false,
   draggedItem: null,
   draggedIndex: null,
@@ -42,11 +41,8 @@ const state = {
   sleepTimerEndTime: null,
   stationItems: [],
   editingTab: null,
-  touchStartY: 0,
-  touchStartX: 0,
-  longPressTimer: null,
-  isPulling: false,
-  pullStartY: 0
+  hasUserInteracted: false, // Критично для автовідтворення
+  audioRetryCount: 0
 };
 
 // ============================================
@@ -87,7 +83,7 @@ const elements = {
 function saveState() {
   localStorage.setItem('currentTab', state.currentTab);
   localStorage.setItem('favoriteStations', JSON.stringify(state.favoriteStations));
-  localStorage.setItem('intendedPlaying', state.intendedPlaying);
+  // НЕ зберігаємо intendedPlaying!
   localStorage.setItem('stationLists', JSON.stringify(state.stationLists));
   localStorage.setItem('userAddedStations', JSON.stringify(state.userAddedStations));
   localStorage.setItem('customTabs', JSON.stringify(state.customTabs));
@@ -140,17 +136,24 @@ function shortenGenre(genre) {
 }
 
 // ============================================
-// AUDIO MANAGEMENT
+// USER INTERACTION TRACKING
 // ============================================
 
-let audioRetryCount = 0;
-let currentAudioUrl = null;
+function markUserInteracted() {
+  if (!state.hasUserInteracted) {
+    state.hasUserInteracted = true;
+    console.log('User interaction detected - autoplay enabled');
+  }
+}
+
+// ============================================
+// AUDIO MANAGEMENT
+// ============================================
 
 function initAudio() {
   elements.audio = document.getElementById('audioPlayer');
   elements.audio.preload = 'none';
   elements.audio.volume = state.volume;
-  elements.audio.crossOrigin = 'anonymous';
   
   elements.audio.addEventListener('playing', onAudioPlaying);
   elements.audio.addEventListener('pause', onAudioPause);
@@ -167,7 +170,6 @@ function onAudioPlaying() {
   state.isPlaying = true;
   updatePlayButton(true);
   updateWaveVisualizer(true);
-  updateCurrentStationPlaying(true);
   
   const item = state.stationItems[state.currentIndex];
   if (item) updateMediaSession(item);
@@ -179,7 +181,6 @@ function onAudioPause() {
   state.isPlaying = false;
   updatePlayButton(false);
   updateWaveVisualizer(false);
-  updateCurrentStationPlaying(false);
 }
 
 function onAudioError(e) {
@@ -187,26 +188,44 @@ function onAudioError(e) {
   showLoading(false);
   updateWaveVisualizer(false);
   
-  if (state.intendedPlaying && audioRetryCount < CONFIG.MAX_RETRIES) {
-    audioRetryCount++;
-    showToast(`Повторна спроба ${audioRetryCount}/${CONFIG.MAX_RETRIES}...`, 'warning');
+  // НЕ повторюємо спроби якщо це NotAllowedError (немає взаємодії)
+  if (e.target?.error?.name === 'NotAllowedError') {
+    showToast('Натисніть Play для відтворення', 'info');
+    state.intendedPlaying = false;
+    state.audioRetryCount = 0;
+    return;
+  }
+  
+  // Звичайні помилки - обмежена кількість повторів
+  if (state.audioRetryCount < CONFIG.MAX_RETRIES) {
+    state.audioRetryCount++;
+    showToast(`Повторна спроба ${state.audioRetryCount}/${CONFIG.MAX_RETRIES}...`, 'warning');
     setTimeout(() => {
-      if (currentAudioUrl) playAudio(currentAudioUrl);
-    }, CONFIG.RETRY_DELAY * audioRetryCount);
+      const item = state.stationItems[state.currentIndex];
+      if (item && state.intendedPlaying) {
+        playAudio(item.dataset.value, false); // false = не збільшувати лічильник
+      }
+    }, CONFIG.RETRY_DELAY * state.audioRetryCount);
   } else {
     showToast('Помилка відтворення', 'error');
-    audioRetryCount = 0;
+    state.audioRetryCount = 0;
+    state.intendedPlaying = false;
   }
 }
 
-async function playAudio(url) {
+async function playAudio(url, incrementRetry = true) {
   if (!url || !isValidUrl(url)) {
     showToast('Некоректне посилання', 'error');
     return;
   }
   
+  // Критично: перевіряємо взаємодію користувача
+  if (!state.hasUserInteracted) {
+    showToast('Натисніть Play для початку', 'info');
+    return;
+  }
+  
   showLoading(true);
-  currentAudioUrl = url;
   
   try {
     // Stop current
@@ -214,30 +233,38 @@ async function playAudio(url) {
     elements.audio.src = '';
     elements.audio.load();
     
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 50));
     
     // Set new source
     const cacheBuster = url.includes('?') ? `&t=${Date.now()}` : `?t=${Date.now()}`;
     elements.audio.src = url + cacheBuster;
     
     await elements.audio.play();
-    audioRetryCount = 0;
+    
+    state.audioRetryCount = 0;
     state.intendedPlaying = true;
-    saveState();
     
   } catch (err) {
     console.error('Play error:', err);
-    onAudioError(err);
+    
+    if (err.name === 'NotAllowedError') {
+      showToast('Натисніть Play для відтворення', 'info');
+      state.intendedPlaying = false;
+      state.hasUserInteracted = false; // Скидаємо, треба нова взаємодія
+    } else {
+      onAudioError({ target: { error: err } });
+    }
   } finally {
     showLoading(false);
   }
 }
 
 function togglePlay() {
+  markUserInteracted(); // ВАЖЛИВО: відмічаємо взаємодію
+  
   if (state.isPlaying) {
     elements.audio.pause();
     state.intendedPlaying = false;
-    saveState();
   } else {
     const item = state.stationItems[state.currentIndex];
     if (item) {
@@ -246,6 +273,7 @@ function togglePlay() {
       showToast('Спочатку оберіть станцію', 'info');
     }
   }
+  saveState();
 }
 
 // ============================================
@@ -266,12 +294,6 @@ function updateWaveVisualizer(isPlaying) {
   document.querySelectorAll('.wave-line').forEach(el => {
     el.classList.toggle('playing', isPlaying);
   });
-}
-
-function updateCurrentStationPlaying(isPlaying) {
-  if (elements.currentStationInfo) {
-    elements.currentStationInfo.classList.toggle('playing', isPlaying);
-  }
 }
 
 function showLoading(show) {
@@ -314,19 +336,13 @@ function updateCurrentStation(item) {
 function updateMediaSession(item) {
   if (!item || !('mediaSession' in navigator)) return;
   
-  const name = item.dataset.name || 'Невідома станція';
-  const genre = item.dataset.genre || '';
-  const country = item.dataset.country || '';
-  const favicon = item.dataset.favicon;
-  
   navigator.mediaSession.metadata = new MediaMetadata({
-    title: name,
-    artist: `${genre} | ${country}`,
+    title: item.dataset.name || 'Невідома станція',
+    artist: `${item.dataset.genre || ''} | ${item.dataset.country || ''}`,
     album: 'Radio Music',
-    artwork: favicon && isValidUrl(favicon) ? [
-      { src: favicon, sizes: '96x96', type: 'image/png' },
-      { src: favicon, sizes: '128x128', type: 'image/png' },
-      { src: favicon, sizes: '192x192', type: 'image/png' }
+    artwork: item.dataset.favicon && isValidUrl(item.dataset.favicon) ? [
+      { src: item.dataset.favicon, sizes: '96x96', type: 'image/png' },
+      { src: item.dataset.favicon, sizes: '192x192', type: 'image/png' }
     ] : []
   });
 }
@@ -361,6 +377,7 @@ function applyTheme(themeName) {
 }
 
 function toggleTheme() {
+  markUserInteracted();
   const names = Object.keys(themes);
   const current = names.indexOf(state.selectedTheme);
   const next = names[(current + 1) % names.length];
@@ -432,7 +449,6 @@ function createStationElement(station, index) {
   const canDelete = ['techno', 'trance', 'ukraine', 'pop', ...state.customTabs].includes(state.currentTab);
   const canDrag = canDelete && state.currentTab !== 'best';
   
-  // Icon
   let iconHtml = '';
   if (station.favicon && isValidUrl(station.favicon)) {
     iconHtml = `<img src="${station.favicon}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">`;
@@ -453,6 +469,7 @@ function createStationElement(station, index) {
   item.addEventListener('click', (e) => {
     if (state.isDragging) return;
     if (e.target.closest('.buttons-container')) return;
+    markUserInteracted(); // ВАЖЛИВО!
     selectStation(index);
   });
   
@@ -461,6 +478,7 @@ function createStationElement(station, index) {
   if (favBtn) {
     favBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      markUserInteracted();
       toggleFavorite(station.name);
     });
   }
@@ -470,6 +488,7 @@ function createStationElement(station, index) {
   if (delBtn) {
     delBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      markUserInteracted();
       if (confirm(`Видалити "${station.name}"?`)) {
         deleteStation(station.name);
       }
@@ -495,10 +514,13 @@ function selectStation(index) {
   const item = state.stationItems[index];
   updateCurrentStation(item);
   
-  state.intendedPlaying = true;
   saveState();
   
-  playAudio(item.dataset.value);
+  // НЕ автоматично відтворюємо! Користувач має натиснути Play
+  // або ми відтворюємо тільки якщо вже була взаємодія
+  if (state.hasUserInteracted && state.intendedPlaying) {
+    playAudio(item.dataset.value);
+  }
   
   item.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -525,21 +547,17 @@ function deleteStation(name) {
   const station = stations.find(s => s.name === name);
   if (!station) return;
   
-  // Remove
   state.stationLists[tab] = stations.filter(s => s.name !== name);
   if (state.userAddedStations[tab]) {
     state.userAddedStations[tab] = state.userAddedStations[tab].filter(s => s.name !== name);
   }
   
-  // Track deleted
   if (!station.isFromSearch && !state.deletedStations.includes(name)) {
     state.deletedStations.push(name);
   }
   
-  // Remove from favorites
   state.favoriteStations = state.favoriteStations.filter(n => n !== name);
   
-  // Adjust index
   if (state.currentIndex >= state.stationLists[tab].length) {
     state.currentIndex = Math.max(0, state.stationLists[tab].length - 1);
   }
@@ -550,6 +568,7 @@ function deleteStation(name) {
 }
 
 function prevStation() {
+  markUserInteracted();
   if (!state.stationItems.length) return;
   let idx = state.currentIndex - 1;
   if (idx < 0) idx = state.stationItems.length - 1;
@@ -557,6 +576,7 @@ function prevStation() {
 }
 
 function nextStation() {
+  markUserInteracted();
   if (!state.stationItems.length) return;
   let idx = state.currentIndex + 1;
   if (idx >= state.stationItems.length) idx = 0;
@@ -568,36 +588,24 @@ function nextStation() {
 // ============================================
 
 function setupDragHandle(item, handle, index) {
-  // Touch
-  handle.addEventListener('touchstart', (e) => {
+  let pressTimer;
+  
+  const startPress = (e) => {
     e.preventDefault();
-    state.longPressTimer = setTimeout(() => startDrag(item, index), CONFIG.LONG_PRESS_DURATION);
-  }, { passive: false });
+    pressTimer = setTimeout(() => startDrag(item, index), CONFIG.LONG_PRESS_DURATION);
+  };
   
-  handle.addEventListener('touchmove', () => {
-    clearTimeout(state.longPressTimer);
-  });
+  const cancelPress = () => {
+    clearTimeout(pressTimer);
+  };
   
-  handle.addEventListener('touchend', () => {
-    clearTimeout(state.longPressTimer);
-    endDrag();
-  });
+  handle.addEventListener('touchstart', startPress, { passive: false });
+  handle.addEventListener('touchend', cancelPress);
+  handle.addEventListener('touchmove', cancelPress);
+  handle.addEventListener('touchcancel', cancelPress);
   
-  handle.addEventListener('touchcancel', () => {
-    clearTimeout(state.longPressTimer);
-    endDrag();
-  });
-  
-  // Mouse
-  handle.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    state.longPressTimer = setTimeout(() => startDrag(item, index), CONFIG.LONG_PRESS_DURATION);
-  });
-  
-  document.addEventListener('mouseup', () => {
-    clearTimeout(state.longPressTimer);
-    endDrag();
-  });
+  handle.addEventListener('mousedown', startPress);
+  document.addEventListener('mouseup', cancelPress);
 }
 
 function startDrag(item, index) {
@@ -611,28 +619,27 @@ function startDrag(item, index) {
   item.classList.add('dragging');
   if (navigator.vibrate) navigator.vibrate(50);
   
-  // Setup move handlers
   document.addEventListener('touchmove', onDragMove, { passive: false });
+  document.addEventListener('touchend', endDrag);
   document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('mouseup', endDrag);
 }
 
 function onDragMove(e) {
   if (!state.isDragging || !state.draggedItem) return;
-  if (e.type === 'touchmove') e.preventDefault();
+  e.preventDefault();
   
-  const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+  const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
   const list = elements.stationList;
   const rect = list.getBoundingClientRect();
-  
-  // Find target
-  const items = Array.from(list.querySelectorAll('.station-item:not(.empty)'));
   const relativeY = clientY - rect.top + list.scrollTop;
   
+  const items = Array.from(list.querySelectorAll('.station-item:not(.empty)'));
   let targetIndex = -1;
+  
   for (let i = 0; i < items.length; i++) {
     const itemRect = items[i].getBoundingClientRect();
     const itemMiddle = itemRect.top - rect.top + list.scrollTop + itemRect.height / 2;
-    
     if (relativeY < itemMiddle && i !== state.draggedIndex) {
       targetIndex = i;
       break;
@@ -641,7 +648,6 @@ function onDragMove(e) {
   
   if (targetIndex === -1) targetIndex = items.length - 1;
   
-  // Visual feedback
   items.forEach((el, i) => {
     el.classList.remove('drag-over', 'drag-over-bottom');
     if (i === targetIndex && i !== state.draggedIndex) {
@@ -656,7 +662,9 @@ function endDrag() {
   if (!state.isDragging) return;
   
   document.removeEventListener('touchmove', onDragMove);
+  document.removeEventListener('touchend', endDrag);
   document.removeEventListener('mousemove', onDragMove);
+  document.removeEventListener('mouseup', endDrag);
   
   if (state.draggedItem && state.targetIndex !== undefined && state.targetIndex !== state.draggedIndex) {
     reorderStations(state.draggedIndex, state.targetIndex);
@@ -684,7 +692,6 @@ function reorderStations(from, to) {
   const [moved] = stations.splice(from, 1);
   stations.splice(to, 0, moved);
   
-  // Update user stations
   state.userAddedStations[tab] = [...stations];
   state.stationLists[tab] = stations;
   state.currentIndex = to;
@@ -708,25 +715,28 @@ function renderTabs() {
   
   container.innerHTML = '';
   
-  // Fixed tabs
   fixed.forEach(tab => {
     const btn = document.createElement('button');
     btn.className = `tab-btn ${state.currentTab === tab ? 'active' : ''}`;
     btn.dataset.tab = tab;
     btn.textContent = labels[tab] || tab;
-    btn.addEventListener('click', () => switchTab(tab));
+    btn.addEventListener('click', () => {
+      markUserInteracted();
+      switchTab(tab);
+    });
     container.appendChild(btn);
   });
   
-  // Custom tabs
   state.customTabs.forEach(tab => {
     const btn = document.createElement('button');
     btn.className = `tab-btn ${state.currentTab === tab ? 'active' : ''}`;
     btn.dataset.tab = tab;
     btn.textContent = tab.toUpperCase();
-    btn.addEventListener('click', () => switchTab(tab));
+    btn.addEventListener('click', () => {
+      markUserInteracted();
+      switchTab(tab);
+    });
     
-    // Long press for edit
     let timer;
     btn.addEventListener('pointerdown', () => {
       timer = setTimeout(() => showEditTabModal(tab), 600);
@@ -738,11 +748,13 @@ function renderTabs() {
     container.appendChild(btn);
   });
   
-  // Add button
   const addBtn = document.createElement('button');
   addBtn.className = 'add-tab-btn';
   addBtn.textContent = '+';
-  addBtn.addEventListener('click', () => showModal(elements.newTabModal));
+  addBtn.addEventListener('click', () => {
+    markUserInteracted();
+    showModal(elements.newTabModal);
+  });
   container.appendChild(addBtn);
 }
 
@@ -753,7 +765,6 @@ function switchTab(tab) {
   state.currentTab = tab;
   state.currentIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
   
-  // Update search visibility
   if (elements.searchInput) {
     elements.searchInput.style.display = tab === 'search' ? 'flex' : 'none';
   }
@@ -764,10 +775,7 @@ function switchTab(tab) {
   renderStationList();
   saveState();
   
-  // Resume playback
-  if (state.intendedPlaying && tab !== 'search' && state.stationItems[state.currentIndex]) {
-    playAudio(state.stationItems[state.currentIndex].dataset.value);
-  }
+  // НЕ автоматично відтворюємо при перемиканні вкладок!
 }
 
 // ============================================
@@ -791,6 +799,7 @@ function setupModals() {
   const createBtn = document.getElementById('createTabBtn');
   if (createBtn) {
     createBtn.addEventListener('click', () => {
+      markUserInteracted();
       const input = document.getElementById('newTabName');
       const name = input.value.trim().toLowerCase();
       
@@ -832,6 +841,7 @@ function setupModals() {
   const renameBtn = document.getElementById('renameTabBtn');
   if (renameBtn) {
     renameBtn.addEventListener('click', () => {
+      markUserInteracted();
       const oldName = state.editingTab;
       const input = document.getElementById('renameTabName');
       const newName = input.value.trim().toLowerCase();
@@ -869,6 +879,7 @@ function setupModals() {
   const deleteBtn = document.getElementById('deleteTabBtn');
   if (deleteBtn) {
     deleteBtn.addEventListener('click', () => {
+      markUserInteracted();
       const tab = state.editingTab;
       if (!confirm(`Видалити "${tab.toUpperCase()}"?`)) return;
       
@@ -889,6 +900,7 @@ function setupModals() {
   // Cancel buttons
   document.querySelectorAll('.modal-cancel-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      markUserInteracted();
       const modal = e.target.closest('.modal-overlay');
       hideModal(modal);
     });
@@ -919,6 +931,7 @@ function setupSleepTimer() {
   if (!elements.sleepTimerBtn) return;
   
   elements.sleepTimerBtn.addEventListener('click', () => {
+    markUserInteracted();
     updateSleepTimerDisplay();
     showModal(elements.sleepModal);
   });
@@ -926,6 +939,7 @@ function setupSleepTimer() {
   // Preset buttons
   document.querySelectorAll('.timer-option').forEach(btn => {
     btn.addEventListener('click', () => {
+      markUserInteracted();
       const mins = btn.dataset.minutes;
       
       if (mins === 'custom') {
@@ -941,6 +955,7 @@ function setupSleepTimer() {
   const setCustomBtn = document.querySelector('.set-custom-timer');
   if (setCustomBtn) {
     setCustomBtn.addEventListener('click', () => {
+      markUserInteracted();
       const input = document.getElementById('customMinutes');
       const mins = parseInt(input.value);
       
@@ -958,7 +973,10 @@ function setupSleepTimer() {
   // Cancel
   const cancelBtn = document.querySelector('.cancel-timer');
   if (cancelBtn) {
-    cancelBtn.addEventListener('click', cancelSleepTimer);
+    cancelBtn.addEventListener('click', () => {
+      markUserInteracted();
+      cancelSleepTimer();
+    });
   }
 }
 
@@ -971,11 +989,11 @@ function setSleepTimer(minutes) {
   state.sleepTimerId = setTimeout(() => {
     elements.audio.pause();
     state.intendedPlaying = false;
-    saveState();
     updatePlayButton(false);
     updateWaveVisualizer(false);
     showToast('Таймер сну: зупинено', 'info');
     cancelSleepTimer();
+    saveState();
   }, ms);
   
   hideModal(elements.sleepModal);
@@ -1047,6 +1065,8 @@ function populateSearchSuggestions() {
 }
 
 async function searchStations() {
+  markUserInteracted();
+  
   const query = elements.searchQuery.value.trim();
   const country = normalizeCountry(elements.searchCountry.value.trim());
   const genre = elements.searchGenre.value.trim();
@@ -1056,7 +1076,6 @@ async function searchStations() {
     return;
   }
   
-  // Save search
   if (query && !state.pastSearches.includes(query)) {
     state.pastSearches.unshift(query);
     if (state.pastSearches.length > 5) state.pastSearches.pop();
@@ -1126,8 +1145,8 @@ function renderSearchResults(stations) {
       <button class="add-btn" title="Додати">+</button>
     `;
     
-    // Play on click
     item.addEventListener('click', (e) => {
+      markUserInteracted();
       if (e.target.closest('.add-btn')) {
         showAddToTabModal(item);
       } else {
@@ -1147,8 +1166,6 @@ function playSearchResult(item, index) {
   item.classList.add('selected');
   
   updateCurrentStation(item);
-  state.intendedPlaying = true;
-  saveState();
   playAudio(item.dataset.value);
 }
 
@@ -1177,6 +1194,7 @@ function showAddToTabModal(item) {
   
   overlay.querySelectorAll('.modal-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      markUserInteracted();
       addStationToTab(item, btn.dataset.tab);
       hideModal(overlay);
       setTimeout(() => overlay.remove(), 300);
@@ -1263,12 +1281,10 @@ function mergeStations(newStations) {
   Object.keys(newStations).forEach(tab => {
     const unique = new Map();
     
-    // User stations first
     (state.userAddedStations[tab] || []).forEach(s => {
       if (s && !state.deletedStations.includes(s.name)) unique.set(s.name, s);
     });
     
-    // Then fetched
     newStations[tab].forEach(s => {
       if (s && !state.deletedStations.includes(s.name)) unique.set(s.name, s);
     });
@@ -1276,7 +1292,6 @@ function mergeStations(newStations) {
     merged[tab] = Array.from(unique.values());
   });
   
-  // Custom tabs
   state.customTabs.forEach(tab => {
     const unique = new Map();
     (state.userAddedStations[tab] || []).forEach(s => {
@@ -1291,7 +1306,6 @@ function mergeStations(newStations) {
   state.stationLists = merged;
   saveState();
   
-  // Clean favorites
   state.favoriteStations = state.favoriteStations.filter(name => 
     Object.values(state.stationLists).flat().some(s => s && s.name === name)
   );
@@ -1302,8 +1316,10 @@ function mergeStations(newStations) {
 // ============================================
 
 function exportSettings() {
+  markUserInteracted();
+  
   const data = {
-    version: 'v73',
+    version: 'v74',
     selectedTheme: state.selectedTheme,
     customTabs: state.customTabs,
     userAddedStations: state.userAddedStations,
@@ -1328,6 +1344,8 @@ function exportSettings() {
 }
 
 function importSettings(event) {
+  markUserInteracted();
+  
   const file = event.target.files[0];
   if (!file) return;
   
@@ -1364,6 +1382,8 @@ function importSettings(event) {
 }
 
 function share() {
+  markUserInteracted();
+  
   const item = state.stationItems[state.currentIndex];
   const name = item ? item.dataset.name : 'Radio Music';
   
@@ -1389,17 +1409,20 @@ function setupPullToRefresh() {
   const list = elements.stationList;
   if (!list) return;
   
+  let startY = 0;
+  let isPulling = false;
+  
   list.addEventListener('touchstart', (e) => {
     if (list.scrollTop <= 0) {
-      state.isPulling = true;
-      state.pullStartY = e.touches[0].clientY;
+      isPulling = true;
+      startY = e.touches[0].clientY;
     }
   }, { passive: true });
   
   list.addEventListener('touchmove', (e) => {
-    if (!state.isPulling) return;
+    if (!isPulling) return;
     
-    const diff = e.touches[0].clientY - state.pullStartY;
+    const diff = e.touches[0].clientY - startY;
     if (diff > 0 && diff < CONFIG.PULL_THRESHOLD * 2) {
       elements.pullIndicator.classList.add('visible');
       elements.pullIndicator.style.transform = `translateX(-50%) translateY(${Math.min(diff * 0.3, 30)}px)`;
@@ -1411,18 +1434,19 @@ function setupPullToRefresh() {
   }, { passive: true });
   
   list.addEventListener('touchend', (e) => {
-    if (!state.isPulling) return;
+    if (!isPulling) return;
     
-    const diff = e.changedTouches[0].clientY - state.pullStartY;
+    const diff = e.changedTouches[0].clientY - startY;
     
     elements.pullIndicator.classList.remove('visible', 'releasing');
     elements.pullIndicator.style.transform = '';
     
     if (diff >= CONFIG.PULL_THRESHOLD) {
+      markUserInteracted();
       loadStations();
     }
     
-    state.isPulling = false;
+    isPulling = false;
   });
 }
 
@@ -1466,6 +1490,7 @@ function setupPlayerGestures() {
     const diff = startX - endX;
     
     if (Math.abs(diff) > 50) {
+      markUserInteracted();
       if (diff > 0) nextStation();
       else prevStation();
     }
@@ -1524,12 +1549,15 @@ function initEventListeners() {
     });
   });
   
-  // Visibility
+  // Visibility change - НЕ відтворюємо автоматично!
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && state.intendedPlaying && navigator.onLine) {
-      const item = state.stationItems[state.currentIndex];
-      if (item && elements.audio.paused) {
-        playAudio(item.dataset.value);
+    // Тільки оновлюємо UI, не викликаємо playAudio
+    if (!document.hidden && state.isPlaying) {
+      // Перевіряємо чи ще грає
+      if (elements.audio.paused) {
+        state.isPlaying = false;
+        updatePlayButton(false);
+        updateWaveVisualizer(false);
       }
     }
   });
@@ -1537,10 +1565,6 @@ function initEventListeners() {
   // Online/Offline
   window.addEventListener('online', () => {
     showToast('Підключено', 'success');
-    if (state.intendedPlaying) {
-      const item = state.stationItems[state.currentIndex];
-      if (item) playAudio(item.dataset.value);
-    }
   });
   
   window.addEventListener('offline', () => {
@@ -1559,17 +1583,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupPlayerGestures();
   applyTheme(state.selectedTheme);
   
+  // Завантажуємо станції, але НЕ відтворюємо автоматично
   loadStations();
-  
-  // Resume if needed
-  if (state.intendedPlaying) {
-    setTimeout(() => {
-      const item = state.stationItems[state.currentIndex];
-      if (item && navigator.onLine) {
-        playAudio(item.dataset.value);
-      }
-    }, 500);
-  }
   
   // Service Worker
   if ('serviceWorker' in navigator) {

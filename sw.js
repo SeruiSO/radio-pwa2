@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-music-v77';
+const CACHE_NAME = 'radio-music-v80';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
