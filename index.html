@@ -1,4 +1,43 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -10,24 +49,24 @@
 </head>
 <body>
   <div class="container">
-    <button class="theme-toggle" aria-label="Toggle theme">🌙</button>
-    <button class="share-button" aria-label="Share radio">📢</button>
-    <button class="export-button" aria-label="Export settings">📤</button>
-    <button class="import-button" aria-label="Import settings">📥</button>
-    <input type="file" id="importFileInput" accept="application/json" aria-label="Import file">
+    <button class="theme-toggle">🌙</button>
+    <button class="share-button">📢</button>
+    <button class="export-button">📤</button>
+    <button class="import-button">📥</button>
+    <input type="file" id="importFileInput" accept="application/json">
     <h1>🎧 Radio Music</h1>
-    <audio id="audioPlayer" crossorigin="anonymous"></audio>
+    <audio id="audioPlayer"></audio>
 
     <div id="currentStationInfo">
       <div class="station-info-content">
-        <div class="station-icon" aria-label="Station icon">🎵</div>
+        <div class="station-icon">🎵</div>
         <div class="station-text">
           <div class="station-name">Обирайте станцію</div>
-          <div class="current-track">Трек невідомий</div>
           <div class="station-genre">жанр: -</div>
           <div class="station-country">країна: -</div>
+          <div class="current-track" id="currentTrack">🎵 Track: unknown</div>
         </div>
-        <div class="wave-visualizer" aria-label="Audio visualizer">
+        <div class="wave-visualizer">
           <div class="wave-line"></div>
           <div class="wave-line"></div>
           <div class="wave-line"></div>
@@ -41,69 +80,57 @@
       </div>
     </div>
 
-    <div class="pull-indicator" id="pullIndicator">
-      <div class="pull-arrow">↓</div>
-      <div class="pull-text">Потягніть для оновлення</div>
-    </div>
-
-    <div class="loading-indicator" id="loadingIndicator" style="display: none;">
-      <div class="spinner"></div>
-      <div class="loading-text">Завантаження...</div>
-    </div>
-
-    <div class="station-list" id="stationList" role="list" aria-label="Radio stations list"></div>
+    <div class="station-list" id="stationList"></div>
 
     <div class="tabs-wrapper">
-      <div class="tabs" id="tabs" role="tablist">
-        <button class="tab-btn" data-tab="best" role="tab" aria-label="Best stations">Best</button>
-        <button class="tab-btn" data-tab="techno" role="tab" aria-label="Techno stations">Techno</button>
-        <button class="tab-btn" data-tab="trance" role="tab" aria-label="Trance stations">Trance</button>
-        <button class="tab-btn" data-tab="ukraine" role="tab" aria-label="Ukrainian stations">UA</button>
-        <button class="tab-btn" data-tab="pop" role="tab" aria-label="Pop stations">Pop</button>
-        <button class="tab-btn" data-tab="search" role="tab" aria-label="Search stations">Search</button>
-        <button class="add-tab-btn" aria-label="Add new tab">+</button>
+      <div class="tabs" id="tabs">
+        <button class="tab-btn" data-tab="best">Best</button>
+        <button class="tab-btn" data-tab="techno">Techno</button>
+        <button class="tab-btn" data-tab="trance">Trance</button>
+        <button class="tab-btn" data-tab="ukraine">UA</button>
+        <button class="tab-btn" data-tab="pop">Pop</button>
+        <button class="tab-btn" data-tab="search">Search</button>
+        <button class="add-tab-btn">+</button>
       </div>
     </div>
 
     <div id="searchInput">
-      <input id="searchQuery" list="pastSearches" placeholder="Enter station name" aria-label="Search by station name">
+      <input id="searchQuery" list="pastSearches" placeholder="Enter station name">
       <datalist id="pastSearches"></datalist>
-      <input id="searchCountry" list="suggestedCountries" placeholder="Enter country" aria-label="Search by country">
+      <input id="searchCountry" list="suggestedCountries" placeholder="Enter country">
       <datalist id="suggestedCountries"></datalist>
-      <input id="searchGenre" list="suggestedGenres" placeholder="Enter genre" aria-label="Search by genre">
+      <input id="searchGenre" list="suggestedGenres" placeholder="Enter genre">
       <datalist id="suggestedGenres"></datalist>
-      <button class="search-btn" aria-label="Search stations">🔍</button>
+      <button class="search-btn">🔍</button>
     </div>
 
     <div class="controls-container">
       <div class="controls">
-        <button class="control-btn" aria-label="Previous station">⏮</button>
-        <button class="control-btn" aria-label="Play or pause">▶</button>
-        <button class="control-btn" aria-label="Next station">⏭</button>
+        <button class="control-btn">⏮</button>
+        <button class="control-btn">▶</button>
+        <button class="control-btn">⏭</button>
       </div>
     </div>
 
-    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
-
     <div class="new-tab-modal modal-overlay" style="display: none;">
-      <div class="modal" role="dialog" aria-label="Create new tab">
+      <div class="modal">
         <h2>Створити нову вкладку</h2>
-        <input id="newTabName" type="text" placeholder="Enter tab name" aria-label="New tab name">
+        <input id="newTabName" type="text" placeholder="Enter tab name">
         <div class="modal-tabs">
-          <button id="createTabBtn" class="modal-tab-btn" aria-label="Create tab">Створити</button>
-          <button class="modal-cancel-btn" aria-label="Cancel">Відміна</button>
+          <button id="createTabBtn" class="modal-tab-btn">Створити</button>
+          <button class="modal-cancel-btn">Відміна</button>
         </div>
       </div>
     </div>
 
     <div class="edit-tab-modal modal-overlay" style="display: none;">
-      <div class="modal" role="dialog" aria-label="Edit tab">
+      <div class="modal">
         <h2>Дії з вкладкою</h2>
-        <input id="renameTabName" type="text" placeholder="Enter new tab name" aria-label="New tab name">
+        <input id="renameTabName" type="text" placeholder="Enter new tab name">
         <div class="modal-tabs">
-          <button id="renameTabBtn" class="modal-tab-btn" aria-label="Rename tab">Перейменувати</button>
-          <button id="deleteTabBtn" class="modal-tab-btn" aria-label="Delete tab">Видалити</button>
-          <button class="modal-cancel-btn" aria-label="Cancel">Відміна</button>
+          <button id="renameTabBtn" class="modal-tab-btn">Перейменувати</button>
+          <button id="deleteTabBtn" class="modal-tab-btn">Видалити</button>
+          <button class="modal-cancel-btn">Відміна</button>
         </div>
       </div>
     </div>

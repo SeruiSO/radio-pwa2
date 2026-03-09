@@ -5,133 +5,16 @@
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#00E676",
-  "orientation": "portrait",
-  "scope": "/",
-  "lang": "uk",
-  "description": "Онлайн радіо плеєр з підтримкою метаданих, drag-and-drop та офлайн режиму",
-  "categories": ["music", "entertainment"],
   "icons": [
-    {
-      "src": "icon-72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "screenshot-narrow.png",
-      "sizes": "720x1280",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Улюблені станції",
-      "short_name": "Улюблені",
-      "description": "Швидкий доступ до улюблених станцій",
-      "url": "/?tab=best",
-      "icons": [
-        {
-          "src": "icon-shortcut-fav.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Пошук станцій",
-      "short_name": "Пошук",
-      "description": "Швидкий пошук радіостанцій",
-      "url": "/?tab=search",
-      "icons": [
-        {
-          "src": "icon-shortcut-search.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Techno",
-      "short_name": "Techno",
-      "description": "Techno радіостанції",
-      "url": "/?tab=techno",
-      "icons": [
-        {
-          "src": "icon-shortcut-techno.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
-    }
-  ],
-  "share_target": {
-    "action": "/",
-    "method": "GET",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  },
-  "related_applications": [],
-  "prefer_related_applications": false,
-  "display_override": ["standalone", "minimal-ui", "browser"],
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "handle_links": "preferred",
-  "launch_handler": {
-    "client_mode": ["navigate-existing", "auto"]
-  }
+  ]
 }
