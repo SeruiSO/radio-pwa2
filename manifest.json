@@ -67,3 +67,46 @@
       "src": "screenshot-narrow.png",
       "sizes": "750x1334",
       "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Techno",
+      "short_name": "Techno",
+      "description": "Техно станції",
+      "url": "/?tab=techno",
+      "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Trance",
+      "short_name": "Trance",
+      "description": "Транс станції",
+      "url": "/?tab=trance",
+      "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Україна",
+      "short_name": "UA",
+      "description": "Українські станції",
+      "url": "/?tab=ukraine",
+      "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Обране",
+      "short_name": "Best",
+      "description": "Обрані станції",
+      "url": "/?tab=best",
+      "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "display_override": ["standalone", "fullscreen"]
+}
