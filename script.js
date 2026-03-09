@@ -16,9 +16,17 @@ let isAutoPlayPending = false;
 let lastSuccessfulPlayTime = 0;
 let streamAbortController = null;
 let errorTimeout = null;
-let autoPlayRequestId = 0; // Unique ID for autoplay requests
-let metadataCheckInterval = null; // For checking track metadata
-let currentTrack = ""; // Store current track name
+let autoPlayRequestId = 0;
+let metadataCheckInterval = null;
+let currentTrack = "";
+let dragEnabled = false; // Flag for drag mode
+let dragStartIndex = null; // Index of dragged item
+let longPressTimer = null; // Timer for long press
+let pullToRefreshStartY = 0; // Pull to refresh start position
+let pullToRefreshThreshold = 100; // Threshold for refresh
+let isPulling = false; // Pull state
+let viewTransitionSupported = document.startViewTransition ? true : false; // Check for view transitions
+
 customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab === "string" && tab.trim()) : [];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -39,6 +47,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const pastSearchesList = document.getElementById("pastSearches");
   const tabsContainer = document.getElementById("tabs");
   const currentTrackElement = document.getElementById("currentTrack");
+  const loadingIndicator = document.getElementById("loadingIndicator");
+  const toastContainer = document.getElementById("toastContainer");
+  const pullIndicator = document.getElementById("pullIndicator");
 
   if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
     console.error("One of required DOM elements not found", {
@@ -72,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePastSearches();
     populateSearchSuggestions();
     renderTabs();
+    setupPullToRefresh();
 
     shareButton.addEventListener("click", () => {
       const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
@@ -82,9 +94,15 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       if (navigator.share) {
         navigator.share(shareData)
-          .catch(error => console.error("Error sharing:", error));
+          .then(() => showToast("Shared successfully!", "success"))
+          .catch(error => {
+            console.error("Error sharing:", error);
+            showToast("Sharing failed", "error");
+          });
       } else {
-        alert(`Share function not supported. Copy: ${shareData.text} ${shareData.url}`);
+        navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`)
+          .then(() => showToast("Link copied to clipboard!", "success"))
+          .catch(() => alert(`Share function not supported. Copy: ${shareData.text} ${shareData.url}`));
       }
     });
 
@@ -92,9 +110,18 @@ document.addEventListener("DOMContentLoaded", () => {
     importButton.addEventListener("click", () => importFileInput.click());
     importFileInput.addEventListener("change", importSettings);
 
-    document.querySelector(".controls .control-btn:nth-child(1)").addEventListener("click", prevStation);
-    document.querySelector(".controls .control-btn:nth-child(2)").addEventListener("click", togglePlayPause);
-    document.querySelector(".controls .control-btn:nth-child(3)").addEventListener("click", nextStation);
+    document.querySelector(".controls .control-btn:nth-child(1)").addEventListener("click", () => {
+      prevStation();
+      provideHapticFeedback();
+    });
+    document.querySelector(".controls .control-btn:nth-child(2)").addEventListener("click", () => {
+      togglePlayPause();
+      provideHapticFeedback();
+    });
+    document.querySelector(".controls .control-btn:nth-child(3)").addEventListener("click", () => {
+      nextStation();
+      provideHapticFeedback();
+    });
 
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
@@ -127,6 +154,99 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") searchBtn.click();
     });
 
+    // Show/hide toast on visibility change
+    function showToast(message, type = "info", duration = 3000) {
+      if (!toastContainer) return;
+      
+      toastContainer.textContent = message;
+      toastContainer.classList.add("show");
+      toastContainer.setAttribute("aria-label", message);
+      
+      // Set color based on type
+      if (type === "error") {
+        toastContainer.style.backgroundColor = "#ff4444";
+      } else if (type === "success") {
+        toastContainer.style.backgroundColor = "#00C851";
+      } else {
+        toastContainer.style.backgroundColor = "var(--toast-bg)";
+      }
+      
+      setTimeout(() => {
+        toastContainer.classList.remove("show");
+        toastContainer.textContent = "";
+      }, duration);
+    }
+
+    function provideHapticFeedback() {
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }
+
+    function setupPullToRefresh() {
+      let touchStartY = 0;
+      
+      stationList.addEventListener("touchstart", (e) => {
+        if (stationList.scrollTop === 0) {
+          touchStartY = e.touches[0].clientY;
+          pullIndicator.style.display = "flex";
+        }
+      }, { passive: true });
+
+      stationList.addEventListener("touchmove", (e) => {
+        if (touchStartY && stationList.scrollTop === 0) {
+          const currentY = e.touches[0].clientY;
+          const pullDistance = currentY - touchStartY;
+          
+          if (pullDistance > 0 && pullDistance < pullToRefreshThreshold) {
+            isPulling = true;
+            pullIndicator.style.transform = `translateY(${pullDistance}px)`;
+            pullIndicator.classList.add("pulling");
+          } else if (pullDistance >= pullToRefreshThreshold) {
+            isPulling = true;
+            pullIndicator.style.transform = `translateY(${pullToRefreshThreshold}px)`;
+            pullIndicator.classList.add("pulling");
+          }
+        }
+      }, { passive: true });
+
+      stationList.addEventListener("touchend", (e) => {
+        if (touchStartY && stationList.scrollTop === 0) {
+          const endY = e.changedTouches[0].clientY;
+          const pullDistance = endY - touchStartY;
+          
+          if (pullDistance >= pullToRefreshThreshold) {
+            showLoading();
+            loadStations().finally(() => {
+              hideLoading();
+              showToast("Stations refreshed!", "success");
+            });
+          }
+          
+          // Reset
+          touchStartY = 0;
+          isPulling = false;
+          pullIndicator.classList.remove("pulling");
+          pullIndicator.style.transform = "";
+          setTimeout(() => {
+            pullIndicator.style.display = "none";
+          }, 300);
+        }
+      }, { passive: true });
+    }
+
+    function showLoading() {
+      if (loadingIndicator) {
+        loadingIndicator.classList.add("show");
+      }
+    }
+
+    function hideLoading() {
+      if (loadingIndicator) {
+        loadingIndicator.classList.remove("show");
+      }
+    }
+
     function exportSettings() {
       const settings = {
         selectedTheme: localStorage.getItem("selectedTheme") || "shadow-pulse",
@@ -147,6 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       console.log("Settings exported:", settings);
+      showToast("Settings exported successfully!", "success");
     }
 
     function importSettings(event) {
@@ -157,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           const settings = JSON.parse(e.target.result);
           if (!settings || typeof settings !== "object") {
-            alert("Invalid settings file!");
+            showToast("Invalid settings file!", "error");
             return;
           }
           const validThemes = [
@@ -227,10 +348,10 @@ document.addEventListener("DOMContentLoaded", () => {
           loadStations();
           switchTab(currentTab);
           console.log("Settings imported:", settings);
-          alert("Settings imported successfully!");
+          showToast("Settings imported successfully!", "success");
         } catch (error) {
           console.error("Error importing settings:", error);
-          alert("Error importing settings. Please check the file format.");
+          showToast("Error importing settings. Please check the file format.", "error");
         }
         importFileInput.value = "";
       };
@@ -430,8 +551,165 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Drag and Drop Functions
+    function enableDragMode() {
+      dragEnabled = true;
+      showToast("Drag mode enabled. Drag handles to reorder stations.", "info", 2000);
+    }
+
+    function disableDragMode() {
+      dragEnabled = false;
+      dragStartIndex = null;
+    }
+
+    function setupDragAndDrop() {
+      stationItems.forEach((item, index) => {
+        const dragHandle = item.querySelector(".drag-handle");
+        if (!dragHandle) return;
+
+        // Remove existing listeners
+        dragHandle.removeEventListener("pointerdown", handleDragStart);
+        dragHandle.removeEventListener("touchstart", handleLongPress);
+        
+        // Add new listeners
+        dragHandle.addEventListener("pointerdown", handleDragStart);
+        dragHandle.addEventListener("touchstart", handleLongPress);
+        
+        // Store index for drag operations
+        item.setAttribute("draggable", "false");
+        item.dataset.index = index;
+      });
+    }
+
+    function handleDragStart(e) {
+      if (!dragEnabled) {
+        // Single tap with drag handle enables drag mode
+        enableDragMode();
+        provideHapticFeedback();
+        return;
+      }
+
+      e.preventDefault();
+      const item = e.target.closest(".station-item");
+      if (!item) return;
+
+      dragStartIndex = parseInt(item.dataset.index);
+      item.classList.add("dragging");
+      
+      // Set drag data
+      e.dataTransfer.setData("text/plain", dragStartIndex);
+      e.dataTransfer.effectAllowed = "move";
+      
+      provideHapticFeedback();
+    }
+
+    function handleLongPress(e) {
+      e.preventDefault();
+      const item = e.target.closest(".station-item");
+      if (!item) return;
+
+      longPressTimer = setTimeout(() => {
+        if (!dragEnabled) {
+          enableDragMode();
+          item.classList.add("long-press");
+          setTimeout(() => item.classList.remove("long-press"), 500);
+          provideHapticFeedback([100]); // Longer vibration for long press
+        }
+      }, 500);
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      
+      const item = e.target.closest(".station-item");
+      if (item && dragEnabled) {
+        item.classList.add("drag-over");
+      }
+    }
+
+    function handleDragLeave(e) {
+      const item = e.target.closest(".station-item");
+      if (item) {
+        item.classList.remove("drag-over");
+      }
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const targetItem = e.target.closest(".station-item");
+      if (!targetItem || dragStartIndex === null || !dragEnabled) return;
+
+      targetItem.classList.remove("drag-over");
+      
+      const dragEndIndex = parseInt(targetItem.dataset.index);
+      if (dragStartIndex === dragEndIndex) return;
+
+      // Reorder stations
+      reorderStations(dragStartIndex, dragEndIndex);
+      
+      // Reset drag state
+      document.querySelectorAll(".station-item").forEach(item => {
+        item.classList.remove("dragging", "drag-over");
+      });
+      
+      dragStartIndex = null;
+      disableDragMode();
+      provideHapticFeedback();
+      showToast("Station order updated!", "success");
+    }
+
+    function reorderStations(fromIndex, toIndex) {
+      if (currentTab === "best") {
+        // Reorder favorites
+        const [movedStation] = favoriteStations.splice(fromIndex, 1);
+        favoriteStations.splice(toIndex, 0, movedStation);
+        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+      } else {
+        // Reorder stations in current tab
+        const stations = stationLists[currentTab];
+        if (!stations) return;
+        
+        const [movedStation] = stations.splice(fromIndex, 1);
+        stations.splice(toIndex, 0, movedStation);
+        
+        // Update userAddedStations if station was user-added
+        if (userAddedStations[currentTab]) {
+          const userStationIndex = userAddedStations[currentTab].findIndex(s => s.name === movedStation.name);
+          if (userStationIndex !== -1) {
+            const [movedUserStation] = userAddedStations[currentTab].splice(userStationIndex, 1);
+            userAddedStations[currentTab].splice(toIndex, 0, movedUserStation);
+          }
+        }
+        
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+      }
+      
+      // Update UI with animation
+      animateStationReorder();
+    }
+
+    function animateStationReorder() {
+      if (viewTransitionSupported) {
+        document.startViewTransition(() => {
+          updateStationList();
+        });
+      } else {
+        // Fallback animation
+        stationList.classList.add("fade-out");
+        setTimeout(() => {
+          updateStationList();
+          stationList.classList.remove("fade-out");
+          stationList.classList.add("fade-in");
+          setTimeout(() => stationList.classList.remove("fade-in"), 300);
+        }, 150);
+      }
+    }
+
     async function loadStations() {
       console.time("loadStations");
+      showLoading();
       stationList.innerHTML = "<div class='station-item empty'>Loading...</div>";
       try {
         abortController.abort();
@@ -490,6 +768,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
         switchTab(currentTab);
+        showToast("Stations loaded successfully!", "success");
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error("Error loading stations:", error);
@@ -509,13 +788,16 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           localStorage.setItem("stationLists", JSON.stringify(stationLists));
           stationList.innerHTML = "<div class='station-item empty'>Failed to load stations</div>";
+          showToast("Failed to load stations", "error");
         }
       } finally {
         console.timeEnd("loadStations");
+        hideLoading();
       }
     }
 
     async function searchStations(query, country, genre) {
+      showLoading();
       stationList.innerHTML = "<div class='station-item empty'>Searching...</div>";
       try {
         abortController.abort();
@@ -539,11 +821,15 @@ document.addEventListener("DOMContentLoaded", () => {
         stations = stations.filter(station => station.url_resolved && isValidUrl(station.url_resolved));
         console.log("Received stations (after HTTPS filter):", stations.length);
         renderSearchResults(stations);
+        showToast(`Found ${stations.length} stations`, "success");
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error("Error searching stations:", error);
           stationList.innerHTML = "<div class='station-item empty'>Failed to find stations</div>";
+          showToast("Search failed", "error");
         }
+      } finally {
+        hideLoading();
       }
     }
 
@@ -562,8 +848,15 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
+        item.dataset.index = index;
+        
         const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '">` : "🎵 ";
-        item.innerHTML = `${iconHtml}<span class="station-name">${station.name}</span><button class="add-btn">ADD</button>`;
+        item.innerHTML = `
+          ${iconHtml}
+          <span class="station-name">${station.name}</span>
+          <div class="buttons-container">
+            <button class="add-btn" aria-label="Add station">ADD</button>
+          </div>`;
         fragment.appendChild(item);
       });
       stationList.innerHTML = "";
@@ -578,6 +871,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (item && !item.classList.contains("empty")) {
           currentIndex = Array.from(stationItems).indexOf(item);
           changeStation(currentIndex);
+          provideHapticFeedback();
         }
         if (addBtn) {
           e.stopPropagation();
@@ -619,6 +913,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const targetTab = btn.dataset.tab;
           saveStation(item, targetTab);
           closeModal();
+          provideHapticFeedback();
         });
       });
       modal.querySelector(".modal-cancel-btn").addEventListener("click", closeModal);
@@ -635,18 +930,19 @@ document.addEventListener("DOMContentLoaded", () => {
           genre: item.dataset.genre,
           country: item.dataset.country,
           favicon: item.dataset.favicon || "",
-          isFromSearch: currentTab === "search" // Mark station as from search
+          isFromSearch: currentTab === "search"
         };
         stationLists[targetTab].unshift(newStation);
-        userAddedStations[targetTab].unshift(newStation); // Always add to userAddedStations
+        userAddedStations[targetTab].unshift(newStation);
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
         localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
         console.log(`Added station ${stationName} to ${targetTab}:`, newStation);
         if (currentTab !== "search") {
           updateStationList();
         }
+        showToast(`Station added to ${targetTab}`, "success");
       } else {
-        alert("This station is already added to the selected tab!");
+        showToast("Station already exists in this tab!", "error");
       }
     }
 
@@ -658,6 +954,9 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.className = `tab-btn ${currentTab === tab ? "active" : ""}`;
         btn.dataset.tab = tab;
         btn.textContent = tab === "best" ? "Best" : tab === "ukraine" ? "UA" : tab === "search" ? "Search" : tab.charAt(0).toUpperCase() + tab.slice(1);
+        btn.setAttribute("role", "tab");
+        btn.setAttribute("aria-selected", currentTab === tab ? "true" : "false");
+        btn.setAttribute("aria-label", `${tab} tab`);
         tabsContainer.appendChild(btn);
       });
       customTabs.forEach(tab => {
@@ -666,19 +965,29 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.className = `tab-btn ${currentTab === tab ? "active" : ""}`;
         btn.dataset.tab = tab;
         btn.textContent = tab.toUpperCase();
+        btn.setAttribute("role", "tab");
+        btn.setAttribute("aria-selected", currentTab === tab ? "true" : "false");
+        btn.setAttribute("aria-label", `${tab} tab`);
         tabsContainer.appendChild(btn);
       });
       const addBtn = document.createElement("button");
       addBtn.className = "add-tab-btn";
       addBtn.textContent = "+";
+      addBtn.setAttribute("aria-label", "Add new tab");
       tabsContainer.appendChild(addBtn);
 
       tabsContainer.querySelectorAll(".tab-btn").forEach(btn => {
-        btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+        btn.addEventListener("click", () => {
+          switchTab(btn.dataset.tab);
+          provideHapticFeedback();
+        });
         if (customTabs.includes(btn.dataset.tab)) {
           let longPressTimer;
           btn.addEventListener("pointerdown", () => {
-            longPressTimer = setTimeout(() => showEditTabModal(btn.dataset.tab), 500);
+            longPressTimer = setTimeout(() => {
+              showEditTabModal(btn.dataset.tab);
+              provideHapticFeedback([100]);
+            }, 500);
           });
           btn.addEventListener("pointerup", () => clearTimeout(longPressTimer));
           btn.addEventListener("pointerleave", () => clearTimeout(longPressTimer));
@@ -710,19 +1019,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const createTabHandler = () => {
         const tabName = input.value.trim().toLowerCase();
         if (!tabName) {
-          alert("Enter tab name!");
+          showToast("Enter tab name!", "error");
           return;
         }
         if (["best", "techno", "trance", "ukraine", "pop", "search"].includes(tabName) || customTabs.includes(tabName)) {
-          alert("This tab name already exists!");
+          showToast("This tab name already exists!", "error");
           return;
         }
         if (tabName.length > 10 || !/^[a-z0-9_-]+$/.test(tabName)) {
-          alert("Tab name cannot exceed 10 characters and must contain only Latin letters, numbers, hyphen or underscore.");
+          showToast("Tab name cannot exceed 10 characters and must contain only Latin letters, numbers, hyphen or underscore.", "error");
           return;
         }
         if (customTabs.length >= 7) {
-          alert("Maximum of 7 custom tabs reached!");
+          showToast("Maximum of 7 custom tabs reached!", "error");
           return;
         }
         customTabs.push(tabName);
@@ -735,6 +1044,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderTabs();
         switchTab(tabName);
         closeModal();
+        showToast(`Tab "${tabName}" created!`, "success");
       };
 
       const keypressHandler = (e) => {
@@ -771,15 +1081,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const renameTabHandler = () => {
         const newName = input.value.trim().toLowerCase();
         if (!newName) {
-          alert("Enter new tab name!");
+          showToast("Enter new tab name!", "error");
           return;
         }
         if (["best", "techno", "trance", "ukraine", "pop", "search"].includes(newName) || customTabs.includes(newName)) {
-          alert("This tab name already exists!");
+          showToast("This tab name already exists!", "error");
           return;
         }
         if (newName.length > 10 || !/^[a-z0-9_-]+$/.test(newName)) {
-          alert("Tab name cannot exceed 10 characters and must contain only Latin letters, numbers, hyphen or underscore!");
+          showToast("Tab name cannot exceed 10 characters and must contain only Latin letters, numbers, hyphen or underscore!", "error");
           return;
         }
         const index = customTabs.indexOf(tab);
@@ -794,6 +1104,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentTab === tab) switchTab(newName);
         renderTabs();
         closeModal();
+        showToast(`Tab renamed to "${newName}"`, "success");
       };
 
       const deleteTabHandler = () => {
@@ -810,6 +1121,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           renderTabs();
           closeModal();
+          showToast(`Tab "${tab}" deleted`, "success");
         }
       };
 
@@ -950,6 +1262,8 @@ document.addEventListener("DOMContentLoaded", () => {
       ];
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
       applyTheme(nextTheme);
+      provideHapticFeedback();
+      showToast(`Theme changed to ${nextTheme}`, "info");
     }
 
     themeToggle.addEventListener("click", toggleTheme);
@@ -982,6 +1296,7 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
             localStorage.setItem("cacheVersion", event.data.cacheVersion);
             loadStations();
+            showToast("App updated!", "success");
           }
         }
         if (event.data.type === "NETWORK_STATUS" && event.data.online && intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
@@ -1008,7 +1323,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (autoPlayTimeout) {
         clearTimeout(autoPlayTimeout);
       }
-      autoPlayRequestId++; // Increment request ID
+      autoPlayRequestId++;
       const currentRequestId = autoPlayRequestId;
       autoPlayTimeout = setTimeout(() => tryAutoPlay(retryCount, delay, currentRequestId), 0);
     }
@@ -1128,6 +1443,29 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!validTabs.includes(tab)) {
         tab = "techno";
       }
+      
+      // Update aria-selected for tabs
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.setAttribute("aria-selected", btn.dataset.tab === tab ? "true" : "false");
+      });
+      
+      // Animate tab transition
+      if (viewTransitionSupported) {
+        document.startViewTransition(() => {
+          performTabSwitch(tab);
+        });
+      } else {
+        stationList.classList.add("fade-out");
+        setTimeout(() => {
+          performTabSwitch(tab);
+          stationList.classList.remove("fade-out");
+          stationList.classList.add("fade-in");
+          setTimeout(() => stationList.classList.remove("fade-in"), 300);
+        }, 150);
+      }
+    }
+
+    function performTabSwitch(tab) {
       currentTab = tab;
       localStorage.setItem("currentTab", tab);
       const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
@@ -1182,22 +1520,51 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.genre = shortenGenre(station.genre);
         item.dataset.country = station.country;
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
+        item.dataset.index = index;
+        item.setAttribute("draggable", "false");
+        item.setAttribute("role", "listitem");
+        
         const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '; console.warn('Error loading favicon:', '${item.dataset.favicon}');">` : "🎵 ";
+        
         const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
-          ? `<button class="delete-btn">🗑</button>`
+          ? `<button class="delete-btn" aria-label="Delete station">🗑</button>`
           : "";
+        
+        const dragHandle = ["techno", "trance", "ukraine", "pop", ...customTabs, "best"].includes(currentTab)
+          ? `<button class="drag-handle" aria-label="Drag to reorder">⋮⋮</button>`
+          : "";
+        
         item.innerHTML = `
           ${iconHtml}
           <span class="station-name">${station.name}</span>
           <div class="buttons-container">
+            ${dragHandle}
             ${deleteButton}
-            <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}">★</button>
+            <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}" aria-label="${favoriteStations.includes(station.name) ? "Remove from favorites" : "Add to favorites"}">★</button>
           </div>`;
         fragment.appendChild(item);
       });
+      
       stationList.innerHTML = "";
       stationList.appendChild(fragment);
       stationItems = stationList.querySelectorAll(".station-item");
+
+      // Setup drag and drop
+      setupDragAndDrop();
+      
+      // Add drag and drop event listeners to container
+      stationList.addEventListener("dragover", handleDragOver);
+      stationList.addEventListener("dragleave", handleDragLeave);
+      stationList.addEventListener("drop", handleDrop);
+      
+      // Cancel long press on pointerup/pointerleave
+      stationItems.forEach(item => {
+        const dragHandle = item.querySelector(".drag-handle");
+        if (dragHandle) {
+          dragHandle.addEventListener("pointerup", () => clearTimeout(longPressTimer));
+          dragHandle.addEventListener("pointerleave", () => clearTimeout(longPressTimer));
+        }
+      });
 
       if (stationItems.length && stationItems[currentIndex] && !stationItems[currentIndex].classList.contains("empty")) {
         stationItems[currentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1207,18 +1574,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const item = e.target.closest(".station-item");
         const favoriteBtn = e.target.closest(".favorite-btn");
         const deleteBtn = e.target.closest(".delete-btn");
-        if (item && !item.classList.contains("empty")) {
+        const dragHandle = e.target.closest(".drag-handle");
+        
+        if (item && !item.classList.contains("empty") && !dragHandle) {
           currentIndex = Array.from(stationItems).indexOf(item);
           changeStation(currentIndex);
+          provideHapticFeedback();
         }
         if (favoriteBtn) {
           e.stopPropagation();
           toggleFavorite(item.dataset.name);
+          provideHapticFeedback();
         }
         if (deleteBtn) {
           e.stopPropagation();
           if (confirm(`Are you sure you want to delete station "${item.dataset.name}" from the list?`)) {
             deleteStation(item.dataset.name);
+            provideHapticFeedback();
           }
         }
       };
@@ -1231,8 +1603,10 @@ document.addEventListener("DOMContentLoaded", () => {
     function toggleFavorite(stationName) {
       if (favoriteStations.includes(stationName)) {
         favoriteStations = favoriteStations.filter(name => name !== stationName);
+        showToast(`Removed from favorites`, "info");
       } else {
         favoriteStations.unshift(stationName);
+        showToast(`Added to favorites`, "success");
       }
       localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
       if (currentTab === "best") switchTab("best");
@@ -1265,6 +1639,7 @@ document.addEventListener("DOMContentLoaded", () => {
           currentIndex = stationLists[currentTab].length - 1;
         }
         switchTab(currentTab);
+        showToast(`Station deleted`, "info");
       }
     }
 
@@ -1370,6 +1745,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentIndex = currentIndex > 0 ? currentIndex - 1 : stationItems.length - 1;
       if (stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
       changeStation(currentIndex);
+      provideHapticFeedback();
     }
 
     function nextStation() {
@@ -1377,6 +1753,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentIndex = currentIndex < stationItems.length - 1 ? currentIndex + 1 : 0;
       if (stationItems[currentIndex].classList.contains("empty")) currentIndex = 0;
       changeStation(currentIndex);
+      provideHapticFeedback();
     }
 
     function togglePlayPause() {
@@ -1389,14 +1766,16 @@ document.addEventListener("DOMContentLoaded", () => {
         intendedPlaying = true;
         debouncedTryAutoPlay();
         playPauseBtn.textContent = "⏸";
+        playPauseBtn.setAttribute("aria-label", "Pause");
         document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       } else {
         audio.pause();
         isPlaying = false;
         intendedPlaying = false;
         playPauseBtn.textContent = "▶";
+        playPauseBtn.setAttribute("aria-label", "Play");
         document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-        stopMetadataStreaming(); // Stop metadata streaming when paused
+        stopMetadataStreaming();
         const currentTrackElement = document.getElementById("currentTrack");
         if (currentTrackElement) {
           currentTrackElement.textContent = "🎵 Track: unknown";
@@ -1408,11 +1787,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const eventListeners = {
       keydown: e => {
-        if (e.key === "ArrowLeft") prevStation();
-        if (e.key === "ArrowRight") nextStation();
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          prevStation();
+          provideHapticFeedback();
+        }
+        if (e.key === "ArrowRight") {
+          e.preventDefault();
+          nextStation();
+          provideHapticFeedback();
+        }
         if (e.key === " ") {
           e.preventDefault();
           togglePlayPause();
+          provideHapticFeedback();
+        }
+        // Escape key to disable drag mode
+        if (e.key === "Escape" && dragEnabled) {
+          disableDragMode();
+          showToast("Drag mode disabled", "info");
         }
       },
       visibilitychange: () => {
@@ -1462,6 +1855,7 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("playing", () => {
       isPlaying = true;
       playPauseBtn.textContent = "⏸";
+      playPauseBtn.setAttribute("aria-label", "Pause");
       document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       if (errorTimeout) {
@@ -1477,6 +1871,7 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("pause", () => {
       isPlaying = false;
       playPauseBtn.textContent = "▶";
+      playPauseBtn.setAttribute("aria-label", "Play");
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       stopMetadataStreaming();
@@ -1515,6 +1910,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.addEventListener("online", () => {
       console.log("Network restored");
+      showToast("Network restored", "success");
       if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
         isAutoPlayPending = false;
         debouncedTryAutoPlay();
@@ -1523,6 +1919,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.addEventListener("offline", () => {
       console.log("Network connection lost");
+      showToast("Network connection lost", "error");
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       errorCount = 0;
       stopMetadataStreaming();
