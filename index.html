@@ -1,51 +1,33 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#00F0FF">
-  <meta name="description" content="Radio Music S O — інтернет-радіо з можливістю пошуку, улюбленими станціями та кастомними вкладками">
-  <title>Radio Music S O</title>
+  <title>Radio Music</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <!-- Іконки для PWA -->
-  <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
 </head>
 <body>
-
-  <!-- Міні-плеєр (Dynamic Island / Notch стиль) -->
-  <div id="miniPlayer" class="hidden">
-    <div class="mini-content">
-      <span class="mini-station-name">Обирайте станцію</span>
-      <button class="mini-play-pause" aria-label="Play/Pause">▶</button>
-    </div>
-  </div>
-
   <div class="container">
+    <button class="theme-toggle" aria-label="Toggle theme">🌙</button>
+    <button class="share-button" aria-label="Share radio">📢</button>
+    <button class="export-button" aria-label="Export settings">📤</button>
+    <button class="import-button" aria-label="Import settings">📥</button>
+    <input type="file" id="importFileInput" accept="application/json" aria-label="Import file">
+    <h1>🎧 Radio Music</h1>
+    <audio id="audioPlayer" crossorigin="anonymous"></audio>
 
-    <!-- Кнопки керування темою та налаштуваннями -->
-    <button class="theme-toggle" aria-label="Змінити тему">🌙</button>
-    <button class="share-button" aria-label="Поділитися">📢</button>
-    <button class="export-button" aria-label="Експортувати налаштування">📤</button>
-    <button class="import-button" aria-label="Імпортувати налаштування">📥</button>
-    <input type="file" id="importFileInput" accept="application/json" hidden>
-
-    <h1>🎧 Radio Music S O</h1>
-
-    <!-- Аудіоплеєр (прихований) -->
-    <audio id="audioPlayer" preload="auto" playsinline webkit-playsinline></audio>
-
-    <!-- Поточна станція + візуалізація + мета (назва треку) -->
     <div id="currentStationInfo">
       <div class="station-info-content">
-        <div class="station-icon">🎵</div>
+        <div class="station-icon" aria-label="Station icon">🎵</div>
         <div class="station-text">
           <div class="station-name">Обирайте станцію</div>
-          <div class="station-genre">жанр: —</div>
-          <div class="station-country">країна: —</div>
+          <div class="current-track">Трек невідомий</div>
+          <div class="station-genre">жанр: -</div>
+          <div class="station-country">країна: -</div>
         </div>
-        <div class="wave-visualizer">
+        <div class="wave-visualizer" aria-label="Audio visualizer">
           <div class="wave-line"></div>
           <div class="wave-line"></div>
           <div class="wave-line"></div>
@@ -57,69 +39,76 @@
           <div class="wave-line"></div>
         </div>
       </div>
-      <div id="lyricsDisplay">Завантаження інформації про трек...</div>
     </div>
 
-    <!-- Список станцій (з підтримкою drag & drop) -->
-    <div class="station-list" id="stationList"></div>
+    <div class="pull-indicator" id="pullIndicator">
+      <div class="pull-arrow">↓</div>
+      <div class="pull-text">Потягніть для оновлення</div>
+    </div>
 
-    <!-- Вкладки -->
+    <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+      <div class="spinner"></div>
+      <div class="loading-text">Завантаження...</div>
+    </div>
+
+    <div class="station-list" id="stationList" role="list" aria-label="Radio stations list"></div>
+
     <div class="tabs-wrapper">
-      <div class="tabs" id="tabs">
-        <!-- Вкладки генеруються динамічно в script.js -->
+      <div class="tabs" id="tabs" role="tablist">
+        <button class="tab-btn" data-tab="best" role="tab" aria-label="Best stations">Best</button>
+        <button class="tab-btn" data-tab="techno" role="tab" aria-label="Techno stations">Techno</button>
+        <button class="tab-btn" data-tab="trance" role="tab" aria-label="Trance stations">Trance</button>
+        <button class="tab-btn" data-tab="ukraine" role="tab" aria-label="Ukrainian stations">UA</button>
+        <button class="tab-btn" data-tab="pop" role="tab" aria-label="Pop stations">Pop</button>
+        <button class="tab-btn" data-tab="search" role="tab" aria-label="Search stations">Search</button>
+        <button class="add-tab-btn" aria-label="Add new tab">+</button>
       </div>
     </div>
 
-    <!-- Пошук (показується тільки на вкладці Search) -->
-    <div id="searchInput" style="display: none;">
-      <input id="searchQuery" list="pastSearches" placeholder="Назва станції" autocomplete="off">
+    <div id="searchInput">
+      <input id="searchQuery" list="pastSearches" placeholder="Enter station name" aria-label="Search by station name">
       <datalist id="pastSearches"></datalist>
-
-      <input id="searchCountry" list="suggestedCountries" placeholder="Країна">
+      <input id="searchCountry" list="suggestedCountries" placeholder="Enter country" aria-label="Search by country">
       <datalist id="suggestedCountries"></datalist>
-
-      <input id="searchGenre" list="suggestedGenres" placeholder="Жанр">
+      <input id="searchGenre" list="suggestedGenres" placeholder="Enter genre" aria-label="Search by genre">
       <datalist id="suggestedGenres"></datalist>
-
-      <button class="search-btn" aria-label="Шукати">🔍</button>
+      <button class="search-btn" aria-label="Search stations">🔍</button>
     </div>
 
-    <!-- Керування відтворенням -->
     <div class="controls-container">
       <div class="controls">
-        <button class="control-btn" aria-label="Попередня станція">⏮</button>
-        <button class="control-btn main-play-pause" aria-label="Відтворити / Пауза">▶</button>
-        <button class="control-btn" aria-label="Наступна станція">⏭</button>
+        <button class="control-btn" aria-label="Previous station">⏮</button>
+        <button class="control-btn" aria-label="Play or pause">▶</button>
+        <button class="control-btn" aria-label="Next station">⏭</button>
       </div>
     </div>
 
-    <!-- Модальне вікно — створення нової вкладки -->
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
     <div class="new-tab-modal modal-overlay" style="display: none;">
-      <div class="modal glass-panel">
-        <h2>Нова вкладка</h2>
-        <input id="newTabName" type="text" placeholder="Назва вкладки" autocomplete="off">
+      <div class="modal" role="dialog" aria-label="Create new tab">
+        <h2>Створити нову вкладку</h2>
+        <input id="newTabName" type="text" placeholder="Enter tab name" aria-label="New tab name">
         <div class="modal-tabs">
-          <button id="createTabBtn" class="modal-tab-btn">Створити</button>
-          <button class="modal-cancel-btn">Скасувати</button>
+          <button id="createTabBtn" class="modal-tab-btn" aria-label="Create tab">Створити</button>
+          <button class="modal-cancel-btn" aria-label="Cancel">Відміна</button>
         </div>
       </div>
     </div>
 
-    <!-- Модальне вікно — редагування вкладки -->
     <div class="edit-tab-modal modal-overlay" style="display: none;">
-      <div class="modal glass-panel">
-        <h2>Редагувати вкладку</h2>
-        <input id="renameTabName" type="text" placeholder="Нова назва" autocomplete="off">
+      <div class="modal" role="dialog" aria-label="Edit tab">
+        <h2>Дії з вкладкою</h2>
+        <input id="renameTabName" type="text" placeholder="Enter new tab name" aria-label="New tab name">
         <div class="modal-tabs">
-          <button id="renameTabBtn" class="modal-tab-btn">Перейменувати</button>
-          <button id="deleteTabBtn" class="modal-tab-btn danger">Видалити</button>
-          <button class="modal-cancel-btn">Скасувати</button>
+          <button id="renameTabBtn" class="modal-tab-btn" aria-label="Rename tab">Перейменувати</button>
+          <button id="deleteTabBtn" class="modal-tab-btn" aria-label="Delete tab">Видалити</button>
+          <button class="modal-cancel-btn" aria-label="Cancel">Відміна</button>
         </div>
       </div>
     </div>
 
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
