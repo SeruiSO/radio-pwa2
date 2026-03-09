@@ -19,13 +19,13 @@ let errorTimeout = null;
 let autoPlayRequestId = 0;
 let metadataCheckInterval = null;
 let currentTrack = "";
-let dragEnabled = false; // Flag for drag mode
-let dragStartIndex = null; // Index of dragged item
-let longPressTimer = null; // Timer for long press
-let pullToRefreshStartY = 0; // Pull to refresh start position
-let pullToRefreshThreshold = 100; // Threshold for refresh
-let isPulling = false; // Pull state
-let viewTransitionSupported = document.startViewTransition ? true : false; // Check for view transitions
+let dragEnabled = false;
+let dragStartIndex = null;
+let longPressTimer = null;
+let pullToRefreshStartY = 0;
+let pullToRefreshThreshold = 100;
+let isPulling = false;
+let viewTransitionSupported = document.startViewTransition ? true : false;
 
 customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab === "string" && tab.trim()) : [];
 
@@ -52,24 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const pullIndicator = document.getElementById("pullIndicator");
 
   if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
-    console.error("One of required DOM elements not found", {
-      audio: !!audio,
-      stationList: !!stationList,
-      playPauseBtn: !!playPauseBtn,
-      currentStationInfo: !!currentStationInfo,
-      themeToggle: !!themeToggle,
-      shareButton: !!shareButton,
-      exportButton: !!exportButton,
-      importButton: !!importButton,
-      importFileInput: !!importFileInput,
-      searchInput: !!searchInput,
-      searchQuery: !!searchQuery,
-      searchCountry: !!searchCountry,
-      searchGenre: !!searchGenre,
-      searchBtn: !!searchBtn,
-      pastSearchesList: !!pastSearchesList,
-      tabsContainer: !!tabsContainer
-    });
+    console.error("One of required DOM elements not found");
     setTimeout(initializeApp, 100);
     return;
   }
@@ -127,7 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const query = searchQuery.value.trim();
       const country = normalizeCountry(searchCountry.value.trim());
       const genre = searchGenre.value.trim().toLowerCase();
-      console.log("Search:", { query, country, genre });
       if (query || country || genre) {
         if (query && !pastSearches.includes(query)) {
           pastSearches.unshift(query);
@@ -137,7 +119,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         searchStations(query, country, genre);
       } else {
-        console.warn("All search fields are empty");
         stationList.innerHTML = "<div class='station-item empty'>Enter station name, country or genre</div>";
       }
     });
@@ -154,7 +135,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") searchBtn.click();
     });
 
-    // Show/hide toast on visibility change
     function showToast(message, type = "info", duration = 3000) {
       if (!toastContainer) return;
       
@@ -162,7 +142,6 @@ document.addEventListener("DOMContentLoaded", () => {
       toastContainer.classList.add("show");
       toastContainer.setAttribute("aria-label", message);
       
-      // Set color based on type
       if (type === "error") {
         toastContainer.style.backgroundColor = "#ff4444";
       } else if (type === "success") {
@@ -223,7 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
           }
           
-          // Reset
           touchStartY = 0;
           isPulling = false;
           pullIndicator.classList.remove("pulling");
@@ -266,7 +244,6 @@ document.addEventListener("DOMContentLoaded", () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      console.log("Settings exported:", settings);
       showToast("Settings exported successfully!", "success");
     }
 
@@ -347,7 +324,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           loadStations();
           switchTab(currentTab);
-          console.log("Settings imported:", settings);
           showToast("Settings imported successfully!", "success");
         } catch (error) {
           console.error("Error importing settings:", error);
@@ -431,21 +407,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationIconElement = currentStationInfo.querySelector(".station-icon");
       const currentTrackElement = document.getElementById("currentTrack");
       if (stationNameElement) stationNameElement.textContent = "Select station";
-      else console.error(".station-name element not found");
       if (stationGenreElement) stationGenreElement.textContent = "genre: -";
-      else console.error(".station-genre element not found");
       if (stationCountryElement) stationCountryElement.textContent = "country: -";
-      else console.error(".station-country element not found");
       if (stationIconElement) {
         stationIconElement.innerHTML = "🎵";
         stationIconElement.style.backgroundImage = "none";
-      } else console.error(".station-icon element not found");
+      }
       if (currentTrackElement) {
         currentTrackElement.textContent = "🎵 Track: unknown";
       }
     }
 
-    // Function to fetch track metadata from Radio Browser API
     async function fetchTrackMetadata(stationUrl, stationName) {
       if (!stationUrl || !isPlaying) {
         updateTrackDisplay("unknown");
@@ -453,14 +425,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       try {
-        // First try: Use Radio Browser API to get current track
         const params = new URLSearchParams({
           limit: 1,
           order: "clickcount",
           reverse: "true"
         });
         
-        // Search by station name to get metadata
         const response = await fetch(`https://de1.api.radio-browser.info/json/stations/byname/${encodeURIComponent(stationName)}?${params.toString()}`, {
           signal: AbortSignal.timeout(5000)
         });
@@ -474,22 +444,16 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
-        // Second try: Use HEAD request to get icy-metaint header and parse metadata
         const headResponse = await fetch(stationUrl, { 
           method: 'HEAD',
           signal: AbortSignal.timeout(3000)
         });
         
         const icyMetaint = headResponse.headers.get('icy-metaint');
-        const icyName = headResponse.headers.get('icy-name');
-        const icyBr = headResponse.headers.get('icy-br');
         
         if (icyMetaint) {
-          // Stream supports ICY metadata, we need to read it from the stream
-          // For now, we'll just indicate that metadata is available
           startMetadataStreaming(stationUrl, icyMetaint);
         } else {
-          // Fallback: Try to get track from station name or show unknown
           updateTrackDisplay("unknown");
         }
       } catch (error) {
@@ -498,13 +462,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Function to start streaming metadata from ICY stream
     function startMetadataStreaming(stationUrl, metaint) {
       if (metadataCheckInterval) {
         clearInterval(metadataCheckInterval);
       }
 
-      // For now, we'll poll the stream periodically
       metadataCheckInterval = setInterval(async () => {
         if (!isPlaying) return;
 
@@ -516,19 +478,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
           const metadata = response.headers.get('icy-metadata');
           if (metadata) {
-            // Parse metadata (format: "StreamTitle='...';")
             const match = metadata.match(/StreamTitle='([^']*)'/);
             if (match && match[1]) {
               updateTrackDisplay(match[1]);
             }
           }
         } catch (error) {
-          // Silent fail for metadata streaming
+          // Silent fail
         }
-      }, 10000); // Check every 10 seconds
+      }, 10000);
     }
 
-    // Function to update track display
     function updateTrackDisplay(track) {
       const currentTrackElement = document.getElementById("currentTrack");
       if (!currentTrackElement) return;
@@ -543,7 +503,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Stop metadata streaming
     function stopMetadataStreaming() {
       if (metadataCheckInterval) {
         clearInterval(metadataCheckInterval);
@@ -555,11 +514,19 @@ document.addEventListener("DOMContentLoaded", () => {
     function enableDragMode() {
       dragEnabled = true;
       showToast("Drag mode enabled. Drag handles to reorder stations.", "info", 2000);
+      
+      stationItems.forEach(item => {
+        item.setAttribute("draggable", "true");
+      });
     }
 
     function disableDragMode() {
       dragEnabled = false;
       dragStartIndex = null;
+      
+      stationItems.forEach(item => {
+        item.setAttribute("draggable", "false");
+      });
     }
 
     function setupDragAndDrop() {
@@ -567,55 +534,85 @@ document.addEventListener("DOMContentLoaded", () => {
         const dragHandle = item.querySelector(".drag-handle");
         if (!dragHandle) return;
 
-        // Remove existing listeners
-        dragHandle.removeEventListener("pointerdown", handleDragStart);
+        dragHandle.removeEventListener("pointerdown", handleDragHandleClick);
         dragHandle.removeEventListener("touchstart", handleLongPress);
+        dragHandle.removeEventListener("pointerup", handlePointerUp);
+        dragHandle.removeEventListener("pointerleave", handlePointerLeave);
+        item.removeEventListener("dragstart", handleDragStart);
+        item.removeEventListener("dragend", handleDragEnd);
+        item.removeEventListener("dragover", handleDragOver);
+        item.removeEventListener("dragleave", handleDragLeave);
+        item.removeEventListener("drop", handleDrop);
         
-        // Add new listeners
-        dragHandle.addEventListener("pointerdown", handleDragStart);
+        dragHandle.addEventListener("pointerdown", handleDragHandleClick);
         dragHandle.addEventListener("touchstart", handleLongPress);
+        dragHandle.addEventListener("pointerup", handlePointerUp);
+        dragHandle.addEventListener("pointerleave", handlePointerLeave);
         
-        // Store index for drag operations
-        item.setAttribute("draggable", "false");
+        item.setAttribute("draggable", dragEnabled ? "true" : "false");
         item.dataset.index = index;
+        
+        item.addEventListener("dragstart", handleDragStart);
+        item.addEventListener("dragend", handleDragEnd);
+        item.addEventListener("dragover", handleDragOver);
+        item.addEventListener("dragleave", handleDragLeave);
+        item.addEventListener("drop", handleDrop);
       });
+    }
+
+    function handleDragHandleClick(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (!dragEnabled) {
+        enableDragMode();
+        provideHapticFeedback();
+        
+        const item = e.target.closest(".station-item");
+        if (item) {
+          setTimeout(() => {
+            const dragEvent = new DragEvent('dragstart', {
+              bubbles: true,
+              cancelable: true,
+              dataTransfer: new DataTransfer()
+            });
+            item.dispatchEvent(dragEvent);
+          }, 50);
+        }
+        return;
+      }
     }
 
     function handleDragStart(e) {
       if (!dragEnabled) {
-        // Single tap with drag handle enables drag mode
-        enableDragMode();
-        provideHapticFeedback();
+        e.preventDefault();
         return;
       }
-
-      e.preventDefault();
+      
       const item = e.target.closest(".station-item");
       if (!item) return;
 
       dragStartIndex = parseInt(item.dataset.index);
       item.classList.add("dragging");
       
-      // Set drag data
       e.dataTransfer.setData("text/plain", dragStartIndex);
       e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setDragImage(item, 20, 20);
       
       provideHapticFeedback();
     }
 
-    function handleLongPress(e) {
-      e.preventDefault();
+    function handleDragEnd(e) {
       const item = e.target.closest(".station-item");
-      if (!item) return;
-
-      longPressTimer = setTimeout(() => {
-        if (!dragEnabled) {
-          enableDragMode();
-          item.classList.add("long-press");
-          setTimeout(() => item.classList.remove("long-press"), 500);
-          provideHapticFeedback([100]); // Longer vibration for long press
-        }
-      }, 500);
+      if (item) {
+        item.classList.remove("dragging");
+      }
+      
+      document.querySelectorAll(".station-item").forEach(i => {
+        i.classList.remove("drag-over");
+      });
+      
+      dragStartIndex = null;
     }
 
     function handleDragOver(e) {
@@ -623,7 +620,7 @@ document.addEventListener("DOMContentLoaded", () => {
       e.dataTransfer.dropEffect = "move";
       
       const item = e.target.closest(".station-item");
-      if (item && dragEnabled) {
+      if (item && dragEnabled && item !== stationItems[dragStartIndex]) {
         item.classList.add("drag-over");
       }
     }
@@ -637,6 +634,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function handleDrop(e) {
       e.preventDefault();
+      e.stopPropagation();
+      
       const targetItem = e.target.closest(".station-item");
       if (!targetItem || dragStartIndex === null || !dragEnabled) return;
 
@@ -645,10 +644,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const dragEndIndex = parseInt(targetItem.dataset.index);
       if (dragStartIndex === dragEndIndex) return;
 
-      // Reorder stations
       reorderStations(dragStartIndex, dragEndIndex);
       
-      // Reset drag state
       document.querySelectorAll(".station-item").forEach(item => {
         item.classList.remove("dragging", "drag-over");
       });
@@ -659,21 +656,52 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast("Station order updated!", "success");
     }
 
+    function handleLongPress(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const item = e.target.closest(".station-item");
+      if (!item) return;
+
+      longPressTimer = setTimeout(() => {
+        if (!dragEnabled) {
+          enableDragMode();
+          item.classList.add("long-press");
+          setTimeout(() => item.classList.remove("long-press"), 500);
+          provideHapticFeedback([100]);
+          
+          setTimeout(() => {
+            const dragEvent = new DragEvent('dragstart', {
+              bubbles: true,
+              cancelable: true,
+              dataTransfer: new DataTransfer()
+            });
+            item.dispatchEvent(dragEvent);
+          }, 50);
+        }
+      }, 500);
+    }
+
+    function handlePointerUp() {
+      clearTimeout(longPressTimer);
+    }
+
+    function handlePointerLeave() {
+      clearTimeout(longPressTimer);
+    }
+
     function reorderStations(fromIndex, toIndex) {
       if (currentTab === "best") {
-        // Reorder favorites
         const [movedStation] = favoriteStations.splice(fromIndex, 1);
         favoriteStations.splice(toIndex, 0, movedStation);
         localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
       } else {
-        // Reorder stations in current tab
         const stations = stationLists[currentTab];
         if (!stations) return;
         
         const [movedStation] = stations.splice(fromIndex, 1);
         stations.splice(toIndex, 0, movedStation);
         
-        // Update userAddedStations if station was user-added
         if (userAddedStations[currentTab]) {
           const userStationIndex = userAddedStations[currentTab].findIndex(s => s.name === movedStation.name);
           if (userStationIndex !== -1) {
@@ -686,7 +714,6 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
       }
       
-      // Update UI with animation
       animateStationReorder();
     }
 
@@ -696,7 +723,6 @@ document.addEventListener("DOMContentLoaded", () => {
           updateStationList();
         });
       } else {
-        // Fallback animation
         stationList.classList.add("fade-out");
         setTimeout(() => {
           updateStationList();
@@ -718,7 +744,6 @@ document.addEventListener("DOMContentLoaded", () => {
           cache: "no-store",
           signal: abortController.signal
         });
-        console.log(`Response status: ${response.status}`);
         const mergedStationLists = {};
         if (response.ok) {
           const newStations = await response.json();
@@ -735,10 +760,7 @@ document.addEventListener("DOMContentLoaded", () => {
               }
             });
             mergedStationLists[tab] = Array.from(uniqueStations.values());
-            console.log(`Added to ${tab}:`, mergedStationLists[tab].map(s => s.name));
           });
-        } else {
-          console.warn("Failed to load stations.json, using cached data");
         }
         customTabs.forEach(tab => {
           const uniqueStations = new Map();
@@ -753,7 +775,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           });
           mergedStationLists[tab] = Array.from(uniqueStations.values());
-          console.log(`Saved for custom tab ${tab}:`, mergedStationLists[tab].map(s => s.name));
         });
         stationLists = mergedStationLists;
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
@@ -772,21 +793,6 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error("Error loading stations:", error);
-          customTabs.forEach(tab => {
-            const uniqueStations = new Map();
-            (userAddedStations[tab] || []).forEach(s => {
-              if (!deletedStations.includes(s.name)) {
-                uniqueStations.set(s.name, s);
-              }
-            });
-            (stationLists[tab] || []).forEach(s => {
-              if (!deletedStations.includes(s.name)) {
-                uniqueStations.set(s.name, s);
-              }
-            });
-            stationLists[tab] = Array.from(uniqueStations.values());
-          });
-          localStorage.setItem("stationLists", JSON.stringify(stationLists));
           stationList.innerHTML = "<div class='station-item empty'>Failed to load stations</div>";
           showToast("Failed to load stations", "error");
         }
@@ -810,7 +816,6 @@ document.addEventListener("DOMContentLoaded", () => {
         params.append("reverse", "true");
         params.append("limit", "2000");
         const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
-        console.log("API request:", url);
         const response = await fetch(url, {
           signal: abortController.signal
         });
@@ -819,7 +824,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         let stations = await response.json();
         stations = stations.filter(station => station.url_resolved && isValidUrl(station.url_resolved));
-        console.log("Received stations (after HTTPS filter):", stations.length);
         renderSearchResults(stations);
         showToast(`Found ${stations.length} stations`, "success");
       } catch (error) {
@@ -936,7 +940,6 @@ document.addEventListener("DOMContentLoaded", () => {
         userAddedStations[targetTab].unshift(newStation);
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
         localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
-        console.log(`Added station ${stationName} to ${targetTab}:`, newStation);
         if (currentTab !== "search") {
           updateStationList();
         }
@@ -1040,7 +1043,6 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("customTabs", JSON.stringify(customTabs));
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
         localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
-        console.log(`Created new tab ${tabName}`);
         renderTabs();
         switchTab(tabName);
         closeModal();
@@ -1234,7 +1236,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function applyTheme(theme) {
       if (!themes[theme]) {
-        console.warn(`Theme ${theme} not found, using 'shadow-pulse'`);
         theme = "shadow-pulse";
         localStorage.setItem("selectedTheme", theme);
       }
@@ -1287,7 +1288,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "CACHE_UPDATED") {
-          console.log("Received cache update, updating stationLists");
           const currentCacheVersion = localStorage.getItem("cacheVersion") || "0";
           if (currentCacheVersion !== event.data.cacheVersion) {
             favoriteStations = favoriteStations.filter((name) =>
@@ -1300,7 +1300,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
         if (event.data.type === "NETWORK_STATUS" && event.data.online && intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
-          console.log("Network restored (SW), trying to play");
           debouncedTryAutoPlay();
         }
       });
@@ -1308,44 +1307,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let autoPlayTimeout = null;
     function debouncedTryAutoPlay(retryCount = 2, delay = 1000) {
-      if (isAutoPlayPending) {
-        console.log("debouncedTryAutoPlay: Skip, previous tryAutoPlay still active");
-        return;
-      }
+      if (isAutoPlayPending) return;
       const now = Date.now();
       const currentStationUrl = stationItems?.[currentIndex]?.dataset?.value;
       const normalizedCurrentUrl = normalizeUrl(currentStationUrl);
       const normalizedAudioSrc = normalizeUrl(audio.src);
-      if (now - lastSuccessfulPlayTime < 500 && normalizedAudioSrc === normalizedCurrentUrl) {
-        console.log("debouncedTryAutoPlay: Skip, recently played successfully for same station");
-        return;
-      }
-      if (autoPlayTimeout) {
-        clearTimeout(autoPlayTimeout);
-      }
+      if (now - lastSuccessfulPlayTime < 500 && normalizedAudioSrc === normalizedCurrentUrl) return;
+      if (autoPlayTimeout) clearTimeout(autoPlayTimeout);
       autoPlayRequestId++;
       const currentRequestId = autoPlayRequestId;
       autoPlayTimeout = setTimeout(() => tryAutoPlay(retryCount, delay, currentRequestId), 0);
     }
 
     async function tryAutoPlay(retryCount = 2, delay = 1000, requestId) {
-      if (isAutoPlayPending) {
-        console.log("tryAutoPlay: Skip, another tryAutoPlay active");
-        return;
-      }
-      if (requestId !== autoPlayRequestId) {
-        console.log("tryAutoPlay: Skip, outdated request ID", { requestId, current: autoPlayRequestId });
-        return;
-      }
+      if (isAutoPlayPending) return;
+      if (requestId !== autoPlayRequestId) return;
       isAutoPlayPending = true;
 
       try {
-        if (!navigator.onLine) {
-          console.log("Device offline: skipping playback");
-          return;
-        }
+        if (!navigator.onLine) return;
         if (!intendedPlaying || !stationItems?.length || currentIndex >= stationItems.length) {
-          console.log("Skip tryAutoPlay: invalid state", { intendedPlaying, hasStationItems: !!stationItems?.length, isIndexValid: currentIndex < stationItems.length });
           document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
           return;
         }
@@ -1353,78 +1334,48 @@ document.addEventListener("DOMContentLoaded", () => {
         const initialStationUrl = currentStationUrl;
         const normalizedCurrentUrl = normalizeUrl(currentStationUrl);
         const normalizedAudioSrc = normalizeUrl(audio.src);
-        if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
-          console.log("Skip tryAutoPlay: audio already playing with correct src, no errors and active stream");
-          return;
-        }
+        if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) return;
         if (!isValidUrl(currentStationUrl)) {
-          console.error("Invalid URL:", currentStationUrl);
           errorCount++;
-          if (errorCount >= ERROR_LIMIT) {
-            console.error("Reached playback error limit");
-            resetStationInfo();
-          }
+          if (errorCount >= ERROR_LIMIT) resetStationInfo();
           return;
         }
 
         const attemptPlay = async (attemptsLeft) => {
           if (streamAbortController) {
             streamAbortController.abort();
-            console.log("Previous audio stream canceled");
             streamAbortController = null;
           }
-          if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
-            console.log("tryAutoPlay: Station changed, canceling playback for", initialStationUrl);
-            return;
-          }
-          if (requestId !== autoPlayRequestId) {
-            console.log("tryAutoPlay: Skip attempt, outdated request ID", { requestId, current: autoPlayRequestId });
-            return;
-          }
+          if (stationItems[currentIndex].dataset.value !== initialStationUrl) return;
+          if (requestId !== autoPlayRequestId) return;
 
           streamAbortController = new AbortController();
           audio.pause();
           audio.src = null;
           audio.load();
           audio.src = currentStationUrl + "?nocache=" + Date.now();
-          console.log(`Playback attempt (${attemptsLeft} left):`, audio.src);
 
           try {
             await audio.play();
             errorCount = 0;
             isPlaying = true;
             lastSuccessfulPlayTime = Date.now();
-            console.log("Playback started successfully");
             document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
             localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
               updateCurrentStation(stationItems[currentIndex]);
             }
           } catch (error) {
-            if (error.name === 'AbortError') {
-              console.log("Stream request canceled");
-              return;
-            }
-            console.error("Playback error:", error);
+            if (error.name === 'AbortError') return;
             document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
             if (attemptsLeft > 1) {
-              if (stationItems[currentIndex].dataset.value !== initialStationUrl) {
-                console.log("tryAutoPlay: Station changed during retry, canceling");
-                return;
-              }
-              if (requestId !== autoPlayRequestId) {
-                console.log("tryAutoPlay: Skip retry, outdated request ID", { requestId, current: autoPlayRequestId });
-                return;
-              }
-              console.log(`Retrying in ${delay}ms`);
+              if (stationItems[currentIndex].dataset.value !== initialStationUrl) return;
+              if (requestId !== autoPlayRequestId) return;
               await new Promise(resolve => setTimeout(resolve, delay));
               await attemptPlay(attemptsLeft - 1);
             } else {
               errorCount++;
-              if (errorCount >= ERROR_LIMIT) {
-                console.error("Reached playback error limit");
-                resetStationInfo();
-              }
+              if (errorCount >= ERROR_LIMIT) resetStationInfo();
             }
           } finally {
             streamAbortController = null;
@@ -1440,16 +1391,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function switchTab(tab) {
       const validTabs = ["best", "techno", "trance", "ukraine", "pop", "search", ...customTabs];
-      if (!validTabs.includes(tab)) {
-        tab = "techno";
-      }
+      if (!validTabs.includes(tab)) tab = "techno";
       
-      // Update aria-selected for tabs
       document.querySelectorAll(".tab-btn").forEach(btn => {
         btn.setAttribute("aria-selected", btn.dataset.tab === tab ? "true" : "false");
       });
       
-      // Animate tab transition
       if (viewTransitionSupported) {
         document.startViewTransition(() => {
           performTabSwitch(tab);
@@ -1482,22 +1429,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
         const normalizedAudioSrc = normalizeUrl(audio.src);
         if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
-          console.log("switchTab: Starting playback after tab change");
           isAutoPlayPending = false;
           debouncedTryAutoPlay();
-        } else {
-          console.log("switchTab: Skip playback, station already playing");
         }
-      } else {
-        console.log("switchTab: Skip playback, invalid state");
       }
     }
 
     function updateStationList() {
-      if (!stationList) {
-        console.error("stationList not found");
-        return;
-      }
+      if (!stationList) return;
       let stations = currentTab === "best"
         ? favoriteStations
             .map(name => Object.values(stationLists).flat().find(s => s.name === name))
@@ -1524,7 +1463,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.setAttribute("draggable", "false");
         item.setAttribute("role", "listitem");
         
-        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '; console.warn('Error loading favicon:', '${item.dataset.favicon}');">` : "🎵 ";
+        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 ';">` : "🎵 ";
         
         const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
           ? `<button class="delete-btn" aria-label="Delete station">🗑</button>`
@@ -1549,20 +1488,17 @@ document.addEventListener("DOMContentLoaded", () => {
       stationList.appendChild(fragment);
       stationItems = stationList.querySelectorAll(".station-item");
 
-      // Setup drag and drop
       setupDragAndDrop();
       
-      // Add drag and drop event listeners to container
       stationList.addEventListener("dragover", handleDragOver);
       stationList.addEventListener("dragleave", handleDragLeave);
       stationList.addEventListener("drop", handleDrop);
       
-      // Cancel long press on pointerup/pointerleave
       stationItems.forEach(item => {
         const dragHandle = item.querySelector(".drag-handle");
         if (dragHandle) {
-          dragHandle.addEventListener("pointerup", () => clearTimeout(longPressTimer));
-          dragHandle.addEventListener("pointerleave", () => clearTimeout(longPressTimer));
+          dragHandle.addEventListener("pointerup", handlePointerUp);
+          dragHandle.addEventListener("pointerleave", handlePointerLeave);
         }
       });
 
@@ -1616,23 +1552,22 @@ document.addEventListener("DOMContentLoaded", () => {
     function deleteStation(stationName) {
       if (Array.isArray(stationLists[currentTab])) {
         const station = stationLists[currentTab].find(s => s.name === stationName);
-        if (!station) {
-          console.warn(`Station ${stationName} not found in ${currentTab}`);
-          return;
-        }
+        if (!station) return;
+        
         stationLists[currentTab] = stationLists[currentTab].filter(s => s.name !== stationName);
         userAddedStations[currentTab] = userAddedStations[currentTab]?.filter(s => s.name !== stationName) || [];
+        
         if (!station.isFromSearch && !deletedStations.includes(stationName)) {
           if (!Array.isArray(deletedStations)) deletedStations = [];
           deletedStations.push(stationName);
           localStorage.setItem("deletedStations", JSON.stringify(deletedStations));
-          console.log(`Added ${stationName} to deletedStations:`, deletedStations);
         }
+        
         localStorage.setItem("stationLists", JSON.stringify(stationLists));
         localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
         favoriteStations = favoriteStations.filter(name => name !== stationName);
         localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-        console.log(`Deleted station ${stationName} from ${currentTab}`);
+        
         if (stationLists[currentTab].length === 0) {
           currentIndex = 0;
         } else if (currentIndex >= stationLists[currentTab].length) {
@@ -1655,20 +1590,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const normalizedCurrentUrl = normalizeUrl(item.dataset.value);
         const normalizedAudioSrc = normalizeUrl(audio.src);
         if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
-          console.log("changeStation: Starting playback after station change");
           isAutoPlayPending = false;
           debouncedTryAutoPlay();
-        } else {
-          console.log("changeStation: Skip playback, station already playing");
         }
-      } else {
-        console.log("changeStation: Skip playback, invalid state");
       }
     }
 
     function updateCurrentStation(item) {
       if (!currentStationInfo || !item.dataset) {
-        console.error("currentStationInfo or item.dataset not found");
         resetStationInfo();
         return;
       }
@@ -1678,23 +1607,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationIconElement = currentStationInfo.querySelector(".station-icon");
       const currentTrackElement = document.getElementById("currentTrack");
 
-      console.log("Updating currentStationInfo with data:", item.dataset);
-
-      if (stationNameElement) {
-        stationNameElement.textContent = item.dataset.name || "";
-      } else {
-        console.error(".station-name element not found");
-      }
-      if (stationGenreElement) {
-        stationGenreElement.textContent = `genre: ${item.dataset.genre || ""}`;
-      } else {
-        console.error(".station-genre element not found");
-      }
-      if (stationCountryElement) {
-        stationCountryElement.textContent = `country: ${item.dataset.country || ""}`;
-      } else {
-        console.error(".station-country element not found");
-      }
+      if (stationNameElement) stationNameElement.textContent = item.dataset.name || "";
+      if (stationGenreElement) stationGenreElement.textContent = `genre: ${item.dataset.genre || ""}`;
+      if (stationCountryElement) stationCountryElement.textContent = `country: ${item.dataset.country || ""}`;
+      
       if (stationIconElement) {
         if (item.dataset.favicon && isValidUrl(item.dataset.favicon)) {
           stationIconElement.innerHTML = "";
@@ -1706,19 +1622,12 @@ document.addEventListener("DOMContentLoaded", () => {
           stationIconElement.innerHTML = "🎵";
           stationIconElement.style.backgroundImage = "none";
         }
-      } else {
-        console.error(".station-icon element not found");
       }
 
-      // Reset track display when changing station
-      if (currentTrackElement) {
-        currentTrackElement.textContent = "🎵 Track: loading...";
-      }
+      if (currentTrackElement) currentTrackElement.textContent = "🎵 Track: loading...";
       
-      // Stop previous metadata streaming
       stopMetadataStreaming();
       
-      // Start fetching metadata for new station
       if (isPlaying) {
         fetchTrackMetadata(item.dataset.value, item.dataset.name);
       }
@@ -1757,10 +1666,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function togglePlayPause() {
-      if (!playPauseBtn || !audio) {
-        console.error("playPauseBtn or audio not found");
-        return;
-      }
+      if (!playPauseBtn || !audio) return;
+      
       if (audio.paused) {
         isPlaying = true;
         intendedPlaying = true;
@@ -1777,9 +1684,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
         stopMetadataStreaming();
         const currentTrackElement = document.getElementById("currentTrack");
-        if (currentTrackElement) {
-          currentTrackElement.textContent = "🎵 Track: unknown";
-        }
+        if (currentTrackElement) currentTrackElement.textContent = "🎵 Track: unknown";
       }
       localStorage.setItem("isPlaying", isPlaying);
       localStorage.setItem("intendedPlaying", intendedPlaying);
@@ -1802,38 +1707,25 @@ document.addEventListener("DOMContentLoaded", () => {
           togglePlayPause();
           provideHapticFeedback();
         }
-        // Escape key to disable drag mode
         if (e.key === "Escape" && dragEnabled) {
           disableDragMode();
           showToast("Drag mode disabled", "info");
         }
       },
       visibilitychange: () => {
-        if (document.hidden || !intendedPlaying || !navigator.onLine || !stationItems?.length || currentIndex >= stationItems.length) {
-          console.log("visibilitychange: Skip, tab hidden or invalid state");
-          return;
-        }
+        if (document.hidden || !intendedPlaying || !navigator.onLine || !stationItems?.length || currentIndex >= stationItems.length) return;
         const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
         const normalizedAudioSrc = normalizeUrl(audio.src);
-        if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
-          console.log("visibilitychange: Skip playback, station already playing");
-        } else {
-          console.log("visibilitychange: Starting playback after visibility change");
+        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
           isAutoPlayPending = false;
           debouncedTryAutoPlay();
         }
       },
       resume: () => {
-        if (!intendedPlaying || !navigator.onLine || !stationItems?.length || currentIndex >= stationItems.length) {
-          console.log("resume: Skip, invalid state");
-          return;
-        }
+        if (!intendedPlaying || !navigator.onLine || !stationItems?.length || currentIndex >= stationItems.length) return;
         const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
         const normalizedAudioSrc = normalizeUrl(audio.src);
-        if (normalizedAudioSrc === normalizedCurrentUrl && !audio.paused && !audio.error && audio.readyState >= 2 && audio.currentTime > 0) {
-          console.log("resume: Skip playback, station already playing");
-        } else {
-          console.log("resume: Starting playback after app resume");
+        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
           isAutoPlayPending = false;
           debouncedTryAutoPlay();
         }
@@ -1862,7 +1754,6 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(errorTimeout);
         errorTimeout = null;
       }
-      // Start fetching metadata when playback starts
       if (stationItems && stationItems[currentIndex]) {
         fetchTrackMetadata(stationItems[currentIndex].dataset.value, stationItems[currentIndex].dataset.name);
       }
@@ -1876,22 +1767,15 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("isPlaying", isPlaying);
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
-      if (currentTrackElement) {
-        currentTrackElement.textContent = "🎵 Track: unknown";
-      }
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.metadata = null;
-      }
+      if (currentTrackElement) currentTrackElement.textContent = "🎵 Track: unknown";
+      if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
     });
 
     audio.addEventListener("error", () => {
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
-      console.error("Audio error:", audio.error?.message || "Unknown error", "for URL:", audio.src);
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
-      if (currentTrackElement) {
-        currentTrackElement.textContent = "🎵 Track: error";
-      }
+      if (currentTrackElement) currentTrackElement.textContent = "🎵 Track: error";
       if (intendedPlaying && errorCount < ERROR_LIMIT && !errorTimeout) {
         errorCount++;
         errorTimeout = setTimeout(() => {
@@ -1899,7 +1783,6 @@ document.addEventListener("DOMContentLoaded", () => {
           errorTimeout = null;
         }, 1000);
       } else if (errorCount >= ERROR_LIMIT) {
-        console.error("Reached playback error limit");
         resetStationInfo();
       }
     });
@@ -1909,7 +1792,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     window.addEventListener("online", () => {
-      console.log("Network restored");
       showToast("Network restored", "success");
       if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
         isAutoPlayPending = false;
@@ -1918,7 +1800,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     window.addEventListener("offline", () => {
-      console.log("Network connection lost");
       showToast("Network connection lost", "error");
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       errorCount = 0;
@@ -1934,12 +1815,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if ("mediaSession" in navigator) {
       navigator.mediaSession.setActionHandler("play", () => {
-        if (intendedPlaying) return;
-        togglePlayPause();
+        if (!intendedPlaying) togglePlayPause();
       });
       navigator.mediaSession.setActionHandler("pause", () => {
-        if (!isPlaying) return;
-        togglePlayPause();
+        if (isPlaying) togglePlayPause();
       });
       navigator.mediaSession.setActionHandler("previoustrack", prevStation);
       navigator.mediaSession.setActionHandler("nexttrack", nextStation);
@@ -1951,14 +1830,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
       const normalizedAudioSrc = normalizeUrl(audio.src);
       if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
-        console.log("initializeApp: Starting playback after initialization");
         isAutoPlayPending = false;
         debouncedTryAutoPlay();
-      } else {
-        console.log("initializeApp: Skip playback, station already playing");
       }
-    } else {
-      console.log("initializeApp: Skip playback, invalid state");
     }
   }
 });
