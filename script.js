@@ -70,7 +70,12 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTabs();
     setupPullToRefresh();
     setupLazyLoading();
-    setupVirtualScrolling();
+    
+    // Завантажуємо станції одразу
+    loadStations().then(() => {
+      // Після завантаження перемикаємося на поточний таб
+      switchTab(currentTab);
+    });
 
     shareButton.addEventListener("click", () => {
       const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
@@ -230,7 +235,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const img = entry.target;
             const src = img.dataset.src;
             if (src) {
-              img.src = src;
+              // Перевіряємо протокол для HTTPS
+              const secureSrc = src.replace('http://', 'https://');
+              img.src = secureSrc;
               img.classList.add('loaded');
               lazyLoadObserver.unobserve(img);
             }
@@ -238,32 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }, {
         rootMargin: '50px'
-      });
-    }
-
-    function setupVirtualScrolling() {
-      // Використовуємо Intersection Observer для віртуалізації
-      const itemHeight = 70; // Приблизна висота елемента
-      const buffer = 5; // Кількість елементів за межами видимості
-      
-      stationList.addEventListener('scroll', () => {
-        const scrollTop = stationList.scrollTop;
-        const visibleHeight = stationList.clientHeight;
-        
-        const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - buffer);
-        const endIndex = Math.min(
-          stationItems.length - 1,
-          Math.ceil((scrollTop + visibleHeight) / itemHeight) + buffer
-        );
-        
-        // Приховуємо елементи за межами видимості
-        stationItems.forEach((item, index) => {
-          if (index < startIndex || index > endIndex) {
-            item.style.display = 'none';
-          } else {
-            item.style.display = 'flex';
-          }
-        });
       });
     }
 
@@ -404,8 +385,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const countryDatalist = document.getElementById("suggestedCountries");
       const genreDatalist = document.getElementById("suggestedGenres");
 
-      countryDatalist.innerHTML = suggestedCountries.map(country => `<option value="${country}">`).join("");
-      genreDatalist.innerHTML = suggestedGenres.map(genre => `<option value="${genre}">`).join("");
+      if (countryDatalist) {
+        countryDatalist.innerHTML = suggestedCountries.map(country => `<option value="${country}">`).join("");
+      }
+      if (genreDatalist) {
+        genreDatalist.innerHTML = suggestedGenres.map(genre => `<option value="${genre}">`).join("");
+      }
     }
 
     function updatePastSearches() {
@@ -438,7 +423,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!url) return false;
       try {
         new URL(url);
-        return /^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(url);
+        return url.startsWith('http://') || url.startsWith('https://');
       } catch {
         return false;
       }
@@ -526,7 +511,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function tryMetadataStreaming(stationUrl) {
-      fetch(stationUrl, { 
+      // Використовуємо HTTPS замість HTTP
+      const secureUrl = stationUrl.replace('http://', 'https://');
+      
+      fetch(secureUrl, { 
         method: 'HEAD',
         signal: AbortSignal.timeout(3000),
         headers: { 'Icy-Metadata': '1' }
@@ -535,13 +523,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const icyMetaint = response.headers.get('icy-metaint');
         
         if (icyMetaint) {
-          startMetadataStreaming(stationUrl, parseInt(icyMetaint));
+          startMetadataStreaming(secureUrl, parseInt(icyMetaint));
         } else {
-          tryAlternativeMetadata(stationUrl);
+          tryAlternativeMetadata(secureUrl);
         }
       })
       .catch(() => {
-        tryAlternativeMetadata(stationUrl);
+        tryAlternativeMetadata(secureUrl);
       });
     }
 
@@ -665,7 +653,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         params.append("order", "clickcount");
         params.append("reverse", "true");
-        params.append("limit", "200");
+        params.append("limit", "500"); // Збільшуємо ліміт
         params.append("hidebroken", "true");
         
         const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
@@ -682,13 +670,22 @@ document.addEventListener("DOMContentLoaded", () => {
         
         let stations = await response.json();
         
-        // М'якша фільтрація
+        // М'якша фільтрація - перевіряємо наявність URL
         stations = stations.filter(station => {
           const url = station.url || station.url_resolved;
           return url && (url.startsWith('http://') || url.startsWith('https://'));
         });
         
-        stations = stations.slice(0, 100); // Обмежуємо до 100 для продуктивності
+        // Конвертуємо HTTP в HTTPS для безпеки
+        stations = stations.map(station => {
+          if (station.url && station.url.startsWith('http://')) {
+            station.url = station.url.replace('http://', 'https://');
+          }
+          if (station.url_resolved && station.url_resolved.startsWith('http://')) {
+            station.url_resolved = station.url_resolved.replace('http://', 'https://');
+          }
+          return station;
+        });
         
         console.log(`Знайдено ${stations.length} станцій`);
         renderSearchResults(stations);
@@ -716,11 +713,12 @@ document.addEventListener("DOMContentLoaded", () => {
       stations.forEach((station, index) => {
         const item = document.createElement("div");
         item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
-        item.dataset.value = station.url || station.url_resolved;
+        const stationUrl = station.url || station.url_resolved;
+        item.dataset.value = stationUrl;
         item.dataset.name = station.name || "Unknown";
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
-        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
+        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon.replace('http://', 'https://') : "";
         item.dataset.index = index;
         item.style.setProperty('--item-index', index);
         
@@ -750,20 +748,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
       
-      if (stationItems.length && currentIndex < stationItems.length) {
-        changeStation(currentIndex);
-      }
-      
       stationList.onclick = e => {
         const item = e.target.closest(".station-item");
         const addBtn = e.target.closest(".add-btn");
         if (item && !item.classList.contains("empty")) {
+          e.preventDefault();
           currentIndex = Array.from(stationItems).indexOf(item);
           changeStation(currentIndex);
           provideHapticFeedback();
         }
         if (addBtn) {
           e.stopPropagation();
+          e.preventDefault();
           showTabModal(item);
         }
       };
@@ -1257,7 +1253,10 @@ document.addEventListener("DOMContentLoaded", () => {
           audio.pause();
           audio.src = null;
           audio.load();
-          audio.src = currentStationUrl + "?nocache=" + Date.now();
+          
+          // Використовуємо HTTPS замість HTTP
+          const secureUrl = currentStationUrl.replace('http://', 'https://');
+          audio.src = secureUrl + "?nocache=" + Date.now();
 
           try {
             await audio.play();
@@ -1300,6 +1299,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!validTabs.includes(tab)) tab = "techno";
       
       document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tab === tab);
         btn.setAttribute("aria-selected", btn.dataset.tab === tab ? "true" : "false");
       });
       
@@ -1322,7 +1322,16 @@ document.addEventListener("DOMContentLoaded", () => {
       currentTab = tab;
       localStorage.setItem("currentTab", tab);
       const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
-      const maxIndex = tab === "best" ? favoriteStations.length - 1 : tab === "search" ? 0 : stationLists[tab]?.length - 1 || 0;
+      let maxIndex = 0;
+      
+      if (tab === "best") {
+        maxIndex = favoriteStations.length - 1;
+      } else if (tab === "search") {
+        maxIndex = 0;
+      } else {
+        maxIndex = (stationLists[tab]?.length || 0) - 1;
+      }
+      
       currentIndex = savedIndex <= maxIndex && savedIndex >= 0 ? savedIndex : 0;
       searchInput.style.display = tab === "search" ? "flex" : "none";
       searchQuery.value = "";
@@ -1331,13 +1340,313 @@ document.addEventListener("DOMContentLoaded", () => {
       if (tab === "search") populateSearchSuggestions();
       updateStationList();
       renderTabs();
-      if (stationItems?.length && currentIndex < stationItems.length && intendedPlaying) {
-        const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
-        const normalizedAudioSrc = normalizeUrl(audio.src);
-        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
-          isAutoPlayPending = false;
-          debouncedTryAutoPlay();
+    }
+
+    // Drag and Drop Functions
+    function enableDragMode() {
+      dragEnabled = true;
+      showToast("Drag mode enabled. Drag handles to reorder stations.", "info", 2000);
+      
+      stationItems.forEach(item => {
+        item.setAttribute("draggable", "true");
+        // Забороняємо виділення тексту
+        item.style.userSelect = "none";
+        item.style.webkitUserSelect = "none";
+      });
+    }
+
+    function disableDragMode() {
+      dragEnabled = false;
+      dragStartIndex = null;
+      
+      stationItems.forEach(item => {
+        item.setAttribute("draggable", "false");
+        item.style.userSelect = "";
+        item.style.webkitUserSelect = "";
+      });
+    }
+
+    function setupDragAndDrop() {
+      stationItems.forEach((item, index) => {
+        const dragHandle = item.querySelector(".drag-handle");
+        if (!dragHandle) return;
+
+        dragHandle.removeEventListener("pointerdown", handleDragHandleClick);
+        dragHandle.removeEventListener("touchstart", handleLongPress);
+        dragHandle.removeEventListener("pointerup", handlePointerUp);
+        dragHandle.removeEventListener("pointerleave", handlePointerLeave);
+        item.removeEventListener("dragstart", handleDragStart);
+        item.removeEventListener("dragend", handleDragEnd);
+        item.removeEventListener("dragover", handleDragOver);
+        item.removeEventListener("dragleave", handleDragLeave);
+        item.removeEventListener("drop", handleDrop);
+        
+        dragHandle.addEventListener("pointerdown", handleDragHandleClick);
+        dragHandle.addEventListener("touchstart", handleLongPress);
+        dragHandle.addEventListener("pointerup", handlePointerUp);
+        dragHandle.addEventListener("pointerleave", handlePointerLeave);
+        
+        item.setAttribute("draggable", dragEnabled ? "true" : "false");
+        item.dataset.index = index;
+        
+        item.addEventListener("dragstart", handleDragStart);
+        item.addEventListener("dragend", handleDragEnd);
+        item.addEventListener("dragover", handleDragOver);
+        item.addEventListener("dragleave", handleDragLeave);
+        item.addEventListener("drop", handleDrop);
+      });
+    }
+
+    function handleDragHandleClick(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (!dragEnabled) {
+        enableDragMode();
+        provideHapticFeedback();
+        
+        const item = e.target.closest(".station-item");
+        if (item) {
+          setTimeout(() => {
+            const dragEvent = new DragEvent('dragstart', {
+              bubbles: true,
+              cancelable: true,
+              dataTransfer: new DataTransfer()
+            });
+            item.dispatchEvent(dragEvent);
+          }, 50);
         }
+        return;
+      }
+    }
+
+    function handleDragStart(e) {
+      if (!dragEnabled) {
+        e.preventDefault();
+        return;
+      }
+      
+      const item = e.target.closest(".station-item");
+      if (!item) return;
+
+      dragStartIndex = parseInt(item.dataset.index);
+      item.classList.add("dragging");
+      
+      e.dataTransfer.setData("text/plain", dragStartIndex);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setDragImage(item, 20, 20);
+      
+      provideHapticFeedback();
+    }
+
+    function handleDragEnd(e) {
+      const item = e.target.closest(".station-item");
+      if (item) {
+        item.classList.remove("dragging");
+      }
+      
+      document.querySelectorAll(".station-item").forEach(i => {
+        i.classList.remove("drag-over");
+      });
+      
+      dragStartIndex = null;
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      
+      const item = e.target.closest(".station-item");
+      if (item && dragEnabled && item !== stationItems[dragStartIndex]) {
+        item.classList.add("drag-over");
+      }
+    }
+
+    function handleDragLeave(e) {
+      const item = e.target.closest(".station-item");
+      if (item) {
+        item.classList.remove("drag-over");
+      }
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const targetItem = e.target.closest(".station-item");
+      if (!targetItem || dragStartIndex === null || !dragEnabled) return;
+
+      targetItem.classList.remove("drag-over");
+      
+      const dragEndIndex = parseInt(targetItem.dataset.index);
+      if (dragStartIndex === dragEndIndex) return;
+
+      reorderStations(dragStartIndex, dragEndIndex);
+      
+      document.querySelectorAll(".station-item").forEach(item => {
+        item.classList.remove("dragging", "drag-over");
+      });
+      
+      dragStartIndex = null;
+      disableDragMode();
+      provideHapticFeedback();
+      showToast("Station order updated!", "success");
+    }
+
+    function handleLongPress(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const item = e.target.closest(".station-item");
+      if (!item) return;
+
+      longPressTimer = setTimeout(() => {
+        if (!dragEnabled) {
+          enableDragMode();
+          item.classList.add("long-press");
+          setTimeout(() => item.classList.remove("long-press"), 500);
+          provideHapticFeedback([100]);
+          
+          setTimeout(() => {
+            const dragEvent = new DragEvent('dragstart', {
+              bubbles: true,
+              cancelable: true,
+              dataTransfer: new DataTransfer()
+            });
+            item.dispatchEvent(dragEvent);
+          }, 50);
+        }
+      }, 500);
+    }
+
+    function handlePointerUp() {
+      clearTimeout(longPressTimer);
+    }
+
+    function handlePointerLeave() {
+      clearTimeout(longPressTimer);
+    }
+
+    function reorderStations(fromIndex, toIndex) {
+      if (currentTab === "best") {
+        const [movedStation] = favoriteStations.splice(fromIndex, 1);
+        favoriteStations.splice(toIndex, 0, movedStation);
+        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+      } else {
+        const stations = stationLists[currentTab];
+        if (!stations) return;
+        
+        const [movedStation] = stations.splice(fromIndex, 1);
+        stations.splice(toIndex, 0, movedStation);
+        
+        if (userAddedStations[currentTab]) {
+          const userStationIndex = userAddedStations[currentTab].findIndex(s => s.name === movedStation.name);
+          if (userStationIndex !== -1) {
+            const [movedUserStation] = userAddedStations[currentTab].splice(userStationIndex, 1);
+            userAddedStations[currentTab].splice(toIndex, 0, movedUserStation);
+          }
+        }
+        
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
+      }
+      
+      animateStationReorder();
+    }
+
+    function animateStationReorder() {
+      if (viewTransitionSupported) {
+        document.startViewTransition(() => {
+          updateStationList();
+        });
+      } else {
+        stationList.classList.add("fade-out");
+        setTimeout(() => {
+          updateStationList();
+          stationList.classList.remove("fade-out");
+          stationList.classList.add("fade-in");
+          setTimeout(() => stationList.classList.remove("fade-in"), 300);
+        }, 150);
+      }
+    }
+
+    async function loadStations() {
+      console.time("loadStations");
+      showLoading();
+      stationList.innerHTML = "<div class='station-item empty'>Loading...</div>";
+      try {
+        abortController.abort();
+        abortController = new AbortController();
+        const response = await fetch(`stations.json?t=${Date.now()}`, {
+          cache: "no-store",
+          signal: abortController.signal
+        });
+        const mergedStationLists = {};
+        if (response.ok) {
+          const newStations = await response.json();
+          Object.keys(newStations).forEach(tab => {
+            const uniqueStations = new Map();
+            (userAddedStations[tab] || []).forEach(s => {
+              if (!deletedStations.includes(s.name)) {
+                // Конвертуємо HTTP в HTTPS
+                if (s.value) s.value = s.value.replace('http://', 'https://');
+                if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
+                uniqueStations.set(s.name, s);
+              }
+            });
+            newStations[tab].forEach(s => {
+              if (!deletedStations.includes(s.name)) {
+                // Конвертуємо HTTP в HTTPS
+                if (s.value) s.value = s.value.replace('http://', 'https://');
+                if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
+                uniqueStations.set(s.name, s);
+              }
+            });
+            mergedStationLists[tab] = Array.from(uniqueStations.values());
+          });
+        }
+        customTabs.forEach(tab => {
+          const uniqueStations = new Map();
+          (userAddedStations[tab] || []).forEach(s => {
+            if (!deletedStations.includes(s.name)) {
+              // Конвертуємо HTTP в HTTPS
+              if (s.value) s.value = s.value.replace('http://', 'https://');
+              if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
+              uniqueStations.set(s.name, s);
+            }
+          });
+          (stationLists[tab] || []).forEach(s => {
+            if (!deletedStations.includes(s.name)) {
+              // Конвертуємо HTTP в HTTPS
+              if (s.value) s.value = s.value.replace('http://', 'https://');
+              if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
+              uniqueStations.set(s.name, s);
+            }
+          });
+          mergedStationLists[tab] = Array.from(uniqueStations.values());
+        });
+        stationLists = mergedStationLists;
+        localStorage.setItem("stationLists", JSON.stringify(stationLists));
+        favoriteStations = favoriteStations.filter(name => 
+          Object.values(stationLists).flat().some(s => s.name === name)
+        );
+        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
+        const validTabs = [...Object.keys(stationLists), "best", "search", ...customTabs];
+        if (!validTabs.includes(currentTab)) {
+          currentTab = validTabs[0] || "techno";
+          localStorage.setItem("currentTab", currentTab);
+        }
+        currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
+        showToast("Stations loaded successfully!", "success");
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error("Error loading stations:", error);
+          stationList.innerHTML = "<div class='station-item empty'>Failed to load stations</div>";
+          showToast("Failed to load stations", "error");
+        }
+      } finally {
+        console.timeEnd("loadStations");
+        hideLoading();
       }
     }
 
@@ -1364,7 +1673,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name;
         item.dataset.genre = shortenGenre(station.genre);
         item.dataset.country = station.country;
-        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
+        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon.replace('http://', 'https://') : "";
         item.dataset.index = index;
         item.setAttribute("draggable", "false");
         item.setAttribute("role", "listitem");
@@ -1430,27 +1739,26 @@ document.addEventListener("DOMContentLoaded", () => {
         const dragHandle = e.target.closest(".drag-handle");
         
         if (item && !item.classList.contains("empty") && !dragHandle) {
+          e.preventDefault();
           currentIndex = Array.from(stationItems).indexOf(item);
           changeStation(currentIndex);
           provideHapticFeedback();
         }
         if (favoriteBtn) {
           e.stopPropagation();
+          e.preventDefault();
           toggleFavorite(item.dataset.name);
           provideHapticFeedback();
         }
         if (deleteBtn) {
           e.stopPropagation();
+          e.preventDefault();
           if (confirm(`Are you sure you want to delete station "${item.dataset.name}" from the list?`)) {
             deleteStation(item.dataset.name);
             provideHapticFeedback();
           }
         }
       };
-
-      if (stationItems.length && currentIndex < stationItems.length) {
-        changeStation(currentIndex);
-      }
     }
 
     function toggleFavorite(stationName) {
@@ -1776,14 +2084,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     applyTheme(currentTheme);
-    loadStations();
-    if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
-      const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
-      const normalizedAudioSrc = normalizeUrl(audio.src);
-      if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
-        isAutoPlayPending = false;
-        debouncedTryAutoPlay();
-      }
-    }
   }
 });
