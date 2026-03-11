@@ -26,6 +26,8 @@ let pullToRefreshStartY = 0;
 let pullToRefreshThreshold = 100;
 let isPulling = false;
 let viewTransitionSupported = document.startViewTransition ? true : false;
+let searchDebounceTimer = null;
+let lazyLoadObserver = null;
 
 customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab === "string" && tab.trim()) : [];
 
@@ -67,6 +69,8 @@ document.addEventListener("DOMContentLoaded", () => {
     populateSearchSuggestions();
     renderTabs();
     setupPullToRefresh();
+    setupLazyLoading();
+    setupVirtualScrolling();
 
     shareButton.addEventListener("click", () => {
       const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
@@ -106,10 +110,12 @@ document.addEventListener("DOMContentLoaded", () => {
       provideHapticFeedback();
     });
 
+    // Debounced search
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
       const country = normalizeCountry(searchCountry.value.trim());
       const genre = searchGenre.value.trim().toLowerCase();
+      
       if (query || country || genre) {
         if (query && !pastSearches.includes(query)) {
           pastSearches.unshift(query);
@@ -117,7 +123,11 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("pastSearches", JSON.stringify(pastSearches));
           updatePastSearches();
         }
-        searchStations(query, country, genre);
+        
+        if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+          searchStations(query, country, genre);
+        }, 300);
       } else {
         stationList.innerHTML = "<div class='station-item empty'>Enter station name, country or genre</div>";
       }
@@ -211,6 +221,50 @@ document.addEventListener("DOMContentLoaded", () => {
           }, 300);
         }
       }, { passive: true });
+    }
+
+    function setupLazyLoading() {
+      lazyLoadObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            const src = img.dataset.src;
+            if (src) {
+              img.src = src;
+              img.classList.add('loaded');
+              lazyLoadObserver.unobserve(img);
+            }
+          }
+        });
+      }, {
+        rootMargin: '50px'
+      });
+    }
+
+    function setupVirtualScrolling() {
+      // Використовуємо Intersection Observer для віртуалізації
+      const itemHeight = 70; // Приблизна висота елемента
+      const buffer = 5; // Кількість елементів за межами видимості
+      
+      stationList.addEventListener('scroll', () => {
+        const scrollTop = stationList.scrollTop;
+        const visibleHeight = stationList.clientHeight;
+        
+        const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - buffer);
+        const endIndex = Math.min(
+          stationItems.length - 1,
+          Math.ceil((scrollTop + visibleHeight) / itemHeight) + buffer
+        );
+        
+        // Приховуємо елементи за межами видимості
+        stationItems.forEach((item, index) => {
+          if (index < startIndex || index > endIndex) {
+            item.style.display = 'none';
+          } else {
+            item.style.display = 'flex';
+          }
+        });
+      });
     }
 
     function showLoading() {
@@ -384,7 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!url) return false;
       try {
         new URL(url);
-        return /^https:\/\/[^\s/$.?#].[^\s]*$/i.test(url);
+        return /^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(url);
       } catch {
         return false;
       }
@@ -418,48 +472,107 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Покращене отримання метаданих треку
     async function fetchTrackMetadata(stationUrl, stationName) {
+      stopMetadataStreaming();
+      
       if (!stationUrl || !isPlaying) {
         updateTrackDisplay("unknown");
         return;
       }
 
+      updateTrackDisplay("loading...");
+
       try {
-        const params = new URLSearchParams({
-          limit: 1,
+        // Спочатку пробуємо отримати трек через API
+        const searchParams = new URLSearchParams({
+          limit: 5,
           order: "clickcount",
-          reverse: "true"
+          reverse: "true",
+          hidebroken: "true"
         });
         
-        const response = await fetch(`https://de1.api.radio-browser.info/json/stations/byname/${encodeURIComponent(stationName)}?${params.toString()}`, {
-          signal: AbortSignal.timeout(5000)
+        const searchName = stationName.split(' ').slice(0, 3).join(' ');
+        const searchUrl = `https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(searchName)}&${searchParams.toString()}`;
+        
+        const response = await fetch(searchUrl, {
+          signal: AbortSignal.timeout(5000),
+          headers: { 'User-Agent': 'RadioMusicSO/1.0' }
         });
 
         if (response.ok) {
           const stations = await response.json();
-          if (stations.length > 0 && stations[0].current_track) {
-            const track = stations[0].current_track;
-            updateTrackDisplay(track);
+          const exactMatch = stations.find(s => 
+            s.name.toLowerCase() === stationName.toLowerCase() ||
+            s.name.toLowerCase().includes(stationName.toLowerCase()) ||
+            stationName.toLowerCase().includes(s.name.toLowerCase())
+          );
+          
+          const station = exactMatch || stations[0];
+          
+          if (station && station.current_track) {
+            updateTrackDisplay(station.current_track);
             return;
           }
         }
 
-        const headResponse = await fetch(stationUrl, { 
-          method: 'HEAD',
-          signal: AbortSignal.timeout(3000)
-        });
+        // Якщо API не дав результату, пробуємо ICEcast metadata
+        tryMetadataStreaming(stationUrl);
         
-        const icyMetaint = headResponse.headers.get('icy-metaint');
+      } catch (error) {
+        console.log("Metadata API error, trying direct stream:", error.message);
+        tryMetadataStreaming(stationUrl);
+      }
+    }
+
+    function tryMetadataStreaming(stationUrl) {
+      fetch(stationUrl, { 
+        method: 'HEAD',
+        signal: AbortSignal.timeout(3000),
+        headers: { 'Icy-Metadata': '1' }
+      })
+      .then(response => {
+        const icyMetaint = response.headers.get('icy-metaint');
         
         if (icyMetaint) {
-          startMetadataStreaming(stationUrl, icyMetaint);
+          startMetadataStreaming(stationUrl, parseInt(icyMetaint));
+        } else {
+          tryAlternativeMetadata(stationUrl);
+        }
+      })
+      .catch(() => {
+        tryAlternativeMetadata(stationUrl);
+      });
+    }
+
+    function tryAlternativeMetadata(stationUrl) {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 5000);
+      
+      fetch(stationUrl, {
+        signal: controller.signal,
+        headers: { 
+          'Icy-Metadata': '1',
+          'Range': 'bytes=0-8192'
+        }
+      })
+      .then(async response => {
+        const reader = response.body.getReader();
+        const { value } = await reader.read();
+        reader.cancel();
+        
+        const text = new TextDecoder().decode(value);
+        const match = text.match(/StreamTitle='([^']*)'/);
+        
+        if (match && match[1]) {
+          updateTrackDisplay(match[1]);
         } else {
           updateTrackDisplay("unknown");
         }
-      } catch (error) {
-        console.log("Metadata fetch error (non-critical):", error.message);
+      })
+      .catch(() => {
         updateTrackDisplay("unknown");
-      }
+      });
     }
 
     function startMetadataStreaming(stationUrl, metaint) {
@@ -467,24 +580,36 @@ document.addEventListener("DOMContentLoaded", () => {
         clearInterval(metadataCheckInterval);
       }
 
+      const streamUrl = stationUrl;
+      let position = 0;
+
       metadataCheckInterval = setInterval(async () => {
-        if (!isPlaying) return;
+        if (!isPlaying || !streamUrl) return;
 
         try {
-          const response = await fetch(stationUrl, {
-            headers: { 'Icy-Metadata': '1' },
-            signal: AbortSignal.timeout(5000)
+          const response = await fetch(streamUrl, {
+            headers: { 
+              'Icy-Metadata': '1',
+              'Range': `bytes=${position}-${position + metaint + 4080}`
+            },
+            signal: AbortSignal.timeout(3000)
           });
 
-          const metadata = response.headers.get('icy-metadata');
-          if (metadata) {
-            const match = metadata.match(/StreamTitle='([^']*)'/);
+          const metadataHeader = response.headers.get('icy-metadata');
+          if (metadataHeader) {
+            const match = metadataHeader.match(/StreamTitle='([^']*)'/);
             if (match && match[1]) {
-              updateTrackDisplay(match[1]);
+              const newTrack = match[1];
+              if (newTrack !== currentTrack) {
+                updateTrackDisplay(newTrack);
+              }
             }
           }
+          
+          position += metaint + 4080;
+          
         } catch (error) {
-          // Silent fail
+          console.log("Metadata streaming error:", error.message);
         }
       }, 10000);
     }
@@ -493,10 +618,24 @@ document.addEventListener("DOMContentLoaded", () => {
       const currentTrackElement = document.getElementById("currentTrack");
       if (!currentTrackElement) return;
 
-      if (track && track !== "unknown") {
-        const trackText = track.length > 50 ? track.substring(0, 47) + "..." : track;
-        currentTrackElement.textContent = `🎵 ${trackText}`;
-        currentTrack = track;
+      currentTrackElement.classList.remove('loading', 'marquee');
+
+      if (track && track !== "unknown" && track !== "loading...") {
+        let cleanTrack = track.replace(/^StreamTitle='|';$|'$/g, '').trim();
+        
+        if (cleanTrack.length > 50) {
+          currentTrackElement.classList.add('marquee');
+          currentTrackElement.textContent = `🎵 ${cleanTrack}`;
+        } else {
+          currentTrackElement.textContent = `🎵 ${cleanTrack}`;
+        }
+        
+        currentTrackElement.title = cleanTrack;
+        currentTrack = cleanTrack;
+      } else if (track === "loading...") {
+        currentTrackElement.textContent = "🎵 Loading track...";
+        currentTrackElement.classList.add("loading");
+        currentTrack = "";
       } else {
         currentTrackElement.textContent = "🎵 Track: unknown";
         currentTrack = "";
@@ -510,322 +649,51 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Drag and Drop Functions
-    function enableDragMode() {
-      dragEnabled = true;
-      showToast("Drag mode enabled. Drag handles to reorder stations.", "info", 2000);
-      
-      stationItems.forEach(item => {
-        item.setAttribute("draggable", "true");
-      });
-    }
-
-    function disableDragMode() {
-      dragEnabled = false;
-      dragStartIndex = null;
-      
-      stationItems.forEach(item => {
-        item.setAttribute("draggable", "false");
-      });
-    }
-
-    function setupDragAndDrop() {
-      stationItems.forEach((item, index) => {
-        const dragHandle = item.querySelector(".drag-handle");
-        if (!dragHandle) return;
-
-        dragHandle.removeEventListener("pointerdown", handleDragHandleClick);
-        dragHandle.removeEventListener("touchstart", handleLongPress);
-        dragHandle.removeEventListener("pointerup", handlePointerUp);
-        dragHandle.removeEventListener("pointerleave", handlePointerLeave);
-        item.removeEventListener("dragstart", handleDragStart);
-        item.removeEventListener("dragend", handleDragEnd);
-        item.removeEventListener("dragover", handleDragOver);
-        item.removeEventListener("dragleave", handleDragLeave);
-        item.removeEventListener("drop", handleDrop);
-        
-        dragHandle.addEventListener("pointerdown", handleDragHandleClick);
-        dragHandle.addEventListener("touchstart", handleLongPress);
-        dragHandle.addEventListener("pointerup", handlePointerUp);
-        dragHandle.addEventListener("pointerleave", handlePointerLeave);
-        
-        item.setAttribute("draggable", dragEnabled ? "true" : "false");
-        item.dataset.index = index;
-        
-        item.addEventListener("dragstart", handleDragStart);
-        item.addEventListener("dragend", handleDragEnd);
-        item.addEventListener("dragover", handleDragOver);
-        item.addEventListener("dragleave", handleDragLeave);
-        item.addEventListener("drop", handleDrop);
-      });
-    }
-
-    function handleDragHandleClick(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if (!dragEnabled) {
-        enableDragMode();
-        provideHapticFeedback();
-        
-        const item = e.target.closest(".station-item");
-        if (item) {
-          setTimeout(() => {
-            const dragEvent = new DragEvent('dragstart', {
-              bubbles: true,
-              cancelable: true,
-              dataTransfer: new DataTransfer()
-            });
-            item.dispatchEvent(dragEvent);
-          }, 50);
-        }
-        return;
-      }
-    }
-
-    function handleDragStart(e) {
-      if (!dragEnabled) {
-        e.preventDefault();
-        return;
-      }
-      
-      const item = e.target.closest(".station-item");
-      if (!item) return;
-
-      dragStartIndex = parseInt(item.dataset.index);
-      item.classList.add("dragging");
-      
-      e.dataTransfer.setData("text/plain", dragStartIndex);
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setDragImage(item, 20, 20);
-      
-      provideHapticFeedback();
-    }
-
-    function handleDragEnd(e) {
-      const item = e.target.closest(".station-item");
-      if (item) {
-        item.classList.remove("dragging");
-      }
-      
-      document.querySelectorAll(".station-item").forEach(i => {
-        i.classList.remove("drag-over");
-      });
-      
-      dragStartIndex = null;
-    }
-
-    function handleDragOver(e) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-      
-      const item = e.target.closest(".station-item");
-      if (item && dragEnabled && item !== stationItems[dragStartIndex]) {
-        item.classList.add("drag-over");
-      }
-    }
-
-    function handleDragLeave(e) {
-      const item = e.target.closest(".station-item");
-      if (item) {
-        item.classList.remove("drag-over");
-      }
-    }
-
-    function handleDrop(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const targetItem = e.target.closest(".station-item");
-      if (!targetItem || dragStartIndex === null || !dragEnabled) return;
-
-      targetItem.classList.remove("drag-over");
-      
-      const dragEndIndex = parseInt(targetItem.dataset.index);
-      if (dragStartIndex === dragEndIndex) return;
-
-      reorderStations(dragStartIndex, dragEndIndex);
-      
-      document.querySelectorAll(".station-item").forEach(item => {
-        item.classList.remove("dragging", "drag-over");
-      });
-      
-      dragStartIndex = null;
-      disableDragMode();
-      provideHapticFeedback();
-      showToast("Station order updated!", "success");
-    }
-
-    function handleLongPress(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const item = e.target.closest(".station-item");
-      if (!item) return;
-
-      longPressTimer = setTimeout(() => {
-        if (!dragEnabled) {
-          enableDragMode();
-          item.classList.add("long-press");
-          setTimeout(() => item.classList.remove("long-press"), 500);
-          provideHapticFeedback([100]);
-          
-          setTimeout(() => {
-            const dragEvent = new DragEvent('dragstart', {
-              bubbles: true,
-              cancelable: true,
-              dataTransfer: new DataTransfer()
-            });
-            item.dispatchEvent(dragEvent);
-          }, 50);
-        }
-      }, 500);
-    }
-
-    function handlePointerUp() {
-      clearTimeout(longPressTimer);
-    }
-
-    function handlePointerLeave() {
-      clearTimeout(longPressTimer);
-    }
-
-    function reorderStations(fromIndex, toIndex) {
-      if (currentTab === "best") {
-        const [movedStation] = favoriteStations.splice(fromIndex, 1);
-        favoriteStations.splice(toIndex, 0, movedStation);
-        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-      } else {
-        const stations = stationLists[currentTab];
-        if (!stations) return;
-        
-        const [movedStation] = stations.splice(fromIndex, 1);
-        stations.splice(toIndex, 0, movedStation);
-        
-        if (userAddedStations[currentTab]) {
-          const userStationIndex = userAddedStations[currentTab].findIndex(s => s.name === movedStation.name);
-          if (userStationIndex !== -1) {
-            const [movedUserStation] = userAddedStations[currentTab].splice(userStationIndex, 1);
-            userAddedStations[currentTab].splice(toIndex, 0, movedUserStation);
-          }
-        }
-        
-        localStorage.setItem("stationLists", JSON.stringify(stationLists));
-        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
-      }
-      
-      animateStationReorder();
-    }
-
-    function animateStationReorder() {
-      if (viewTransitionSupported) {
-        document.startViewTransition(() => {
-          updateStationList();
-        });
-      } else {
-        stationList.classList.add("fade-out");
-        setTimeout(() => {
-          updateStationList();
-          stationList.classList.remove("fade-out");
-          stationList.classList.add("fade-in");
-          setTimeout(() => stationList.classList.remove("fade-in"), 300);
-        }, 150);
-      }
-    }
-
-    async function loadStations() {
-      console.time("loadStations");
-      showLoading();
-      stationList.innerHTML = "<div class='station-item empty'>Loading...</div>";
-      try {
-        abortController.abort();
-        abortController = new AbortController();
-        const response = await fetch(`stations.json?t=${Date.now()}`, {
-          cache: "no-store",
-          signal: abortController.signal
-        });
-        const mergedStationLists = {};
-        if (response.ok) {
-          const newStations = await response.json();
-          Object.keys(newStations).forEach(tab => {
-            const uniqueStations = new Map();
-            (userAddedStations[tab] || []).forEach(s => {
-              if (!deletedStations.includes(s.name)) {
-                uniqueStations.set(s.name, s);
-              }
-            });
-            newStations[tab].forEach(s => {
-              if (!deletedStations.includes(s.name)) {
-                uniqueStations.set(s.name, s);
-              }
-            });
-            mergedStationLists[tab] = Array.from(uniqueStations.values());
-          });
-        }
-        customTabs.forEach(tab => {
-          const uniqueStations = new Map();
-          (userAddedStations[tab] || []).forEach(s => {
-            if (!deletedStations.includes(s.name)) {
-              uniqueStations.set(s.name, s);
-            }
-          });
-          (stationLists[tab] || []).forEach(s => {
-            if (!deletedStations.includes(s.name)) {
-              uniqueStations.set(s.name, s);
-            }
-          });
-          mergedStationLists[tab] = Array.from(uniqueStations.values());
-        });
-        stationLists = mergedStationLists;
-        localStorage.setItem("stationLists", JSON.stringify(stationLists));
-        favoriteStations = favoriteStations.filter(name => 
-          Object.values(stationLists).flat().some(s => s.name === name)
-        );
-        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-        const validTabs = [...Object.keys(stationLists), "best", "search", ...customTabs];
-        if (!validTabs.includes(currentTab)) {
-          currentTab = validTabs[0] || "techno";
-          localStorage.setItem("currentTab", currentTab);
-        }
-        currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
-        switchTab(currentTab);
-        showToast("Stations loaded successfully!", "success");
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error("Error loading stations:", error);
-          stationList.innerHTML = "<div class='station-item empty'>Failed to load stations</div>";
-          showToast("Failed to load stations", "error");
-        }
-      } finally {
-        console.timeEnd("loadStations");
-        hideLoading();
-      }
-    }
-
+    // Покращений пошук станцій
     async function searchStations(query, country, genre) {
       showLoading();
       stationList.innerHTML = "<div class='station-item empty'>Searching...</div>";
+      
       try {
         abortController.abort();
         abortController = new AbortController();
+        
         const params = new URLSearchParams();
         if (query) params.append("name", query);
         if (country) params.append("country", country);
         if (genre) params.append("tag", genre);
+        
         params.append("order", "clickcount");
         params.append("reverse", "true");
-        params.append("limit", "2000");
+        params.append("limit", "200");
+        params.append("hidebroken", "true");
+        
         const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
+        console.log("Search URL:", url);
+        
         const response = await fetch(url, {
-          signal: abortController.signal
+          signal: abortController.signal,
+          headers: { 'User-Agent': 'RadioMusicSO/1.0' }
         });
+        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
+        
         let stations = await response.json();
-        stations = stations.filter(station => station.url_resolved && isValidUrl(station.url_resolved));
+        
+        // М'якша фільтрація
+        stations = stations.filter(station => {
+          const url = station.url || station.url_resolved;
+          return url && (url.startsWith('http://') || url.startsWith('https://'));
+        });
+        
+        stations = stations.slice(0, 100); // Обмежуємо до 100 для продуктивності
+        
+        console.log(`Знайдено ${stations.length} станцій`);
         renderSearchResults(stations);
         showToast(`Found ${stations.length} stations`, "success");
+        
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error("Error searching stations:", error);
@@ -843,6 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
         stationItems = [];
         return;
       }
+      
       const fragment = document.createDocumentFragment();
       stations.forEach((station, index) => {
         const item = document.createElement("div");
@@ -853,22 +722,38 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.country = station.country || "Unknown";
         item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
         item.dataset.index = index;
+        item.style.setProperty('--item-index', index);
         
-        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '">` : "🎵 ";
+        const iconHtml = item.dataset.favicon 
+          ? `<img data-src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '">` 
+          : "🎵 ";
+        
         item.innerHTML = `
           ${iconHtml}
           <span class="station-name">${station.name}</span>
           <div class="buttons-container">
             <button class="add-btn" aria-label="Add station">ADD</button>
           </div>`;
+        
         fragment.appendChild(item);
       });
+      
       stationList.innerHTML = "";
       stationList.appendChild(fragment);
       stationItems = document.querySelectorAll(".station-item");
+      
+      // Налаштовуємо lazy loading для зображень
+      stationItems.forEach(item => {
+        const img = item.querySelector('img');
+        if (img) {
+          lazyLoadObserver.observe(img);
+        }
+      });
+      
       if (stationItems.length && currentIndex < stationItems.length) {
         changeStation(currentIndex);
       }
+      
       stationList.onclick = e => {
         const item = e.target.closest(".station-item");
         const addBtn = e.target.closest(".add-btn");
@@ -950,18 +835,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderTabs() {
-      const fixedTabs = ["best", "techno", "trance", "ukraine", "pop", "search"];
+      const fixedTabs = ["best", "techno", "trance", "ukraine", "pop"];
+      const searchTab = "search";
+      
       tabsContainer.innerHTML = "";
+      
+      // Спочатку фіксовані таби
       fixedTabs.forEach(tab => {
         const btn = document.createElement("button");
         btn.className = `tab-btn ${currentTab === tab ? "active" : ""}`;
         btn.dataset.tab = tab;
-        btn.textContent = tab === "best" ? "Best" : tab === "ukraine" ? "UA" : tab === "search" ? "Search" : tab.charAt(0).toUpperCase() + tab.slice(1);
+        btn.textContent = tab === "best" ? "Best" : tab === "ukraine" ? "UA" : tab.charAt(0).toUpperCase() + tab.slice(1);
         btn.setAttribute("role", "tab");
         btn.setAttribute("aria-selected", currentTab === tab ? "true" : "false");
         btn.setAttribute("aria-label", `${tab} tab`);
         tabsContainer.appendChild(btn);
       });
+      
+      // Потім кастомні таби
       customTabs.forEach(tab => {
         if (typeof tab !== "string" || !tab.trim()) return;
         const btn = document.createElement("button");
@@ -973,6 +864,18 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.setAttribute("aria-label", `${tab} tab`);
         tabsContainer.appendChild(btn);
       });
+      
+      // Search tab завжди останній
+      const searchBtn = document.createElement("button");
+      searchBtn.className = `tab-btn ${currentTab === "search" ? "active" : ""}`;
+      searchBtn.dataset.tab = "search";
+      searchBtn.textContent = "SEARCH";
+      searchBtn.setAttribute("role", "tab");
+      searchBtn.setAttribute("aria-selected", currentTab === "search" ? "true" : "false");
+      searchBtn.setAttribute("aria-label", "Search tab");
+      tabsContainer.appendChild(searchBtn);
+      
+      // Кнопка додавання табу
       const addBtn = document.createElement("button");
       addBtn.className = "add-tab-btn";
       addBtn.textContent = "+";
@@ -1228,6 +1131,7 @@ document.addEventListener("DOMContentLoaded", () => {
         shadow: "rgba(64, 196, 255, 0.3)"
       }
     };
+    
     let currentTheme = localStorage.getItem("selectedTheme") || "shadow-pulse";
     if (!themes[currentTheme]) {
       currentTheme = "shadow-pulse";
@@ -1361,6 +1265,7 @@ document.addEventListener("DOMContentLoaded", () => {
             isPlaying = true;
             lastSuccessfulPlayTime = Date.now();
             document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
+            playPauseBtn.classList.add("playing");
             localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
               updateCurrentStation(stationItems[currentIndex]);
@@ -1368,6 +1273,7 @@ document.addEventListener("DOMContentLoaded", () => {
           } catch (error) {
             if (error.name === 'AbortError') return;
             document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+            playPauseBtn.classList.remove("playing");
             if (attemptsLeft > 1) {
               if (stationItems[currentIndex].dataset.value !== initialStationUrl) return;
               if (requestId !== autoPlayRequestId) return;
@@ -1462,8 +1368,11 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.index = index;
         item.setAttribute("draggable", "false");
         item.setAttribute("role", "listitem");
+        item.style.setProperty('--item-index', index);
         
-        const iconHtml = item.dataset.favicon ? `<img src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 ';">` : "🎵 ";
+        const iconHtml = item.dataset.favicon 
+          ? `<img data-src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 ';">` 
+          : "🎵 ";
         
         const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
           ? `<button class="delete-btn" aria-label="Delete station">🗑</button>`
@@ -1487,6 +1396,14 @@ document.addEventListener("DOMContentLoaded", () => {
       stationList.innerHTML = "";
       stationList.appendChild(fragment);
       stationItems = stationList.querySelectorAll(".station-item");
+
+      // Налаштовуємо lazy loading для зображень
+      stationItems.forEach(item => {
+        const img = item.querySelector('img');
+        if (img) {
+          lazyLoadObserver.observe(img);
+        }
+      });
 
       setupDragAndDrop();
       
@@ -1584,7 +1501,16 @@ document.addEventListener("DOMContentLoaded", () => {
       stationItems.forEach(i => i.classList.remove("selected"));
       item.classList.add("selected");
       currentIndex = index;
-      updateCurrentStation(item);
+      
+      // Анімація затемнення при зміні треку
+      currentStationInfo.classList.add("fade-out");
+      setTimeout(() => {
+        updateCurrentStation(item);
+        currentStationInfo.classList.remove("fade-out");
+        currentStationInfo.classList.add("fade-in");
+        setTimeout(() => currentStationInfo.classList.remove("fade-in"), 300);
+      }, 150);
+      
       localStorage.setItem(`lastStation_${currentTab}`, index);
       if (intendedPlaying) {
         const normalizedCurrentUrl = normalizeUrl(item.dataset.value);
@@ -1624,7 +1550,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      if (currentTrackElement) currentTrackElement.textContent = "🎵 Track: loading...";
+      if (currentTrackElement) {
+        currentTrackElement.textContent = "🎵 Track: loading...";
+        currentTrackElement.classList.add("loading");
+      }
       
       stopMetadataStreaming();
       
@@ -1674,6 +1603,7 @@ document.addEventListener("DOMContentLoaded", () => {
         debouncedTryAutoPlay();
         playPauseBtn.textContent = "⏸";
         playPauseBtn.setAttribute("aria-label", "Pause");
+        playPauseBtn.classList.add("playing");
         document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       } else {
         audio.pause();
@@ -1681,10 +1611,14 @@ document.addEventListener("DOMContentLoaded", () => {
         intendedPlaying = false;
         playPauseBtn.textContent = "▶";
         playPauseBtn.setAttribute("aria-label", "Play");
+        playPauseBtn.classList.remove("playing");
         document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
         stopMetadataStreaming();
         const currentTrackElement = document.getElementById("currentTrack");
-        if (currentTrackElement) currentTrackElement.textContent = "🎵 Track: unknown";
+        if (currentTrackElement) {
+          currentTrackElement.textContent = "🎵 Track: unknown";
+          currentTrackElement.classList.remove("loading", "marquee");
+        }
       }
       localStorage.setItem("isPlaying", isPlaying);
       localStorage.setItem("intendedPlaying", intendedPlaying);
@@ -1748,6 +1682,7 @@ document.addEventListener("DOMContentLoaded", () => {
       isPlaying = true;
       playPauseBtn.textContent = "⏸";
       playPauseBtn.setAttribute("aria-label", "Pause");
+      playPauseBtn.classList.add("playing");
       document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       if (errorTimeout) {
@@ -1763,19 +1698,27 @@ document.addEventListener("DOMContentLoaded", () => {
       isPlaying = false;
       playPauseBtn.textContent = "▶";
       playPauseBtn.setAttribute("aria-label", "Play");
+      playPauseBtn.classList.remove("playing");
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
-      if (currentTrackElement) currentTrackElement.textContent = "🎵 Track: unknown";
+      if (currentTrackElement) {
+        currentTrackElement.textContent = "🎵 Track: unknown";
+        currentTrackElement.classList.remove("loading", "marquee");
+      }
       if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
     });
 
     audio.addEventListener("error", () => {
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+      playPauseBtn.classList.remove("playing");
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
-      if (currentTrackElement) currentTrackElement.textContent = "🎵 Track: error";
+      if (currentTrackElement) {
+        currentTrackElement.textContent = "🎵 Track: error";
+        currentTrackElement.classList.remove("loading", "marquee");
+      }
       if (intendedPlaying && errorCount < ERROR_LIMIT && !errorTimeout) {
         errorCount++;
         errorTimeout = setTimeout(() => {
@@ -1791,6 +1734,13 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("volume", audio.volume);
     });
 
+    audio.addEventListener("loadedmetadata", () => {
+      if (isPlaying && stationItems && stationItems[currentIndex]) {
+        const station = stationItems[currentIndex];
+        tryMetadataStreaming(station.dataset.value);
+      }
+    });
+
     window.addEventListener("online", () => {
       showToast("Network restored", "success");
       if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
@@ -1802,6 +1752,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("offline", () => {
       showToast("Network connection lost", "error");
       document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+      playPauseBtn.classList.remove("playing");
       errorCount = 0;
       stopMetadataStreaming();
     });

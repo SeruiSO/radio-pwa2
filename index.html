@@ -1,56 +1,21 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <meta name="theme-color" content="#00E676">
-  <meta name="description" content="Radio Music S O - Listen to your favorite radio stations">
+  <meta name="description" content="Radio Music S O - Listen to your favorite radio stations with modern UI and features">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Radio Music S O</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://de1.api.radio-browser.info">
 </head>
 <body>
   <div class="container">
+    <!-- Кнопки управління -->
     <button class="theme-toggle" aria-label="Toggle theme">🌙</button>
     <button class="share-button" aria-label="Share current station">📢</button>
     <button class="export-button" aria-label="Export settings">📤</button>
@@ -58,7 +23,7 @@
     <input type="file" id="importFileInput" accept="application/json" aria-label="Import settings file">
     
     <h1>🎧 Radio Music S O</h1>
-    <audio id="audioPlayer" aria-label="Audio player"></audio>
+    <audio id="audioPlayer" aria-label="Audio player" preload="auto"></audio>
 
     <!-- Loading Indicator -->
     <div class="loading-indicator" id="loadingIndicator" role="status" aria-label="Loading"></div>
@@ -71,6 +36,7 @@
       <i>↓</i>
     </div>
 
+    <!-- Current Station Info -->
     <div id="currentStationInfo" role="region" aria-label="Current station information">
       <div class="station-info-content">
         <div class="station-icon" role="img" aria-label="Station icon">🎵</div>
@@ -80,44 +46,39 @@
           <div class="station-country" aria-label="Country">країна: -</div>
           <div class="current-track" id="currentTrack" aria-label="Current track">🎵 Track: unknown</div>
         </div>
+        <!-- Сучасний хвильовий візуалізатор -->
         <div class="wave-visualizer" aria-hidden="true">
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
-          <div class="wave-line"></div>
+          <svg viewBox="0 0 100 60" preserveAspectRatio="none">
+            <path d="M10,30 Q20,10 30,30 T50,30 T70,30 T90,30" stroke="var(--accent)" fill="none" stroke-width="2"/>
+            <path d="M10,30 Q20,50 30,30 T50,30 T70,30 T90,30" stroke="var(--accent)" fill="none" stroke-width="2" opacity="0.7"/>
+            <path d="M10,30 Q20,20 30,30 T50,30 T70,30 T90,30" stroke="var(--accent)" fill="none" stroke-width="2" opacity="0.4"/>
+          </svg>
         </div>
       </div>
     </div>
 
+    <!-- Station List -->
     <div class="station-list" id="stationList" role="list" aria-label="Stations list"></div>
 
+    <!-- Tabs -->
     <div class="tabs-wrapper">
       <div class="tabs" id="tabs" role="tablist" aria-label="Station categories">
-        <button class="tab-btn" data-tab="best" role="tab" aria-selected="false">Best</button>
-        <button class="tab-btn" data-tab="techno" role="tab" aria-selected="false">Techno</button>
-        <button class="tab-btn" data-tab="trance" role="tab" aria-selected="false">Trance</button>
-        <button class="tab-btn" data-tab="ukraine" role="tab" aria-selected="false">UA</button>
-        <button class="tab-btn" data-tab="pop" role="tab" aria-selected="false">Pop</button>
-        <button class="tab-btn" data-tab="search" role="tab" aria-selected="false">Search</button>
-        <button class="add-tab-btn" aria-label="Add new tab">+</button>
+        <!-- Таби генеруються динамічно через JavaScript -->
       </div>
     </div>
 
-    <div id="searchInput" role="search" aria-label="Search stations">
+    <!-- Search Input -->
+    <div id="searchInput" role="search" aria-label="Search stations" style="display: none;">
       <input id="searchQuery" list="pastSearches" placeholder="Enter station name" aria-label="Search by station name">
       <datalist id="pastSearches"></datalist>
       <input id="searchCountry" list="suggestedCountries" placeholder="Enter country" aria-label="Search by country">
       <datalist id="suggestedCountries"></datalist>
       <input id="searchGenre" list="suggestedGenres" placeholder="Enter genre" aria-label="Search by genre">
       <datalist id="suggestedGenres"></datalist>
-      <button class="search-btn" aria-label="Perform search">🔍</button>
+      <button class="search-btn" aria-label="Perform search">🔍 Search</button>
     </div>
 
+    <!-- Controls -->
     <div class="controls-container">
       <div class="controls">
         <button class="control-btn" aria-label="Previous station">⏮</button>
@@ -126,10 +87,11 @@
       </div>
     </div>
 
+    <!-- New Tab Modal -->
     <div class="new-tab-modal modal-overlay" style="display: none;" role="dialog" aria-label="Create new tab">
       <div class="modal">
         <h2>Створити нову вкладку</h2>
-        <input id="newTabName" type="text" placeholder="Enter tab name" aria-label="New tab name">
+        <input id="newTabName" type="text" placeholder="Enter tab name (a-z, 0-9, -, _)" aria-label="New tab name" maxlength="10" pattern="[a-z0-9_-]+">
         <div class="modal-tabs">
           <button id="createTabBtn" class="modal-tab-btn" aria-label="Create tab">Створити</button>
           <button class="modal-cancel-btn" aria-label="Cancel">Відміна</button>
@@ -137,10 +99,11 @@
       </div>
     </div>
 
+    <!-- Edit Tab Modal -->
     <div class="edit-tab-modal modal-overlay" style="display: none;" role="dialog" aria-label="Edit tab">
       <div class="modal">
         <h2>Дії з вкладкою</h2>
-        <input id="renameTabName" type="text" placeholder="Enter new tab name" aria-label="New tab name">
+        <input id="renameTabName" type="text" placeholder="Enter new tab name" aria-label="New tab name" maxlength="10" pattern="[a-z0-9_-]+">
         <div class="modal-tabs">
           <button id="renameTabBtn" class="modal-tab-btn" aria-label="Rename tab">Перейменувати</button>
           <button id="deleteTabBtn" class="modal-tab-btn" aria-label="Delete tab">Видалити</button>
@@ -150,6 +113,19 @@
     </div>
 
   </div>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(error => {
+          console.log('ServiceWorker registration failed: ', error);
+        });
+      });
+    }
+  </script>
+  
+  <!-- Main Script -->
   <script src="script.js"></script>
 </body>
 </html>
