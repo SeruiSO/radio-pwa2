@@ -27,6 +27,8 @@ let isPulling = false;
 let viewTransitionSupported = document.startViewTransition ? true : false;
 let searchDebounceTimer = null;
 let lazyLoadObserver = null;
+let metadataCheckInterval = null;
+let currentStationUrlForMetadata = null;
 
 customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab === "string" && tab.trim()) : [];
 
@@ -74,13 +76,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // Слухаємо повідомлення від Service Worker
     if (navigator.serviceWorker) {
       navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data.type === 'METADATA_UPDATE') {
+        console.log('Received message from SW:', event.data);
+        if (event.data && event.data.type === 'METADATA_UPDATE') {
           const currentStationUrl = stationItems?.[currentIndex]?.dataset?.value;
           // Перевіряємо, чи метадані для поточної станції
           if (currentStationUrl && event.data.stationUrl && 
               normalizeUrl(currentStationUrl) === normalizeUrl(event.data.stationUrl)) {
+            console.log('Updating track display with:', event.data.track);
             updateTrackDisplay(event.data.track);
           }
+        } else if (event.data && event.data.type === 'CACHE_UPDATED') {
+          console.log('Cache updated to version:', event.data.cacheVersion);
+        } else if (event.data && event.data.type === 'NETWORK_STATUS') {
+          console.log('Network status:', event.data.online ? 'online' : 'offline');
         }
       });
     }
@@ -477,14 +485,98 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Функція для отримання метаданих треку
+    async function fetchTrackMetadata(stationUrl, stationName) {
+      if (!stationUrl || !isPlaying) {
+        updateTrackDisplay("unknown");
+        return;
+      }
+
+      updateTrackDisplay("loading...");
+      
+      // Зберігаємо URL для перевірки
+      currentStationUrlForMetadata = stationUrl;
+      
+      // Спочатку пробуємо отримати через API (як запасний варіант)
+      try {
+        const encodedUrl = encodeURIComponent(stationUrl);
+        const searchUrl = `https://de1.api.radio-browser.info/json/stations/byurl/${encodedUrl}?limit=1&hidebroken=true`;
+        
+        console.log('Fetching metadata from API:', searchUrl);
+        
+        const response = await fetch(searchUrl, {
+          signal: AbortSignal.timeout(3000),
+          headers: { 'User-Agent': 'RadioMusicSO/1.0' }
+        });
+
+        if (response.ok) {
+          const stations = await response.json();
+          if (stations.length > 0 && stations[0].current_track) {
+            console.log('Found track via API:', stations[0].current_track);
+            updateTrackDisplay(stations[0].current_track);
+            
+            // Запускаємо періодичну перевірку через API
+            startPeriodicApiCheck(stations[0].id);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log("API by URL failed:", error.message);
+      }
+      
+      console.log('Waiting for metadata from Service Worker...');
+    }
+
+    // Періодична перевірка через API (запасний варіант)
+    function startPeriodicApiCheck(stationId) {
+      if (metadataCheckInterval) {
+        clearInterval(metadataCheckInterval);
+      }
+
+      metadataCheckInterval = setInterval(async () => {
+        if (!isPlaying || !currentStationUrlForMetadata) return;
+
+        try {
+          const response = await fetch(`https://de1.api.radio-browser.info/json/stations/byuuid/${stationId}`, {
+            signal: AbortSignal.timeout(3000),
+            headers: { 'User-Agent': 'RadioMusicSO/1.0' }
+          });
+
+          if (response.ok) {
+            const stations = await response.json();
+            if (stations.length > 0 && stations[0].current_track) {
+              const newTrack = stations[0].current_track;
+              if (newTrack !== currentTrack) {
+                console.log('Periodic API update:', newTrack);
+                updateTrackDisplay(newTrack);
+              }
+            }
+          }
+        } catch (error) {
+          console.log("Periodic API check failed:", error.message);
+        }
+      }, 15000);
+    }
+
+    function stopMetadataStreaming() {
+      if (metadataCheckInterval) {
+        clearInterval(metadataCheckInterval);
+        metadataCheckInterval = null;
+      }
+      currentStationUrlForMetadata = null;
+    }
+
     function updateTrackDisplay(track) {
       const currentTrackElement = document.getElementById("currentTrack");
       if (!currentTrackElement) return;
 
       currentTrackElement.classList.remove('loading', 'marquee');
 
-      if (track && track !== "unknown" && track !== "loading...") {
+      if (track && track !== "unknown" && track !== "loading..." && track !== 'null' && track !== 'undefined') {
         let cleanTrack = track.replace(/^StreamTitle='|';$|'$/g, '').trim();
+        
+        // Видаляємо зайві символи
+        cleanTrack = cleanTrack.replace(/[^\x20-\x7E\u0400-\u04FF]/g, '');
         
         if (cleanTrack.length > 50) {
           currentTrackElement.classList.add('marquee');
@@ -1713,6 +1805,11 @@ document.addEventListener("DOMContentLoaded", () => {
         currentTrackElement.classList.add("loading");
       }
 
+      // Запускаємо отримання метаданих
+      if (isPlaying) {
+        fetchTrackMetadata(item.dataset.value, item.dataset.name);
+      }
+
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: item.dataset.name || "Unknown Station",
@@ -1765,6 +1862,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playPauseBtn.setAttribute("aria-label", "Play");
         playPauseBtn.classList.remove("playing");
         updateWaveVisualizer(false);
+        stopMetadataStreaming();
         const currentTrackElement = document.getElementById("currentTrack");
         if (currentTrackElement) {
           currentTrackElement.textContent = "🎵 Track: unknown";
@@ -1840,6 +1938,10 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(errorTimeout);
         errorTimeout = null;
       }
+      // Запускаємо отримання метаданих при початку відтворення
+      if (stationItems && stationItems[currentIndex]) {
+        fetchTrackMetadata(stationItems[currentIndex].dataset.value, stationItems[currentIndex].dataset.name);
+      }
     });
 
     audio.addEventListener("pause", () => {
@@ -1849,6 +1951,7 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.classList.remove("playing");
       updateWaveVisualizer(false);
       localStorage.setItem("isPlaying", isPlaying);
+      stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
       if (currentTrackElement) {
         currentTrackElement.textContent = "🎵 Track: unknown";
@@ -1860,6 +1963,7 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("error", () => {
       updateWaveVisualizer(false);
       playPauseBtn.classList.remove("playing");
+      stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
       if (currentTrackElement) {
         currentTrackElement.textContent = "🎵 Track: error";
@@ -1893,12 +1997,14 @@ document.addEventListener("DOMContentLoaded", () => {
       updateWaveVisualizer(false);
       playPauseBtn.classList.remove("playing");
       errorCount = 0;
+      stopMetadataStreaming();
     });
 
     addEventListeners();
 
     window.addEventListener("beforeunload", () => {
       removeEventListeners();
+      stopMetadataStreaming();
     });
 
     if ("mediaSession" in navigator) {
