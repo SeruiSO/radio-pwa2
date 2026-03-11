@@ -28,8 +28,6 @@ let isPulling = false;
 let viewTransitionSupported = document.startViewTransition ? true : false;
 let searchDebounceTimer = null;
 let lazyLoadObserver = null;
-let metadataReaderController = null;
-let metadataRetryTimeout = null;
 
 customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab === "string" && tab.trim()) : [];
 
@@ -54,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadingIndicator = document.getElementById("loadingIndicator");
   const toastContainer = document.getElementById("toastContainer");
   const pullIndicator = document.getElementById("pullIndicator");
-  const waveVisualizer = document.querySelector('.wave-visualizer');
 
   if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
     console.error("One of required DOM elements not found");
@@ -73,12 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTabs();
     setupPullToRefresh();
     setupLazyLoading();
-    
-    // Завантажуємо станції одразу
-    loadStations().then(() => {
-      // Після завантаження перемикаємося на поточний таб
-      switchTab(currentTab);
-    });
+    setupVirtualScrolling();
 
     shareButton.addEventListener("click", () => {
       const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
@@ -238,9 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const img = entry.target;
             const src = img.dataset.src;
             if (src) {
-              // Перевіряємо протокол для HTTPS
-              const secureSrc = src.replace('http://', 'https://');
-              img.src = secureSrc;
+              img.src = src;
               img.classList.add('loaded');
               lazyLoadObserver.unobserve(img);
             }
@@ -251,14 +241,30 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    function updateWaveVisualizer(playing) {
-      if (!waveVisualizer) return;
+    function setupVirtualScrolling() {
+      // Використовуємо Intersection Observer для віртуалізації
+      const itemHeight = 70; // Приблизна висота елемента
+      const buffer = 5; // Кількість елементів за межами видимості
       
-      if (playing) {
-        waveVisualizer.classList.add('playing');
-      } else {
-        waveVisualizer.classList.remove('playing');
-      }
+      stationList.addEventListener('scroll', () => {
+        const scrollTop = stationList.scrollTop;
+        const visibleHeight = stationList.clientHeight;
+        
+        const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - buffer);
+        const endIndex = Math.min(
+          stationItems.length - 1,
+          Math.ceil((scrollTop + visibleHeight) / itemHeight) + buffer
+        );
+        
+        // Приховуємо елементи за межами видимості
+        stationItems.forEach((item, index) => {
+          if (index < startIndex || index > endIndex) {
+            item.style.display = 'none';
+          } else {
+            item.style.display = 'flex';
+          }
+        });
+      });
     }
 
     function showLoading() {
@@ -398,12 +404,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const countryDatalist = document.getElementById("suggestedCountries");
       const genreDatalist = document.getElementById("suggestedGenres");
 
-      if (countryDatalist) {
-        countryDatalist.innerHTML = suggestedCountries.map(country => `<option value="${country}">`).join("");
-      }
-      if (genreDatalist) {
-        genreDatalist.innerHTML = suggestedGenres.map(genre => `<option value="${genre}">`).join("");
-      }
+      countryDatalist.innerHTML = suggestedCountries.map(country => `<option value="${country}">`).join("");
+      genreDatalist.innerHTML = suggestedGenres.map(genre => `<option value="${genre}">`).join("");
     }
 
     function updatePastSearches() {
@@ -436,7 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!url) return false;
       try {
         new URL(url);
-        return url.startsWith('http://') || url.startsWith('https://');
+        return /^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(url);
       } catch {
         return false;
       }
@@ -470,9 +472,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // --- ПОКРАЩЕНА ФУНКЦІЯ ДЛЯ ОТРИМАННЯ МЕТАДАНИХ ТРЕКУ ---
+    // Покращене отримання метаданих треку
     async function fetchTrackMetadata(stationUrl, stationName) {
-      // Зупиняємо попереднє читання потоку
       stopMetadataStreaming();
       
       if (!stationUrl || !isPlaying) {
@@ -482,265 +483,77 @@ document.addEventListener("DOMContentLoaded", () => {
 
       updateTrackDisplay("loading...");
 
-      // Спочатку пробуємо отримати метадані через API радіобраузера за URL
       try {
-        const encodedUrl = encodeURIComponent(stationUrl);
-        const searchUrl = `https://de1.api.radio-browser.info/json/stations/byurl/${encodedUrl}?limit=1&hidebroken=true`;
-        
-        const response = await fetch(searchUrl, {
-          signal: AbortSignal.timeout(3000),
-          headers: { 'User-Agent': 'RadioMusicSO/1.0' }
-        });
-
-        if (response.ok) {
-          const stations = await response.json();
-          if (stations.length > 0 && stations[0].current_track) {
-            updateTrackDisplay(stations[0].current_track);
-            
-            // Запускаємо періодичну перевірку через API
-            startPeriodicApiCheck(stations[0].id);
-            return;
-          }
-        }
-      } catch (error) {
-        console.log("API by URL failed:", error.message);
-      }
-
-      // Якщо не вдалося за URL, пробуємо знайти станцію за назвою
-      try {
+        // Спочатку пробуємо отримати трек через API
         const searchParams = new URLSearchParams({
-          name: stationName,
-          limit: 10,
+          limit: 5,
           order: "clickcount",
           reverse: "true",
           hidebroken: "true"
         });
         
-        const searchUrl = `https://de1.api.radio-browser.info/json/stations/search?${searchParams.toString()}`;
+        const searchName = stationName.split(' ').slice(0, 3).join(' ');
+        const searchUrl = `https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(searchName)}&${searchParams.toString()}`;
+        
         const response = await fetch(searchUrl, {
-          signal: AbortSignal.timeout(3000),
+          signal: AbortSignal.timeout(5000),
           headers: { 'User-Agent': 'RadioMusicSO/1.0' }
         });
 
         if (response.ok) {
           const stations = await response.json();
+          const exactMatch = stations.find(s => 
+            s.name.toLowerCase() === stationName.toLowerCase() ||
+            s.name.toLowerCase().includes(stationName.toLowerCase()) ||
+            stationName.toLowerCase().includes(s.name.toLowerCase())
+          );
           
-          // Шукаємо станцію з найближчим URL
-          for (const station of stations) {
-            if (station.url_resolved && normalizeUrl(station.url_resolved) === normalizeUrl(stationUrl)) {
-              if (station.current_track) {
-                updateTrackDisplay(station.current_track);
-                startPeriodicApiCheck(station.id);
-                return;
-              }
-              break;
-            }
-          }
+          const station = exactMatch || stations[0];
           
-          // Якщо точної не знайшли, беремо першу з високим рейтингом
-          if (stations.length > 0 && stations[0].current_track) {
-            updateTrackDisplay(stations[0].current_track);
-            startPeriodicApiCheck(stations[0].id);
+          if (station && station.current_track) {
+            updateTrackDisplay(station.current_track);
             return;
           }
         }
+
+        // Якщо API не дав результату, пробуємо ICEcast metadata
+        tryMetadataStreaming(stationUrl);
+        
       } catch (error) {
-        console.log("API by name failed:", error.message);
+        console.log("Metadata API error, trying direct stream:", error.message);
+        tryMetadataStreaming(stationUrl);
       }
-
-      // Спробуємо отримати метадані через HEAD запит
-      tryIcyMetadata(stationUrl);
     }
 
-    // Періодична перевірка через API
-    function startPeriodicApiCheck(stationId) {
-      if (metadataCheckInterval) {
-        clearInterval(metadataCheckInterval);
-      }
-
-      metadataCheckInterval = setInterval(async () => {
-        if (!isPlaying) return;
-
-        try {
-          const response = await fetch(`https://de1.api.radio-browser.info/json/stations/byuuid/${stationId}`, {
-            signal: AbortSignal.timeout(3000),
-            headers: { 'User-Agent': 'RadioMusicSO/1.0' }
-          });
-
-          if (response.ok) {
-            const stations = await response.json();
-            if (stations.length > 0 && stations[0].current_track) {
-              const newTrack = stations[0].current_track;
-              if (newTrack !== currentTrack) {
-                updateTrackDisplay(newTrack);
-              }
-            }
-          }
-        } catch (error) {
-          console.log("Periodic API check failed:", error.message);
-        }
-      }, 15000); // Кожні 15 секунд
-    }
-
-    // Спроба отримати ICY метадані
-    function tryIcyMetadata(stationUrl) {
-      const secureUrl = stationUrl.replace('http://', 'https://');
-      
-      // Спочатку робимо HEAD запит щоб отримати заголовки
-      fetch(secureUrl, { 
+    function tryMetadataStreaming(stationUrl) {
+      fetch(stationUrl, { 
         method: 'HEAD',
-        signal: AbortSignal.timeout(5000),
-        headers: { 
-          'Icy-MetaData': '1',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' // Деякі сервери вимагають нормальний User-Agent
-        }
+        signal: AbortSignal.timeout(3000),
+        headers: { 'Icy-Metadata': '1' }
       })
       .then(response => {
-        const icyMetaInt = response.headers.get('icy-metaint');
-        const icyName = response.headers.get('icy-name');
-        const contentType = response.headers.get('content-type');
+        const icyMetaint = response.headers.get('icy-metaint');
         
-        console.log('ICY Headers:', { icyMetaInt, icyName, contentType });
-        
-        // Перевіряємо різні заголовки, які можуть містити назву треку
-        const icyBr = response.headers.get('icy-br');
-        const icyGenre = response.headers.get('icy-genre');
-        const icyUrl = response.headers.get('icy-url');
-        
-        // Деякі сервери передають назву треку в заголовку icy-name
-        if (icyName && icyName !== 'null' && icyName.trim() !== '') {
-          updateTrackDisplay(icyName);
-        }
-        
-        if (icyMetaInt) {
-          // Якщо є підтримка метаданих, запускаємо читання потоку
-          readIcyStream(secureUrl, parseInt(icyMetaInt));
+        if (icyMetaint) {
+          startMetadataStreaming(stationUrl, parseInt(icyMetaint));
         } else {
-          // Спробуємо отримати метадані через GET запит з невеликим діапазоном
-          tryAlternativeMetadata(secureUrl);
-        }
-      })
-      .catch(error => {
-        console.log('HEAD request failed, trying direct stream:', error.message);
-        tryAlternativeMetadata(secureUrl);
-      });
-    }
-
-    // Читання потоку з ICY метаданими
-    function readIcyStream(stationUrl, metaInt) {
-      console.log(`Starting ICY stream reader with interval ${metaInt} bytes`);
-      
-      if (metadataReaderController) {
-        metadataReaderController.abort();
-      }
-      
-      metadataReaderController = new AbortController();
-      
-      fetch(stationUrl, {
-        signal: metadataReaderController.signal,
-        headers: { 
-          'Icy-MetaData': '1',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      })
-      .then(response => {
-        if (!response.body) {
-          throw new Error('No response body');
-        }
-        
-        const reader = response.body.getReader();
-        let buffer = new Uint8Array(0);
-        let bytesRead = 0;
-        
-        function processStream() {
-          if (!isPlaying || !metadataReaderController) {
-            reader.cancel();
-            return;
-          }
-          
-          reader.read().then(({ done, value }) => {
-            if (done || !isPlaying) {
-              return;
-            }
-            
-            if (value) {
-              // Додаємо нові дані до буфера
-              const newBuffer = new Uint8Array(buffer.length + value.length);
-              newBuffer.set(buffer);
-              newBuffer.set(value, buffer.length);
-              buffer = newBuffer;
-              
-              // Шукаємо метадані в потоці
-              while (buffer.length >= metaInt + 1) {
-                // Читаємо аудіо дані
-                const audioData = buffer.slice(0, metaInt);
-                buffer = buffer.slice(metaInt);
-                
-                // Читаємо довжину метаданих
-                const metaLen = buffer[0] * 16;
-                
-                if (buffer.length >= 1 + metaLen) {
-                  if (metaLen > 0) {
-                    // Отримуємо метадані
-                    const metaBytes = buffer.slice(1, 1 + metaLen);
-                    const metaStr = new TextDecoder().decode(metaBytes).replace(/\0/g, '');
-                    
-                    // Парсимо метадані
-                    const titleMatch = metaStr.match(/StreamTitle='([^']*)'/);
-                    if (titleMatch && titleMatch[1]) {
-                      const newTrack = titleMatch[1].trim();
-                      if (newTrack && newTrack !== currentTrack) {
-                        console.log('ICY Track update:', newTrack);
-                        updateTrackDisplay(newTrack);
-                      }
-                    }
-                  }
-                  
-                  // Видаляємо оброблений блок метаданих
-                  buffer = buffer.slice(1 + metaLen);
-                } else {
-                  break;
-                }
-              }
-            }
-            
-            // Продовжуємо читання
-            setTimeout(processStream, 0);
-          }).catch(error => {
-            if (error.name !== 'AbortError') {
-              console.log('Stream reading error:', error.message);
-              // Спробуємо перезапустити через деякий час
-              if (isPlaying) {
-                if (metadataRetryTimeout) clearTimeout(metadataRetryTimeout);
-                metadataRetryTimeout = setTimeout(() => {
-                  tryIcyMetadata(stationUrl);
-                }, 5000);
-              }
-            }
-          });
-        }
-        
-        processStream();
-      })
-      .catch(error => {
-        if (error.name !== 'AbortError') {
-          console.log('Stream fetch failed:', error.message);
           tryAlternativeMetadata(stationUrl);
         }
+      })
+      .catch(() => {
+        tryAlternativeMetadata(stationUrl);
       });
     }
 
-    // Альтернативний метод для отримання метаданих
     function tryAlternativeMetadata(stationUrl) {
       const controller = new AbortController();
-      setTimeout(() => controller.abort(), 8000);
+      setTimeout(() => controller.abort(), 5000);
       
       fetch(stationUrl, {
         signal: controller.signal,
         headers: { 
-          'Icy-MetaData': '1',
-          'Range': 'bytes=0-131072', // Беремо більше даних (128KB)
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          'Icy-Metadata': '1',
+          'Range': 'bytes=0-8192'
         }
       })
       .then(async response => {
@@ -748,53 +561,57 @@ document.addEventListener("DOMContentLoaded", () => {
         const { value } = await reader.read();
         reader.cancel();
         
-        if (value) {
-          const text = new TextDecoder().decode(value);
-          
-          // Шукаємо метадані в різних форматах
-          const patterns = [
-            /StreamTitle='([^']*)'/,
-            /StreamTitle="([^"]*)"/,
-            /title='([^']*)'/i,
-            /title="([^"]*)"/i,
-            /Current Track:\s*(.+?)(?:\r|\n|<)/i,
-            /Now Playing:\s*(.+?)(?:\r|\n|<)/i,
-            /<title>(.*?)<\/title>/i,
-            /"title":"([^"]+)"/i,
-            /'title':'([^']+)'/i
-          ];
-          
-          for (const pattern of patterns) {
-            const match = text.match(pattern);
+        const text = new TextDecoder().decode(value);
+        const match = text.match(/StreamTitle='([^']*)'/);
+        
+        if (match && match[1]) {
+          updateTrackDisplay(match[1]);
+        } else {
+          updateTrackDisplay("unknown");
+        }
+      })
+      .catch(() => {
+        updateTrackDisplay("unknown");
+      });
+    }
+
+    function startMetadataStreaming(stationUrl, metaint) {
+      if (metadataCheckInterval) {
+        clearInterval(metadataCheckInterval);
+      }
+
+      const streamUrl = stationUrl;
+      let position = 0;
+
+      metadataCheckInterval = setInterval(async () => {
+        if (!isPlaying || !streamUrl) return;
+
+        try {
+          const response = await fetch(streamUrl, {
+            headers: { 
+              'Icy-Metadata': '1',
+              'Range': `bytes=${position}-${position + metaint + 4080}`
+            },
+            signal: AbortSignal.timeout(3000)
+          });
+
+          const metadataHeader = response.headers.get('icy-metadata');
+          if (metadataHeader) {
+            const match = metadataHeader.match(/StreamTitle='([^']*)'/);
             if (match && match[1]) {
-              const track = match[1].trim();
-              if (track && track !== 'null' && track !== 'undefined') {
-                updateTrackDisplay(track);
-                return;
+              const newTrack = match[1];
+              if (newTrack !== currentTrack) {
+                updateTrackDisplay(newTrack);
               }
             }
           }
           
-          // Якщо нічого не знайшли, пробуємо отримати з JSON-LD
-          const jsonLdMatch = text.match(/<script type="application\/ld\+json">(.*?)<\/script>/s);
-          if (jsonLdMatch) {
-            try {
-              const jsonData = JSON.parse(jsonLdMatch[1]);
-              if (jsonData.name) {
-                updateTrackDisplay(jsonData.name);
-                return;
-              }
-            } catch (e) {}
-          }
+          position += metaint + 4080;
+          
+        } catch (error) {
+          console.log("Metadata streaming error:", error.message);
         }
-        
-        // Якщо все ще нічого немає, показуємо unknown
-        updateTrackDisplay("unknown");
-      })
-      .catch(error => {
-        console.log('Alternative metadata failed:', error.message);
-        updateTrackDisplay("unknown");
-      });
+      }, 10000);
     }
 
     function updateTrackDisplay(track) {
@@ -803,19 +620,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       currentTrackElement.classList.remove('loading', 'marquee');
 
-      if (track && track !== "unknown" && track !== "loading..." && track !== 'null' && track !== 'undefined') {
+      if (track && track !== "unknown" && track !== "loading...") {
         let cleanTrack = track.replace(/^StreamTitle='|';$|'$/g, '').trim();
-        
-        // Видаляємо зайві символи
-        cleanTrack = cleanTrack.replace(/[^\x20-\x7E\u0400-\u04FF]/g, ''); // Видаляємо недруковані символи
-        
-        // Розділяємо на виконавця і трек якщо є " - "
-        if (cleanTrack.includes(' - ')) {
-          const parts = cleanTrack.split(' - ');
-          if (parts.length >= 2) {
-            cleanTrack = `${parts[0]} - ${parts[1]}`;
-          }
-        }
         
         if (cleanTrack.length > 50) {
           currentTrackElement.classList.add('marquee');
@@ -837,20 +643,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function stopMetadataStreaming() {
-      if (metadataReaderController) {
-        metadataReaderController.abort();
-        metadataReaderController = null;
-      }
       if (metadataCheckInterval) {
         clearInterval(metadataCheckInterval);
         metadataCheckInterval = null;
       }
-      if (metadataRetryTimeout) {
-        clearTimeout(metadataRetryTimeout);
-        metadataRetryTimeout = null;
-      }
     }
-    // --- КІНЕЦЬ ПОКРАЩЕНОЇ ФУНКЦІЇ ---
 
     // Покращений пошук станцій
     async function searchStations(query, country, genre) {
@@ -868,7 +665,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         params.append("order", "clickcount");
         params.append("reverse", "true");
-        params.append("limit", "500");
+        params.append("limit", "200");
         params.append("hidebroken", "true");
         
         const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
@@ -885,22 +682,13 @@ document.addEventListener("DOMContentLoaded", () => {
         
         let stations = await response.json();
         
-        // М'якша фільтрація - перевіряємо наявність URL
+        // М'якша фільтрація
         stations = stations.filter(station => {
           const url = station.url || station.url_resolved;
           return url && (url.startsWith('http://') || url.startsWith('https://'));
         });
         
-        // Конвертуємо HTTP в HTTPS для безпеки
-        stations = stations.map(station => {
-          if (station.url && station.url.startsWith('http://')) {
-            station.url = station.url.replace('http://', 'https://');
-          }
-          if (station.url_resolved && station.url_resolved.startsWith('http://')) {
-            station.url_resolved = station.url_resolved.replace('http://', 'https://');
-          }
-          return station;
-        });
+        stations = stations.slice(0, 100); // Обмежуємо до 100 для продуктивності
         
         console.log(`Знайдено ${stations.length} станцій`);
         renderSearchResults(stations);
@@ -928,12 +716,11 @@ document.addEventListener("DOMContentLoaded", () => {
       stations.forEach((station, index) => {
         const item = document.createElement("div");
         item.className = `station-item ${index === currentIndex ? "selected" : ""}`;
-        const stationUrl = station.url || station.url_resolved;
-        item.dataset.value = stationUrl;
+        item.dataset.value = station.url || station.url_resolved;
         item.dataset.name = station.name || "Unknown";
         item.dataset.genre = shortenGenre(station.tags || "Unknown");
         item.dataset.country = station.country || "Unknown";
-        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon.replace('http://', 'https://') : "";
+        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
         item.dataset.index = index;
         item.style.setProperty('--item-index', index);
         
@@ -963,18 +750,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
       
+      if (stationItems.length && currentIndex < stationItems.length) {
+        changeStation(currentIndex);
+      }
+      
       stationList.onclick = e => {
         const item = e.target.closest(".station-item");
         const addBtn = e.target.closest(".add-btn");
         if (item && !item.classList.contains("empty")) {
-          e.preventDefault();
           currentIndex = Array.from(stationItems).indexOf(item);
           changeStation(currentIndex);
           provideHapticFeedback();
         }
         if (addBtn) {
           e.stopPropagation();
-          e.preventDefault();
           showTabModal(item);
         }
       };
@@ -1442,7 +1231,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         if (!navigator.onLine) return;
         if (!intendedPlaying || !stationItems?.length || currentIndex >= stationItems.length) {
-          updateWaveVisualizer(false);
+          document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
           return;
         }
         const currentStationUrl = stationItems[currentIndex].dataset.value;
@@ -1468,17 +1257,14 @@ document.addEventListener("DOMContentLoaded", () => {
           audio.pause();
           audio.src = null;
           audio.load();
-          
-          // Використовуємо HTTPS замість HTTP
-          const secureUrl = currentStationUrl.replace('http://', 'https://');
-          audio.src = secureUrl + "?nocache=" + Date.now();
+          audio.src = currentStationUrl + "?nocache=" + Date.now();
 
           try {
             await audio.play();
             errorCount = 0;
             isPlaying = true;
             lastSuccessfulPlayTime = Date.now();
-            updateWaveVisualizer(true);
+            document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
             playPauseBtn.classList.add("playing");
             localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
@@ -1486,7 +1272,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           } catch (error) {
             if (error.name === 'AbortError') return;
-            updateWaveVisualizer(false);
+            document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
             playPauseBtn.classList.remove("playing");
             if (attemptsLeft > 1) {
               if (stationItems[currentIndex].dataset.value !== initialStationUrl) return;
@@ -1514,7 +1300,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!validTabs.includes(tab)) tab = "techno";
       
       document.querySelectorAll(".tab-btn").forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.tab === tab);
         btn.setAttribute("aria-selected", btn.dataset.tab === tab ? "true" : "false");
       });
       
@@ -1537,16 +1322,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentTab = tab;
       localStorage.setItem("currentTab", tab);
       const savedIndex = parseInt(localStorage.getItem(`lastStation_${tab}`)) || 0;
-      let maxIndex = 0;
-      
-      if (tab === "best") {
-        maxIndex = favoriteStations.length - 1;
-      } else if (tab === "search") {
-        maxIndex = 0;
-      } else {
-        maxIndex = (stationLists[tab]?.length || 0) - 1;
-      }
-      
+      const maxIndex = tab === "best" ? favoriteStations.length - 1 : tab === "search" ? 0 : stationLists[tab]?.length - 1 || 0;
       currentIndex = savedIndex <= maxIndex && savedIndex >= 0 ? savedIndex : 0;
       searchInput.style.display = tab === "search" ? "flex" : "none";
       searchQuery.value = "";
@@ -1555,313 +1331,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (tab === "search") populateSearchSuggestions();
       updateStationList();
       renderTabs();
-    }
-
-    // Drag and Drop Functions
-    function enableDragMode() {
-      dragEnabled = true;
-      showToast("Drag mode enabled. Drag handles to reorder stations.", "info", 2000);
-      
-      stationItems.forEach(item => {
-        item.setAttribute("draggable", "true");
-        // Забороняємо виділення тексту
-        item.style.userSelect = "none";
-        item.style.webkitUserSelect = "none";
-      });
-    }
-
-    function disableDragMode() {
-      dragEnabled = false;
-      dragStartIndex = null;
-      
-      stationItems.forEach(item => {
-        item.setAttribute("draggable", "false");
-        item.style.userSelect = "";
-        item.style.webkitUserSelect = "";
-      });
-    }
-
-    function setupDragAndDrop() {
-      stationItems.forEach((item, index) => {
-        const dragHandle = item.querySelector(".drag-handle");
-        if (!dragHandle) return;
-
-        dragHandle.removeEventListener("pointerdown", handleDragHandleClick);
-        dragHandle.removeEventListener("touchstart", handleLongPress);
-        dragHandle.removeEventListener("pointerup", handlePointerUp);
-        dragHandle.removeEventListener("pointerleave", handlePointerLeave);
-        item.removeEventListener("dragstart", handleDragStart);
-        item.removeEventListener("dragend", handleDragEnd);
-        item.removeEventListener("dragover", handleDragOver);
-        item.removeEventListener("dragleave", handleDragLeave);
-        item.removeEventListener("drop", handleDrop);
-        
-        dragHandle.addEventListener("pointerdown", handleDragHandleClick);
-        dragHandle.addEventListener("touchstart", handleLongPress);
-        dragHandle.addEventListener("pointerup", handlePointerUp);
-        dragHandle.addEventListener("pointerleave", handlePointerLeave);
-        
-        item.setAttribute("draggable", dragEnabled ? "true" : "false");
-        item.dataset.index = index;
-        
-        item.addEventListener("dragstart", handleDragStart);
-        item.addEventListener("dragend", handleDragEnd);
-        item.addEventListener("dragover", handleDragOver);
-        item.addEventListener("dragleave", handleDragLeave);
-        item.addEventListener("drop", handleDrop);
-      });
-    }
-
-    function handleDragHandleClick(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if (!dragEnabled) {
-        enableDragMode();
-        provideHapticFeedback();
-        
-        const item = e.target.closest(".station-item");
-        if (item) {
-          setTimeout(() => {
-            const dragEvent = new DragEvent('dragstart', {
-              bubbles: true,
-              cancelable: true,
-              dataTransfer: new DataTransfer()
-            });
-            item.dispatchEvent(dragEvent);
-          }, 50);
+      if (stationItems?.length && currentIndex < stationItems.length && intendedPlaying) {
+        const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
+        const normalizedAudioSrc = normalizeUrl(audio.src);
+        if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
+          isAutoPlayPending = false;
+          debouncedTryAutoPlay();
         }
-        return;
-      }
-    }
-
-    function handleDragStart(e) {
-      if (!dragEnabled) {
-        e.preventDefault();
-        return;
-      }
-      
-      const item = e.target.closest(".station-item");
-      if (!item) return;
-
-      dragStartIndex = parseInt(item.dataset.index);
-      item.classList.add("dragging");
-      
-      e.dataTransfer.setData("text/plain", dragStartIndex);
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setDragImage(item, 20, 20);
-      
-      provideHapticFeedback();
-    }
-
-    function handleDragEnd(e) {
-      const item = e.target.closest(".station-item");
-      if (item) {
-        item.classList.remove("dragging");
-      }
-      
-      document.querySelectorAll(".station-item").forEach(i => {
-        i.classList.remove("drag-over");
-      });
-      
-      dragStartIndex = null;
-    }
-
-    function handleDragOver(e) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-      
-      const item = e.target.closest(".station-item");
-      if (item && dragEnabled && item !== stationItems[dragStartIndex]) {
-        item.classList.add("drag-over");
-      }
-    }
-
-    function handleDragLeave(e) {
-      const item = e.target.closest(".station-item");
-      if (item) {
-        item.classList.remove("drag-over");
-      }
-    }
-
-    function handleDrop(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const targetItem = e.target.closest(".station-item");
-      if (!targetItem || dragStartIndex === null || !dragEnabled) return;
-
-      targetItem.classList.remove("drag-over");
-      
-      const dragEndIndex = parseInt(targetItem.dataset.index);
-      if (dragStartIndex === dragEndIndex) return;
-
-      reorderStations(dragStartIndex, dragEndIndex);
-      
-      document.querySelectorAll(".station-item").forEach(item => {
-        item.classList.remove("dragging", "drag-over");
-      });
-      
-      dragStartIndex = null;
-      disableDragMode();
-      provideHapticFeedback();
-      showToast("Station order updated!", "success");
-    }
-
-    function handleLongPress(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const item = e.target.closest(".station-item");
-      if (!item) return;
-
-      longPressTimer = setTimeout(() => {
-        if (!dragEnabled) {
-          enableDragMode();
-          item.classList.add("long-press");
-          setTimeout(() => item.classList.remove("long-press"), 500);
-          provideHapticFeedback([100]);
-          
-          setTimeout(() => {
-            const dragEvent = new DragEvent('dragstart', {
-              bubbles: true,
-              cancelable: true,
-              dataTransfer: new DataTransfer()
-            });
-            item.dispatchEvent(dragEvent);
-          }, 50);
-        }
-      }, 500);
-    }
-
-    function handlePointerUp() {
-      clearTimeout(longPressTimer);
-    }
-
-    function handlePointerLeave() {
-      clearTimeout(longPressTimer);
-    }
-
-    function reorderStations(fromIndex, toIndex) {
-      if (currentTab === "best") {
-        const [movedStation] = favoriteStations.splice(fromIndex, 1);
-        favoriteStations.splice(toIndex, 0, movedStation);
-        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-      } else {
-        const stations = stationLists[currentTab];
-        if (!stations) return;
-        
-        const [movedStation] = stations.splice(fromIndex, 1);
-        stations.splice(toIndex, 0, movedStation);
-        
-        if (userAddedStations[currentTab]) {
-          const userStationIndex = userAddedStations[currentTab].findIndex(s => s.name === movedStation.name);
-          if (userStationIndex !== -1) {
-            const [movedUserStation] = userAddedStations[currentTab].splice(userStationIndex, 1);
-            userAddedStations[currentTab].splice(toIndex, 0, movedUserStation);
-          }
-        }
-        
-        localStorage.setItem("stationLists", JSON.stringify(stationLists));
-        localStorage.setItem("userAddedStations", JSON.stringify(userAddedStations));
-      }
-      
-      animateStationReorder();
-    }
-
-    function animateStationReorder() {
-      if (viewTransitionSupported) {
-        document.startViewTransition(() => {
-          updateStationList();
-        });
-      } else {
-        stationList.classList.add("fade-out");
-        setTimeout(() => {
-          updateStationList();
-          stationList.classList.remove("fade-out");
-          stationList.classList.add("fade-in");
-          setTimeout(() => stationList.classList.remove("fade-in"), 300);
-        }, 150);
-      }
-    }
-
-    async function loadStations() {
-      console.time("loadStations");
-      showLoading();
-      stationList.innerHTML = "<div class='station-item empty'>Loading...</div>";
-      try {
-        abortController.abort();
-        abortController = new AbortController();
-        const response = await fetch(`stations.json?t=${Date.now()}`, {
-          cache: "no-store",
-          signal: abortController.signal
-        });
-        const mergedStationLists = {};
-        if (response.ok) {
-          const newStations = await response.json();
-          Object.keys(newStations).forEach(tab => {
-            const uniqueStations = new Map();
-            (userAddedStations[tab] || []).forEach(s => {
-              if (!deletedStations.includes(s.name)) {
-                // Конвертуємо HTTP в HTTPS
-                if (s.value) s.value = s.value.replace('http://', 'https://');
-                if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
-                uniqueStations.set(s.name, s);
-              }
-            });
-            newStations[tab].forEach(s => {
-              if (!deletedStations.includes(s.name)) {
-                // Конвертуємо HTTP в HTTPS
-                if (s.value) s.value = s.value.replace('http://', 'https://');
-                if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
-                uniqueStations.set(s.name, s);
-              }
-            });
-            mergedStationLists[tab] = Array.from(uniqueStations.values());
-          });
-        }
-        customTabs.forEach(tab => {
-          const uniqueStations = new Map();
-          (userAddedStations[tab] || []).forEach(s => {
-            if (!deletedStations.includes(s.name)) {
-              // Конвертуємо HTTP в HTTPS
-              if (s.value) s.value = s.value.replace('http://', 'https://');
-              if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
-              uniqueStations.set(s.name, s);
-            }
-          });
-          (stationLists[tab] || []).forEach(s => {
-            if (!deletedStations.includes(s.name)) {
-              // Конвертуємо HTTP в HTTPS
-              if (s.value) s.value = s.value.replace('http://', 'https://');
-              if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
-              uniqueStations.set(s.name, s);
-            }
-          });
-          mergedStationLists[tab] = Array.from(uniqueStations.values());
-        });
-        stationLists = mergedStationLists;
-        localStorage.setItem("stationLists", JSON.stringify(stationLists));
-        favoriteStations = favoriteStations.filter(name => 
-          Object.values(stationLists).flat().some(s => s.name === name)
-        );
-        localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
-        const validTabs = [...Object.keys(stationLists), "best", "search", ...customTabs];
-        if (!validTabs.includes(currentTab)) {
-          currentTab = validTabs[0] || "techno";
-          localStorage.setItem("currentTab", currentTab);
-        }
-        currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
-        showToast("Stations loaded successfully!", "success");
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error("Error loading stations:", error);
-          stationList.innerHTML = "<div class='station-item empty'>Failed to load stations</div>";
-          showToast("Failed to load stations", "error");
-        }
-      } finally {
-        console.timeEnd("loadStations");
-        hideLoading();
       }
     }
 
@@ -1888,7 +1364,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.name = station.name;
         item.dataset.genre = shortenGenre(station.genre);
         item.dataset.country = station.country;
-        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon.replace('http://', 'https://') : "";
+        item.dataset.favicon = station.favicon && isValidUrl(station.favicon) ? station.favicon : "";
         item.dataset.index = index;
         item.setAttribute("draggable", "false");
         item.setAttribute("role", "listitem");
@@ -1954,26 +1430,27 @@ document.addEventListener("DOMContentLoaded", () => {
         const dragHandle = e.target.closest(".drag-handle");
         
         if (item && !item.classList.contains("empty") && !dragHandle) {
-          e.preventDefault();
           currentIndex = Array.from(stationItems).indexOf(item);
           changeStation(currentIndex);
           provideHapticFeedback();
         }
         if (favoriteBtn) {
           e.stopPropagation();
-          e.preventDefault();
           toggleFavorite(item.dataset.name);
           provideHapticFeedback();
         }
         if (deleteBtn) {
           e.stopPropagation();
-          e.preventDefault();
           if (confirm(`Are you sure you want to delete station "${item.dataset.name}" from the list?`)) {
             deleteStation(item.dataset.name);
             provideHapticFeedback();
           }
         }
       };
+
+      if (stationItems.length && currentIndex < stationItems.length) {
+        changeStation(currentIndex);
+      }
     }
 
     function toggleFavorite(stationName) {
@@ -2127,7 +1604,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playPauseBtn.textContent = "⏸";
         playPauseBtn.setAttribute("aria-label", "Pause");
         playPauseBtn.classList.add("playing");
-        updateWaveVisualizer(true);
+        document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       } else {
         audio.pause();
         isPlaying = false;
@@ -2135,7 +1612,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playPauseBtn.textContent = "▶";
         playPauseBtn.setAttribute("aria-label", "Play");
         playPauseBtn.classList.remove("playing");
-        updateWaveVisualizer(false);
+        document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
         stopMetadataStreaming();
         const currentTrackElement = document.getElementById("currentTrack");
         if (currentTrackElement) {
@@ -2206,7 +1683,7 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.textContent = "⏸";
       playPauseBtn.setAttribute("aria-label", "Pause");
       playPauseBtn.classList.add("playing");
-      updateWaveVisualizer(true);
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       if (errorTimeout) {
         clearTimeout(errorTimeout);
@@ -2222,7 +1699,7 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.textContent = "▶";
       playPauseBtn.setAttribute("aria-label", "Play");
       playPauseBtn.classList.remove("playing");
-      updateWaveVisualizer(false);
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
@@ -2234,7 +1711,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     audio.addEventListener("error", () => {
-      updateWaveVisualizer(false);
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       playPauseBtn.classList.remove("playing");
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
@@ -2258,7 +1735,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     audio.addEventListener("loadedmetadata", () => {
-      // Не робимо нічого, метадані отримуємо через fetchTrackMetadata
+      if (isPlaying && stationItems && stationItems[currentIndex]) {
+        const station = stationItems[currentIndex];
+        tryMetadataStreaming(station.dataset.value);
+      }
     });
 
     window.addEventListener("online", () => {
@@ -2271,7 +1751,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.addEventListener("offline", () => {
       showToast("Network connection lost", "error");
-      updateWaveVisualizer(false);
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       playPauseBtn.classList.remove("playing");
       errorCount = 0;
       stopMetadataStreaming();
@@ -2296,5 +1776,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     applyTheme(currentTheme);
+    loadStations();
+    if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
+      const normalizedCurrentUrl = normalizeUrl(stationItems[currentIndex].dataset.value);
+      const normalizedAudioSrc = normalizeUrl(audio.src);
+      if (normalizedAudioSrc !== normalizedCurrentUrl || audio.paused || audio.error || audio.readyState < 2 || audio.currentTime === 0) {
+        isAutoPlayPending = false;
+        debouncedTryAutoPlay();
+      }
+    }
   }
 });
