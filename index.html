@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <meta name="theme-color" content="#00E676">
-  <meta name="description" content="Radio Music S O - Listen to your favorite radio stations with modern UI and features">
+  <meta name="description" content="Radio Music S O - Слухайте улюблені радіостанції з сучасним інтерфейсом та функціями">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Radio Music S O</title>
@@ -16,17 +16,17 @@
 <body>
   <div class="container">
     <!-- Кнопки управління -->
-    <button class="theme-toggle" aria-label="Toggle theme">🌙</button>
-    <button class="share-button" aria-label="Share current station">📢</button>
-    <button class="export-button" aria-label="Export settings">📤</button>
-    <button class="import-button" aria-label="Import settings">📥</button>
-    <input type="file" id="importFileInput" accept="application/json" aria-label="Import settings file">
+    <button class="theme-toggle" aria-label="Змінити тему">🌙</button>
+    <button class="share-button" aria-label="Поділитися поточною станцією">📢</button>
+    <button class="export-button" aria-label="Експортувати налаштування">📤</button>
+    <button class="import-button" aria-label="Імпортувати налаштування">📥</button>
+    <input type="file" id="importFileInput" accept="application/json" aria-label="Файл для імпорту налаштувань">
     
     <h1>🎧 Radio Music S O</h1>
-    <audio id="audioPlayer" aria-label="Audio player" preload="auto"></audio>
+    <audio id="audioPlayer" aria-label="Аудіоплеєр" preload="auto"></audio>
 
     <!-- Loading Indicator -->
-    <div class="loading-indicator" id="loadingIndicator" role="status" aria-label="Loading"></div>
+    <div class="loading-indicator" id="loadingIndicator" role="status" aria-label="Завантаження"></div>
 
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer" role="alert"></div>
@@ -37,14 +37,14 @@
     </div>
 
     <!-- Current Station Info -->
-    <div id="currentStationInfo" role="region" aria-label="Current station information">
+    <div id="currentStationInfo" role="region" aria-label="Інформація про поточну станцію">
       <div class="station-info-content">
-        <div class="station-icon" role="img" aria-label="Station icon">🎵</div>
+        <div class="station-icon" role="img" aria-label="Іконка станції">🎵</div>
         <div class="station-text">
-          <div class="station-name" aria-label="Station name">Обирайте станцію</div>
-          <div class="station-genre" aria-label="Genre">жанр: -</div>
-          <div class="station-country" aria-label="Country">країна: -</div>
-          <div class="current-track" id="currentTrack" aria-label="Current track">🎵 Track: unknown</div>
+          <div class="station-name" aria-label="Назва станції">Виберіть станцію</div>
+          <div class="station-genre" aria-label="Жанр">жанр: -</div>
+          <div class="station-country" aria-label="Країна">країна: -</div>
+          <div class="current-track" id="currentTrack" aria-label="Поточний трек">🎵 Трек: невідомо</div>
         </div>
         <!-- Сучасний хвильовий візуалізатор -->
         <div class="wave-visualizer" aria-hidden="true">
@@ -58,56 +58,56 @@
     </div>
 
     <!-- Station List -->
-    <div class="station-list" id="stationList" role="list" aria-label="Stations list"></div>
+    <div class="station-list" id="stationList" role="list" aria-label="Список станцій"></div>
 
     <!-- Tabs -->
     <div class="tabs-wrapper">
-      <div class="tabs" id="tabs" role="tablist" aria-label="Station categories">
+      <div class="tabs" id="tabs" role="tablist" aria-label="Категорії станцій">
         <!-- Таби генеруються динамічно через JavaScript -->
       </div>
     </div>
 
     <!-- Search Input -->
-    <div id="searchInput" role="search" aria-label="Search stations" style="display: none;">
-      <input id="searchQuery" list="pastSearches" placeholder="Enter station name" aria-label="Search by station name">
+    <div id="searchInput" role="search" aria-label="Пошук станцій" style="display: none;">
+      <input id="searchQuery" list="pastSearches" placeholder="Введіть назву станції" aria-label="Пошук за назвою станції">
       <datalist id="pastSearches"></datalist>
-      <input id="searchCountry" list="suggestedCountries" placeholder="Enter country" aria-label="Search by country">
+      <input id="searchCountry" list="suggestedCountries" placeholder="Введіть країну" aria-label="Пошук за країною">
       <datalist id="suggestedCountries"></datalist>
-      <input id="searchGenre" list="suggestedGenres" placeholder="Enter genre" aria-label="Search by genre">
+      <input id="searchGenre" list="suggestedGenres" placeholder="Введіть жанр" aria-label="Пошук за жанром">
       <datalist id="suggestedGenres"></datalist>
-      <button class="search-btn" aria-label="Perform search">🔍 Search</button>
+      <button class="search-btn" aria-label="Виконати пошук">🔍 Пошук</button>
     </div>
 
     <!-- Controls -->
     <div class="controls-container">
       <div class="controls">
-        <button class="control-btn" aria-label="Previous station">⏮</button>
-        <button class="control-btn" aria-label="Play/Pause">▶</button>
-        <button class="control-btn" aria-label="Next station">⏭</button>
+        <button class="control-btn" aria-label="Попередня станція">⏮</button>
+        <button class="control-btn" aria-label="Грати/Пауза">▶</button>
+        <button class="control-btn" aria-label="Наступна станція">⏭</button>
       </div>
     </div>
 
     <!-- New Tab Modal -->
-    <div class="new-tab-modal modal-overlay" style="display: none;" role="dialog" aria-label="Create new tab">
+    <div class="new-tab-modal modal-overlay" style="display: none;" role="dialog" aria-label="Створити нову вкладку">
       <div class="modal">
         <h2>Створити нову вкладку</h2>
-        <input id="newTabName" type="text" placeholder="Enter tab name (a-z, 0-9, -, _)" aria-label="New tab name" maxlength="10" pattern="[a-z0-9_-]+">
+        <input id="newTabName" type="text" placeholder="Введіть назву вкладки (a-z, 0-9, -, _)" aria-label="Назва нової вкладки" maxlength="10" pattern="[a-z0-9_-]+">
         <div class="modal-tabs">
-          <button id="createTabBtn" class="modal-tab-btn" aria-label="Create tab">Створити</button>
-          <button class="modal-cancel-btn" aria-label="Cancel">Відміна</button>
+          <button id="createTabBtn" class="modal-tab-btn" aria-label="Створити вкладку">Створити</button>
+          <button class="modal-cancel-btn" aria-label="Скасувати">Скасувати</button>
         </div>
       </div>
     </div>
 
     <!-- Edit Tab Modal -->
-    <div class="edit-tab-modal modal-overlay" style="display: none;" role="dialog" aria-label="Edit tab">
+    <div class="edit-tab-modal modal-overlay" style="display: none;" role="dialog" aria-label="Редагувати вкладку">
       <div class="modal">
         <h2>Дії з вкладкою</h2>
-        <input id="renameTabName" type="text" placeholder="Enter new tab name" aria-label="New tab name" maxlength="10" pattern="[a-z0-9_-]+">
+        <input id="renameTabName" type="text" placeholder="Введіть нову назву вкладки" aria-label="Нова назва вкладки" maxlength="10" pattern="[a-z0-9_-]+">
         <div class="modal-tabs">
-          <button id="renameTabBtn" class="modal-tab-btn" aria-label="Rename tab">Перейменувати</button>
-          <button id="deleteTabBtn" class="modal-tab-btn" aria-label="Delete tab">Видалити</button>
-          <button class="modal-cancel-btn" aria-label="Cancel">Відміна</button>
+          <button id="renameTabBtn" class="modal-tab-btn" aria-label="Перейменувати вкладку">Перейменувати</button>
+          <button id="deleteTabBtn" class="modal-tab-btn" aria-label="Видалити вкладку">Видалити</button>
+          <button class="modal-cancel-btn" aria-label="Скасувати">Скасувати</button>
         </div>
       </div>
     </div>

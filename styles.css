@@ -189,12 +189,12 @@
   display: block;
 }
 
-/* Toast Container */
+/* Toast Container - Оновлено для показу зверху */
 .toast-container {
   position: fixed;
-  bottom: 20px;
+  top: 20px;
   left: 50%;
-  transform: translateX(-50%) translateY(100px);
+  transform: translateX(-50%) translateY(-100px);
   background: var(--toast-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -1217,9 +1217,9 @@ input:focus-visible,
   }
 
   .toast-container {
+    top: 10px;
     font-size: 12px;
     padding: 10px 20px;
-    bottom: 15px;
   }
 }
 

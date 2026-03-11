@@ -92,20 +92,20 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationName = currentStationInfo.querySelector(".station-name").textContent || "Radio S O";
       const shareData = {
         title: "Radio S O",
-        text: `Listening to ${stationName} on Radio S O! Join my favorite radio stations!`,
+        text: `Слухаю ${stationName} на Radio S O! Приєднуйся до моїх улюблених радіостанцій!`,
         url: window.location.href
       };
       if (navigator.share) {
         navigator.share(shareData)
-          .then(() => showToast("Shared successfully!", "success"))
+          .then(() => showToast("Поділилися успішно!", "success"))
           .catch(error => {
             console.error("Error sharing:", error);
-            showToast("Sharing failed", "error");
+            showToast("Помилка поширення", "error");
           });
       } else {
         navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`)
-          .then(() => showToast("Link copied to clipboard!", "success"))
-          .catch(() => alert(`Share function not supported. Copy: ${shareData.text} ${shareData.url}`));
+          .then(() => showToast("Посилання скопійовано в буфер обміну!", "success"))
+          .catch(() => alert(`Функція поширення не підтримується. Скопіюйте: ${shareData.text} ${shareData.url}`));
       }
     });
 
@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
           searchStations(query, country, genre);
         }, 300);
       } else {
-        stationList.innerHTML = "<div class='station-item empty'>Enter station name, country or genre</div>";
+        stationList.innerHTML = "<div class='station-item empty'>Введіть назву станції, країну або жанр</div>";
       }
     });
 
@@ -224,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
             showLoading();
             loadStations().finally(() => {
               hideLoading();
-              showToast("Stations refreshed!", "success");
+              showToast("Станції оновлено!", "success");
             });
           }
           
@@ -300,7 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast("Settings exported successfully!", "success");
+      showToast("Налаштування успішно експортовано!", "success");
     }
 
     function importSettings(event) {
@@ -311,7 +311,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           const settings = JSON.parse(e.target.result);
           if (!settings || typeof settings !== "object") {
-            showToast("Invalid settings file!", "error");
+            showToast("Невірний файл налаштувань!", "error");
             return;
           }
           const validThemes = [
@@ -380,10 +380,10 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           loadStations();
           switchTab(currentTab);
-          showToast("Settings imported successfully!", "success");
+          showToast("Налаштування успішно імпортовано!", "success");
         } catch (error) {
           console.error("Error importing settings:", error);
-          showToast("Error importing settings. Please check the file format.", "error");
+          showToast("Помилка імпорту налаштувань. Перевірте формат файлу.", "error");
         }
         importFileInput.value = "";
       };
@@ -466,15 +466,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const stationCountryElement = currentStationInfo.querySelector(".station-country");
       const stationIconElement = currentStationInfo.querySelector(".station-icon");
       const currentTrackElement = document.getElementById("currentTrack");
-      if (stationNameElement) stationNameElement.textContent = "Select station";
-      if (stationGenreElement) stationGenreElement.textContent = "genre: -";
-      if (stationCountryElement) stationCountryElement.textContent = "country: -";
+      if (stationNameElement) stationNameElement.textContent = "Виберіть станцію";
+      if (stationGenreElement) stationGenreElement.textContent = "жанр: -";
+      if (stationCountryElement) stationCountryElement.textContent = "країна: -";
       if (stationIconElement) {
         stationIconElement.innerHTML = "🎵";
         stationIconElement.style.backgroundImage = "none";
       }
       if (currentTrackElement) {
-        currentTrackElement.textContent = "🎵 Track: unknown";
+        currentTrackElement.textContent = "🎵 Трек: невідомо";
       }
     }
 
@@ -643,7 +643,7 @@ document.addEventListener("DOMContentLoaded", () => {
         currentTrackElement.title = cleanTrack;
         currentTrack = cleanTrack;
       } else if (track === "loading...") {
-        currentTrackElement.textContent = "🎵 Loading track...";
+        currentTrackElement.textContent = "🎵 Завантаження треку...";
         currentTrackElement.classList.add("loading");
         currentTrack = "";
       } else {
@@ -669,7 +669,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Покращений пошук станцій
     async function searchStations(query, country, genre) {
       showLoading();
-      stationList.innerHTML = "<div class='station-item empty'>Searching...</div>";
+      stationList.innerHTML = "<div class='station-item empty'>Пошук...</div>";
       
       try {
         abortController.abort();
@@ -718,13 +718,13 @@ document.addEventListener("DOMContentLoaded", () => {
         
         console.log(`Знайдено ${stations.length} станцій`);
         renderSearchResults(stations);
-        showToast(`Found ${stations.length} stations`, "success");
+        showToast(`Знайдено ${stations.length} станцій`, "success");
         
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error("Error searching stations:", error);
-          stationList.innerHTML = "<div class='station-item empty'>Failed to find stations</div>";
-          showToast("Search failed", "error");
+          stationList.innerHTML = "<div class='station-item empty'>Не вдалося знайти станції</div>";
+          showToast("Помилка пошуку", "error");
         }
       } finally {
         hideLoading();
@@ -733,7 +733,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderSearchResults(stations) {
       if (!stations.length) {
-        stationList.innerHTML = "<div class='station-item empty'>Nothing found</div>";
+        stationList.innerHTML = "<div class='station-item empty'>Нічого не знайдено</div>";
         stationItems = [];
         return;
       }
@@ -759,7 +759,7 @@ document.addEventListener("DOMContentLoaded", () => {
           ${iconHtml}
           <span class="station-name">${station.name}</span>
           <div class="buttons-container">
-            <button class="add-btn" aria-label="Add station">ADD</button>
+            <button class="add-btn" aria-label="Додати станцію">ADD</button>
           </div>`;
         
         fragment.appendChild(item);
@@ -805,14 +805,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const modal = document.createElement("div");
       modal.className = "modal";
       modal.innerHTML = `
-        <h2>Select tab</h2>
+        <h2>Виберіть вкладку</h2>
         <div class="modal-tabs">
           <button class="modal-tab-btn" data-tab="techno">TECHNO</button>
           <button class="modal-tab-btn" data-tab="trance">TRANCE</button>
           <button class="modal-tab-btn" data-tab="ukraine">UA</button>
           <button class="modal-tab-btn" data-tab="pop">POP</button>
           ${customTabs.map(tab => `<button class="modal-tab-btn" data-tab="${tab}">${tab.toUpperCase()}</button>`).join('')}
-          <button class="modal-cancel-btn">Cancel</button>
+          <button class="modal-cancel-btn">Скасувати</button>
         </div>
       `;
       document.body.appendChild(overlay);
@@ -853,9 +853,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentTab !== "search") {
           updateStationList();
         }
-        showToast(`Station added to ${targetTab}`, "success");
+        showToast(`Станцію додано до ${targetTab}`, "success");
       } else {
-        showToast("Station already exists in this tab!", "error");
+        showToast("Станція вже існує в цій вкладці!", "error");
       }
     }
 
@@ -904,7 +904,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const addBtn = document.createElement("button");
       addBtn.className = "add-tab-btn";
       addBtn.textContent = "+";
-      addBtn.setAttribute("aria-label", "Add new tab");
+      addBtn.setAttribute("aria-label", "Додати нову вкладку");
       tabsContainer.appendChild(addBtn);
 
       tabsContainer.querySelectorAll(".tab-btn").forEach(btn => {
@@ -950,19 +950,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const createTabHandler = () => {
         const tabName = input.value.trim().toLowerCase();
         if (!tabName) {
-          showToast("Enter tab name!", "error");
+          showToast("Введіть назву вкладки!", "error");
           return;
         }
         if (["best", "techno", "trance", "ukraine", "pop", "search"].includes(tabName) || customTabs.includes(tabName)) {
-          showToast("This tab name already exists!", "error");
+          showToast("Така назва вкладки вже існує!", "error");
           return;
         }
         if (tabName.length > 10 || !/^[a-z0-9_-]+$/.test(tabName)) {
-          showToast("Tab name cannot exceed 10 characters and must contain only Latin letters, numbers, hyphen or underscore.", "error");
+          showToast("Назва вкладки не може перевищувати 10 символів і має містити лише латинські літери, цифри, дефіс або підкреслення.", "error");
           return;
         }
         if (customTabs.length >= 7) {
-          showToast("Maximum of 7 custom tabs reached!", "error");
+          showToast("Досягнуто максимум 7 кастомних вкладок!", "error");
           return;
         }
         customTabs.push(tabName);
@@ -974,7 +974,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderTabs();
         switchTab(tabName);
         closeModal();
-        showToast(`Tab "${tabName}" created!`, "success");
+        showToast(`Вкладку "${tabName}" створено!`, "success");
       };
 
       const keypressHandler = (e) => {
@@ -1011,15 +1011,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const renameTabHandler = () => {
         const newName = input.value.trim().toLowerCase();
         if (!newName) {
-          showToast("Enter new tab name!", "error");
+          showToast("Введіть нову назву вкладки!", "error");
           return;
         }
         if (["best", "techno", "trance", "ukraine", "pop", "search"].includes(newName) || customTabs.includes(newName)) {
-          showToast("This tab name already exists!", "error");
+          showToast("Така назва вкладки вже існує!", "error");
           return;
         }
         if (newName.length > 10 || !/^[a-z0-9_-]+$/.test(newName)) {
-          showToast("Tab name cannot exceed 10 characters and must contain only Latin letters, numbers, hyphen or underscore!", "error");
+          showToast("Назва вкладки не може перевищувати 10 символів і має містити лише латинські літери, цифри, дефіс або підкреслення.", "error");
           return;
         }
         const index = customTabs.indexOf(tab);
@@ -1034,11 +1034,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentTab === tab) switchTab(newName);
         renderTabs();
         closeModal();
-        showToast(`Tab renamed to "${newName}"`, "success");
+        showToast(`Вкладку перейменовано на "${newName}"`, "success");
       };
 
       const deleteTabHandler = () => {
-        if (confirm(`Are you sure you want to delete the "${tab.toUpperCase()}" tab?`)) {
+        if (confirm(`Ви впевнені, що хочете видалити вкладку "${tab.toUpperCase()}"?`)) {
           customTabs = customTabs.filter(t => t !== tab);
           delete stationLists[tab];
           delete userAddedStations[tab];
@@ -1051,7 +1051,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           renderTabs();
           closeModal();
-          showToast(`Tab "${tab}" deleted`, "success");
+          showToast(`Вкладку "${tab}" видалено`, "success");
         }
       };
 
@@ -1193,7 +1193,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const nextTheme = themesOrder[(themesOrder.indexOf(currentTheme) + 1) % themesOrder.length];
       applyTheme(nextTheme);
       provideHapticFeedback();
-      showToast(`Theme changed to ${nextTheme}`, "info");
+      showToast(`Тему змінено на ${nextTheme}`, "info");
     }
 
     themeToggle.addEventListener("click", toggleTheme);
@@ -1206,7 +1206,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (newWorker) {
             newWorker.addEventListener("statechange", () => {
               if (newWorker.state === "activated" && navigator.serviceWorker.controller) {
-                if (window.confirm("New version of radio available. Update?")) {
+                if (window.confirm("Доступна нова версія радіо. Оновити?")) {
                   window.location.reload();
                 }
               }
@@ -1225,7 +1225,7 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
             localStorage.setItem("cacheVersion", event.data.cacheVersion);
             loadStations();
-            showToast("App updated!", "success");
+            showToast("Додаток оновлено!", "success");
           }
         }
         if (event.data.type === "NETWORK_STATUS" && event.data.online && intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
@@ -1374,7 +1374,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Drag and Drop Functions
     function enableDragMode() {
       dragEnabled = true;
-      showToast("Drag mode enabled. Drag handles to reorder stations.", "info", 2000);
+      showToast("Режим перетягування увімкнено. Перетягуйте за ручку для зміни порядку.", "info", 2000);
       
       stationItems.forEach(item => {
         item.setAttribute("draggable", "true");
@@ -1519,7 +1519,7 @@ document.addEventListener("DOMContentLoaded", () => {
       dragStartIndex = null;
       disableDragMode();
       provideHapticFeedback();
-      showToast("Station order updated!", "success");
+      showToast("Порядок станцій оновлено!", "success");
     }
 
     function handleLongPress(e) {
@@ -1602,7 +1602,7 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadStations() {
       console.time("loadStations");
       showLoading();
-      stationList.innerHTML = "<div class='station-item empty'>Loading...</div>";
+      stationList.innerHTML = "<div class='station-item empty'>Завантаження...</div>";
       try {
         abortController.abort();
         abortController = new AbortController();
@@ -1666,12 +1666,12 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("currentTab", currentTab);
         }
         currentIndex = parseInt(localStorage.getItem(`lastStation_${currentTab}`)) || 0;
-        showToast("Stations loaded successfully!", "success");
+        showToast("Станції успішно завантажено!", "success");
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error("Error loading stations:", error);
-          stationList.innerHTML = "<div class='station-item empty'>Failed to load stations</div>";
-          showToast("Failed to load stations", "error");
+          stationList.innerHTML = "<div class='station-item empty'>Не вдалося завантажити станції</div>";
+          showToast("Не вдалося завантажити станції", "error");
         }
       } finally {
         console.timeEnd("loadStations");
@@ -1690,7 +1690,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!stations.length) {
         currentIndex = 0;
         stationItems = [];
-        stationList.innerHTML = `<div class="station-item empty">${currentTab === "best" ? "No favorite stations" : "No stations in this category"}</div>`;
+        stationList.innerHTML = `<div class="station-item empty">${currentTab === "best" ? "Немає улюблених станцій" : "Немає станцій у цій категорії"}</div>`;
         return;
       }
 
@@ -1713,11 +1713,11 @@ document.addEventListener("DOMContentLoaded", () => {
           : "🎵 ";
         
         const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
-          ? `<button class="delete-btn" aria-label="Delete station">🗑</button>`
+          ? `<button class="delete-btn" aria-label="Видалити станцію">🗑</button>`
           : "";
         
         const dragHandle = ["techno", "trance", "ukraine", "pop", ...customTabs, "best"].includes(currentTab)
-          ? `<button class="drag-handle" aria-label="Drag to reorder">⋮⋮</button>`
+          ? `<button class="drag-handle" aria-label="Перетягнути для зміни порядку">⋮⋮</button>`
           : "";
         
         item.innerHTML = `
@@ -1726,7 +1726,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="buttons-container">
             ${dragHandle}
             ${deleteButton}
-            <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}" aria-label="${favoriteStations.includes(station.name) ? "Remove from favorites" : "Add to favorites"}">★</button>
+            <button class="favorite-btn${favoriteStations.includes(station.name) ? " favorited" : ""}" aria-label="${favoriteStations.includes(station.name) ? "Видалити з улюблених" : "Додати до улюблених"}">★</button>
           </div>`;
         fragment.appendChild(item);
       });
@@ -1782,7 +1782,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (deleteBtn) {
           e.stopPropagation();
           e.preventDefault();
-          if (confirm(`Are you sure you want to delete station "${item.dataset.name}" from the list?`)) {
+          if (confirm(`Ви впевнені, що хочете видалити станцію "${item.dataset.name}" зі списку?`)) {
             deleteStation(item.dataset.name);
             provideHapticFeedback();
           }
@@ -1793,10 +1793,10 @@ document.addEventListener("DOMContentLoaded", () => {
     function toggleFavorite(stationName) {
       if (favoriteStations.includes(stationName)) {
         favoriteStations = favoriteStations.filter(name => name !== stationName);
-        showToast(`Removed from favorites`, "info");
+        showToast(`Видалено з улюблених`, "info");
       } else {
         favoriteStations.unshift(stationName);
-        showToast(`Added to favorites`, "success");
+        showToast(`Додано до улюблених`, "success");
       }
       localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
       if (currentTab === "best") switchTab("best");
@@ -1828,7 +1828,7 @@ document.addEventListener("DOMContentLoaded", () => {
           currentIndex = stationLists[currentTab].length - 1;
         }
         switchTab(currentTab);
-        showToast(`Station deleted`, "info");
+        showToast(`Станцію видалено`, "info");
       }
     }
 
@@ -1871,8 +1871,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const currentTrackElement = document.getElementById("currentTrack");
 
       if (stationNameElement) stationNameElement.textContent = item.dataset.name || "";
-      if (stationGenreElement) stationGenreElement.textContent = `genre: ${item.dataset.genre || ""}`;
-      if (stationCountryElement) stationCountryElement.textContent = `country: ${item.dataset.country || ""}`;
+      if (stationGenreElement) stationGenreElement.textContent = `жанр: ${item.dataset.genre || ""}`;
+      if (stationCountryElement) stationCountryElement.textContent = `країна: ${item.dataset.country || ""}`;
       
       if (stationIconElement) {
         if (item.dataset.favicon && isValidUrl(item.dataset.favicon)) {
@@ -1888,7 +1888,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (currentTrackElement) {
-        currentTrackElement.textContent = "🎵 Track: loading...";
+        currentTrackElement.textContent = "🎵 Трек: завантаження...";
         currentTrackElement.classList.add("loading");
       }
       
@@ -1939,7 +1939,7 @@ document.addEventListener("DOMContentLoaded", () => {
         intendedPlaying = true;
         debouncedTryAutoPlay();
         playPauseBtn.textContent = "⏸";
-        playPauseBtn.setAttribute("aria-label", "Pause");
+        playPauseBtn.setAttribute("aria-label", "Пауза");
         playPauseBtn.classList.add("playing");
         updateWaveVisualizer(true);
       } else {
@@ -1947,13 +1947,13 @@ document.addEventListener("DOMContentLoaded", () => {
         isPlaying = false;
         intendedPlaying = false;
         playPauseBtn.textContent = "▶";
-        playPauseBtn.setAttribute("aria-label", "Play");
+        playPauseBtn.setAttribute("aria-label", "Грати");
         playPauseBtn.classList.remove("playing");
         updateWaveVisualizer(false);
         stopMetadataStreaming();
         const currentTrackElement = document.getElementById("currentTrack");
         if (currentTrackElement) {
-          currentTrackElement.textContent = "🎵 Track: unknown";
+          currentTrackElement.textContent = "🎵 Трек: невідомо";
           currentTrackElement.classList.remove("loading", "marquee");
         }
       }
@@ -1980,7 +1980,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (e.key === "Escape" && dragEnabled) {
           disableDragMode();
-          showToast("Drag mode disabled", "info");
+          showToast("Режим перетягування вимкнено", "info");
         }
       },
       visibilitychange: () => {
@@ -2018,7 +2018,7 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("playing", () => {
       isPlaying = true;
       playPauseBtn.textContent = "⏸";
-      playPauseBtn.setAttribute("aria-label", "Pause");
+      playPauseBtn.setAttribute("aria-label", "Пауза");
       playPauseBtn.classList.add("playing");
       updateWaveVisualizer(true);
       localStorage.setItem("isPlaying", isPlaying);
@@ -2034,14 +2034,14 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("pause", () => {
       isPlaying = false;
       playPauseBtn.textContent = "▶";
-      playPauseBtn.setAttribute("aria-label", "Play");
+      playPauseBtn.setAttribute("aria-label", "Грати");
       playPauseBtn.classList.remove("playing");
       updateWaveVisualizer(false);
       localStorage.setItem("isPlaying", isPlaying);
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
       if (currentTrackElement) {
-        currentTrackElement.textContent = "🎵 Track: unknown";
+        currentTrackElement.textContent = "🎵 Трек: невідомо";
         currentTrackElement.classList.remove("loading", "marquee");
       }
       if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
@@ -2053,7 +2053,7 @@ document.addEventListener("DOMContentLoaded", () => {
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
       if (currentTrackElement) {
-        currentTrackElement.textContent = "🎵 Track: error";
+        currentTrackElement.textContent = "🎵 Трек: помилка";
         currentTrackElement.classList.remove("loading", "marquee");
       }
       if (intendedPlaying && errorCount < ERROR_LIMIT && !errorTimeout) {
@@ -2076,7 +2076,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     window.addEventListener("online", () => {
-      showToast("Network restored", "success");
+      showToast("Мережу відновлено", "success");
       if (intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
         isAutoPlayPending = false;
         debouncedTryAutoPlay();
@@ -2084,7 +2084,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     window.addEventListener("offline", () => {
-      showToast("Network connection lost", "error");
+      showToast("З'єднання з мережею втрачено", "error");
       updateWaveVisualizer(false);
       playPauseBtn.classList.remove("playing");
       errorCount = 0;
