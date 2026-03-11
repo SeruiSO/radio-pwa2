@@ -52,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadingIndicator = document.getElementById("loadingIndicator");
   const toastContainer = document.getElementById("toastContainer");
   const pullIndicator = document.getElementById("pullIndicator");
-  const waveVisualizer = document.querySelector('.wave-visualizer');
 
   if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
     console.error("One of required DOM elements not found");
@@ -247,16 +246,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }, {
         rootMargin: '50px'
       });
-    }
-
-    function updateWaveVisualizer(playing) {
-      if (!waveVisualizer) return;
-      
-      if (playing) {
-        waveVisualizer.classList.add('playing');
-      } else {
-        waveVisualizer.classList.remove('playing');
-      }
     }
 
     function showLoading() {
@@ -468,8 +457,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Покращене отримання метаданих треку
+    // --- ВИПРАВЛЕНА ФУНКЦІЯ ДЛЯ ОТРИМАННЯ МЕТАДАНИХ ТРЕКУ ---
     async function fetchTrackMetadata(stationUrl, stationName) {
+      // Зупиняємо попереднє опитування
       stopMetadataStreaming();
       
       if (!stationUrl || !isPlaying) {
@@ -479,17 +469,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
       updateTrackDisplay("loading...");
 
+      // --- Новий, більш надійний підхід: пошук станції за URL потоку ---
       try {
-        // Спочатку пробуємо отримати трек через API
+        // 1. Шукаємо станцію в базі radio-browser за точним URL (url або url_resolved)
         const searchParams = new URLSearchParams({
-          limit: 10,
-          order: "clickcount",
-          reverse: "true",
+          limit: 1,
           hidebroken: "true"
         });
         
-        const searchName = stationName.split(' ').slice(0, 3).join(' ');
-        const searchUrl = `https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(searchName)}&${searchParams.toString()}`;
+        // Енкодимо URL для безпечного використання в запиті
+        const encodedUrl = encodeURIComponent(stationUrl);
+        const searchUrl = `https://de1.api.radio-browser.info/json/stations/byurl/${encodedUrl}?${searchParams.toString()}`;
+        
+        console.log("Searching station by URL:", searchUrl);
         
         const response = await fetch(searchUrl, {
           signal: AbortSignal.timeout(5000),
@@ -498,110 +490,197 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (response.ok) {
           const stations = await response.json();
-          
-          // Шукаємо найкращий збіг
-          let bestMatch = null;
-          let bestScore = 0;
-          
-          stations.forEach(s => {
-            let score = 0;
-            if (s.name.toLowerCase() === stationName.toLowerCase()) score += 10;
-            if (s.name.toLowerCase().includes(stationName.toLowerCase())) score += 5;
-            if (stationName.toLowerCase().includes(s.name.toLowerCase())) score += 3;
-            if (s.current_track) score += 2;
+          if (stations.length > 0 && stations[0].current_track) {
+            console.log("Track found via URL search:", stations[0].current_track);
+            updateTrackDisplay(stations[0].current_track);
             
-            if (score > bestScore) {
-              bestScore = score;
-              bestMatch = s;
-            }
-          });
-          
-          if (bestMatch && bestMatch.current_track) {
-            updateTrackDisplay(bestMatch.current_track);
+            // Якщо знайшли трек, запускаємо періодичне опитування для оновлень
+            startPeriodicMetadataCheck(stationUrl);
+            return;
+          } else if (stations.length > 0) {
+            // Якщо станцію знайшли, але поточного треку немає, все одно зберігаємо її ID для майбутніх запитів
+            console.log("Station found but no current track. Will try periodic checks.");
+            startPeriodicMetadataCheck(stationUrl, stations[0].id);
             return;
           }
         }
-
-        // Якщо API не дав результату, пробуємо ICEcast metadata
-        tryMetadataStreaming(stationUrl);
+        
+        // Якщо не вдалося знайти за URL, пробуємо розширений пошук за назвою (як запасний варіант)
+        console.log("Station not found by URL, trying by name...");
+        tryFallbackNameSearch(stationName, stationUrl);
         
       } catch (error) {
-        console.log("Metadata API error, trying direct stream:", error.message);
-        tryMetadataStreaming(stationUrl);
+        console.log("Error in URL search:", error.message);
+        // У випадку помилки, пробуємо запасний варіант
+        tryFallbackNameSearch(stationName, stationUrl);
       }
     }
 
-    function tryMetadataStreaming(stationUrl) {
-      // Використовуємо HTTPS замість HTTP
-      const secureUrl = stationUrl.replace('http://', 'https://');
-      
-      fetch(secureUrl, { 
-        method: 'HEAD',
-        signal: AbortSignal.timeout(3000),
-        headers: { 'Icy-Metadata': '1' }
-      })
-      .then(response => {
-        const icyMetaint = response.headers.get('icy-metaint');
+    // Запасний метод пошуку за назвою
+    async function tryFallbackNameSearch(stationName, stationUrl) {
+      try {
+        const searchParams = new URLSearchParams({
+          name: stationName,
+          limit: 5,
+          order: "clickcount",
+          reverse: "true",
+          hidebroken: "true"
+        });
         
-        if (icyMetaint) {
-          startMetadataStreaming(secureUrl, parseInt(icyMetaint));
-        } else {
-          tryAlternativeMetadata(secureUrl);
+        const searchUrl = `https://de1.api.radio-browser.info/json/stations/search?${searchParams.toString()}`;
+        const response = await fetch(searchUrl, {
+          signal: AbortSignal.timeout(5000),
+          headers: { 'User-Agent': 'RadioMusicSO/1.0' }
+        });
+
+        if (response.ok) {
+          const stations = await response.json();
+          // Шукаємо станцію з найближчим URL
+          let bestMatch = null;
+          for (const s of stations) {
+            if (s.url_resolved && normalizeUrl(s.url_resolved) === normalizeUrl(stationUrl)) {
+              bestMatch = s;
+              break;
+            }
+          }
+          
+          if (!bestMatch && stations.length > 0) {
+            bestMatch = stations[0]; // Беремо першу, якщо точної не знайшли
+          }
+          
+          if (bestMatch && bestMatch.current_track) {
+            updateTrackDisplay(bestMatch.current_track);
+            startPeriodicMetadataCheck(stationUrl, bestMatch.id);
+            return;
+          }
         }
-      })
-      .catch(() => {
-        tryAlternativeMetadata(secureUrl);
-      });
+        
+        // Якщо нічого не знайшли, пробуємо отримати метадані безпосередньо з потоку
+        tryDirectStreamMetadata(stationUrl);
+        
+      } catch (error) {
+        console.log("Fallback search failed:", error.message);
+        tryDirectStreamMetadata(stationUrl);
+      }
     }
 
-    function tryAlternativeMetadata(stationUrl) {
-      const controller = new AbortController();
-      setTimeout(() => controller.abort(), 5000);
-      
-      fetch(stationUrl, {
-        signal: controller.signal,
-        headers: { 
-          'Icy-Metadata': '1',
-          'Range': 'bytes=0-8192'
-        }
-      })
-      .then(async response => {
-        const reader = response.body.getReader();
-        const { value } = await reader.read();
-        reader.cancel();
-        
-        const text = new TextDecoder().decode(value);
-        const match = text.match(/StreamTitle='([^']*)'/);
-        
-        if (match && match[1]) {
-          updateTrackDisplay(match[1]);
-        } else {
-          updateTrackDisplay("unknown");
-        }
-      })
-      .catch(() => {
-        updateTrackDisplay("unknown");
-      });
-    }
-
-    function startMetadataStreaming(stationUrl, metaint) {
+    // Запуск періодичної перевірки метаданих через API
+    function startPeriodicMetadataCheck(stationUrl, stationId = null) {
       if (metadataCheckInterval) {
         clearInterval(metadataCheckInterval);
       }
 
-      const streamUrl = stationUrl;
-      let position = 0;
-
       metadataCheckInterval = setInterval(async () => {
-        if (!isPlaying || !streamUrl) return;
+        if (!isPlaying || !stationUrl) return;
 
         try {
-          const response = await fetch(streamUrl, {
+          let checkUrl;
+          if (stationId) {
+            // Якщо маємо ID, використовуємо прямий запит до станції
+            checkUrl = `https://de1.api.radio-browser.info/json/stations/byuuid/${stationId}`;
+          } else {
+            // Інакше шукаємо за URL
+            const encodedUrl = encodeURIComponent(stationUrl);
+            checkUrl = `https://de1.api.radio-browser.info/json/stations/byurl/${encodedUrl}?limit=1`;
+          }
+          
+          const response = await fetch(checkUrl, {
+            signal: AbortSignal.timeout(5000),
+            headers: { 'User-Agent': 'RadioMusicSO/1.0' }
+          });
+
+          if (response.ok) {
+            const stations = await response.json();
+            if (stations.length > 0 && stations[0].current_track) {
+              const newTrack = stations[0].current_track;
+              if (newTrack !== currentTrack) {
+                updateTrackDisplay(newTrack);
+              }
+            }
+          }
+        } catch (error) {
+          console.log("Periodic metadata check error:", error.message);
+        }
+      }, 15000); // Перевіряємо кожні 15 секунд
+    }
+
+    // Спроба отримати метадані безпосередньо з потоку (ICY метадані)
+    function tryDirectStreamMetadata(stationUrl) {
+      const secureUrl = stationUrl.replace('http://', 'https://');
+      
+      fetch(secureUrl, { 
+        method: 'GET',
+        signal: AbortSignal.timeout(8000),
+        headers: { 
+          'Icy-Metadata': '1',
+          'Range': 'bytes=0-65536' // Беремо трохи більше даних
+        }
+      })
+      .then(async response => {
+        // Спочатку перевіряємо заголовки
+        const icyMetaint = response.headers.get('icy-metaint');
+        const icyName = response.headers.get('icy-name');
+        const icyGenre = response.headers.get('icy-genre');
+        
+        console.log("Stream headers:", { icyMetaint, icyName, icyGenre });
+        
+        if (icyMetaint) {
+          // Якщо є підтримка метаданих, запускаємо стрімінг
+          startIcyMetadataStreaming(secureUrl, parseInt(icyMetaint));
+          return;
+        }
+        
+        // Якщо немає заголовка, пробуємо прочитати з тіла відповіді
+        const reader = response.body.getReader();
+        const { value } = await reader.read();
+        reader.cancel();
+        
+        if (value) {
+          const text = new TextDecoder().decode(value);
+          // Шукаємо метадані в різних форматах
+          const patterns = [
+            /StreamTitle='([^']*)'/,
+            /StreamTitle="([^"]*)"/,
+            /title='([^']*)'/i,
+            /title="([^"]*)"/i,
+            /Current Track:\s*(.+?)(?:\r|\n|<)/i
+          ];
+          
+          for (const pattern of patterns) {
+            const match = text.match(pattern);
+            if (match && match[1]) {
+              updateTrackDisplay(match[1].trim());
+              return;
+            }
+          }
+        }
+        
+        updateTrackDisplay("unknown");
+      })
+      .catch(error => {
+        console.log("Direct stream metadata failed:", error.message);
+        updateTrackDisplay("unknown");
+      });
+    }
+
+    // Стрімінг ICY метаданих
+    function startIcyMetadataStreaming(stationUrl, metaint) {
+      if (metadataCheckInterval) {
+        clearInterval(metadataCheckInterval);
+      }
+
+      let position = 0;
+      
+      metadataCheckInterval = setInterval(async () => {
+        if (!isPlaying) return;
+
+        try {
+          const response = await fetch(stationUrl, {
             headers: { 
               'Icy-Metadata': '1',
               'Range': `bytes=${position}-${position + metaint + 4080}`
             },
-            signal: AbortSignal.timeout(3000)
+            signal: AbortSignal.timeout(5000)
           });
 
           const metadataHeader = response.headers.get('icy-metadata');
@@ -618,7 +697,7 @@ document.addEventListener("DOMContentLoaded", () => {
           position += metaint + 4080;
           
         } catch (error) {
-          console.log("Metadata streaming error:", error.message);
+          console.log("ICY streaming error:", error.message);
         }
       }, 10000);
     }
@@ -665,6 +744,7 @@ document.addEventListener("DOMContentLoaded", () => {
         metadataCheckInterval = null;
       }
     }
+    // --- КІНЕЦЬ ВИПРАВЛЕНОЇ ФУНКЦІЇ ---
 
     // Покращений пошук станцій
     async function searchStations(query, country, genre) {
@@ -1256,7 +1336,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         if (!navigator.onLine) return;
         if (!intendedPlaying || !stationItems?.length || currentIndex >= stationItems.length) {
-          updateWaveVisualizer(false);
+          document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
           return;
         }
         const currentStationUrl = stationItems[currentIndex].dataset.value;
@@ -1292,7 +1372,7 @@ document.addEventListener("DOMContentLoaded", () => {
             errorCount = 0;
             isPlaying = true;
             lastSuccessfulPlayTime = Date.now();
-            updateWaveVisualizer(true);
+            document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
             playPauseBtn.classList.add("playing");
             localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
@@ -1300,7 +1380,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           } catch (error) {
             if (error.name === 'AbortError') return;
-            updateWaveVisualizer(false);
+            document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
             playPauseBtn.classList.remove("playing");
             if (attemptsLeft > 1) {
               if (stationItems[currentIndex].dataset.value !== initialStationUrl) return;
@@ -1941,7 +2021,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playPauseBtn.textContent = "⏸";
         playPauseBtn.setAttribute("aria-label", "Pause");
         playPauseBtn.classList.add("playing");
-        updateWaveVisualizer(true);
+        document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       } else {
         audio.pause();
         isPlaying = false;
@@ -1949,7 +2029,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playPauseBtn.textContent = "▶";
         playPauseBtn.setAttribute("aria-label", "Play");
         playPauseBtn.classList.remove("playing");
-        updateWaveVisualizer(false);
+        document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
         stopMetadataStreaming();
         const currentTrackElement = document.getElementById("currentTrack");
         if (currentTrackElement) {
@@ -2020,7 +2100,7 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.textContent = "⏸";
       playPauseBtn.setAttribute("aria-label", "Pause");
       playPauseBtn.classList.add("playing");
-      updateWaveVisualizer(true);
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       if (errorTimeout) {
         clearTimeout(errorTimeout);
@@ -2036,7 +2116,7 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.textContent = "▶";
       playPauseBtn.setAttribute("aria-label", "Play");
       playPauseBtn.classList.remove("playing");
-      updateWaveVisualizer(false);
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       localStorage.setItem("isPlaying", isPlaying);
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
@@ -2048,7 +2128,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     audio.addEventListener("error", () => {
-      updateWaveVisualizer(false);
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       playPauseBtn.classList.remove("playing");
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
@@ -2074,7 +2154,7 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.addEventListener("loadedmetadata", () => {
       if (isPlaying && stationItems && stationItems[currentIndex]) {
         const station = stationItems[currentIndex];
-        tryMetadataStreaming(station.dataset.value);
+        tryDirectStreamMetadata(station.dataset.value);
       }
     });
 
@@ -2088,7 +2168,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.addEventListener("offline", () => {
       showToast("Network connection lost", "error");
-      updateWaveVisualizer(false);
+      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
       playPauseBtn.classList.remove("playing");
       errorCount = 0;
       stopMetadataStreaming();
