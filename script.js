@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadingIndicator = document.getElementById("loadingIndicator");
   const toastContainer = document.getElementById("toastContainer");
   const pullIndicator = document.getElementById("pullIndicator");
+  const waveVisualizer = document.querySelector('.wave-visualizer');
 
   if (!audio || !stationList || !playPauseBtn || !currentStationInfo || !themeToggle || !shareButton || !exportButton || !importButton || !importFileInput || !searchInput || !searchQuery || !searchCountry || !searchGenre || !searchBtn || !pastSearchesList || !tabsContainer) {
     console.error("One of required DOM elements not found");
@@ -246,6 +247,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }, {
         rootMargin: '50px'
       });
+    }
+
+    function updateWaveVisualizer(playing) {
+      if (!waveVisualizer) return;
+      
+      if (playing) {
+        waveVisualizer.classList.add('playing');
+      } else {
+        waveVisualizer.classList.remove('playing');
+      }
     }
 
     function showLoading() {
@@ -471,7 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         // Спочатку пробуємо отримати трек через API
         const searchParams = new URLSearchParams({
-          limit: 5,
+          limit: 10,
           order: "clickcount",
           reverse: "true",
           hidebroken: "true"
@@ -487,16 +498,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (response.ok) {
           const stations = await response.json();
-          const exactMatch = stations.find(s => 
-            s.name.toLowerCase() === stationName.toLowerCase() ||
-            s.name.toLowerCase().includes(stationName.toLowerCase()) ||
-            stationName.toLowerCase().includes(s.name.toLowerCase())
-          );
           
-          const station = exactMatch || stations[0];
+          // Шукаємо найкращий збіг
+          let bestMatch = null;
+          let bestScore = 0;
           
-          if (station && station.current_track) {
-            updateTrackDisplay(station.current_track);
+          stations.forEach(s => {
+            let score = 0;
+            if (s.name.toLowerCase() === stationName.toLowerCase()) score += 10;
+            if (s.name.toLowerCase().includes(stationName.toLowerCase())) score += 5;
+            if (stationName.toLowerCase().includes(s.name.toLowerCase())) score += 3;
+            if (s.current_track) score += 2;
+            
+            if (score > bestScore) {
+              bestScore = score;
+              bestMatch = s;
+            }
+          });
+          
+          if (bestMatch && bestMatch.current_track) {
+            updateTrackDisplay(bestMatch.current_track);
             return;
           }
         }
@@ -611,6 +632,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (track && track !== "unknown" && track !== "loading...") {
         let cleanTrack = track.replace(/^StreamTitle='|';$|'$/g, '').trim();
         
+        // Розділяємо на виконавця і трек якщо є " - "
+        if (cleanTrack.includes(' - ')) {
+          const parts = cleanTrack.split(' - ');
+          if (parts.length >= 2) {
+            cleanTrack = `${parts[0]} - ${parts[1]}`;
+          }
+        }
+        
         if (cleanTrack.length > 50) {
           currentTrackElement.classList.add('marquee');
           currentTrackElement.textContent = `🎵 ${cleanTrack}`;
@@ -653,7 +682,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         params.append("order", "clickcount");
         params.append("reverse", "true");
-        params.append("limit", "500"); // Збільшуємо ліміт
+        params.append("limit", "500");
         params.append("hidebroken", "true");
         
         const url = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
@@ -1227,7 +1256,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         if (!navigator.onLine) return;
         if (!intendedPlaying || !stationItems?.length || currentIndex >= stationItems.length) {
-          document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+          updateWaveVisualizer(false);
           return;
         }
         const currentStationUrl = stationItems[currentIndex].dataset.value;
@@ -1263,7 +1292,7 @@ document.addEventListener("DOMContentLoaded", () => {
             errorCount = 0;
             isPlaying = true;
             lastSuccessfulPlayTime = Date.now();
-            document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
+            updateWaveVisualizer(true);
             playPauseBtn.classList.add("playing");
             localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
@@ -1271,7 +1300,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           } catch (error) {
             if (error.name === 'AbortError') return;
-            document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+            updateWaveVisualizer(false);
             playPauseBtn.classList.remove("playing");
             if (attemptsLeft > 1) {
               if (stationItems[currentIndex].dataset.value !== initialStationUrl) return;
@@ -1912,7 +1941,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playPauseBtn.textContent = "⏸";
         playPauseBtn.setAttribute("aria-label", "Pause");
         playPauseBtn.classList.add("playing");
-        document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
+        updateWaveVisualizer(true);
       } else {
         audio.pause();
         isPlaying = false;
@@ -1920,7 +1949,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playPauseBtn.textContent = "▶";
         playPauseBtn.setAttribute("aria-label", "Play");
         playPauseBtn.classList.remove("playing");
-        document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+        updateWaveVisualizer(false);
         stopMetadataStreaming();
         const currentTrackElement = document.getElementById("currentTrack");
         if (currentTrackElement) {
@@ -1991,7 +2020,7 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.textContent = "⏸";
       playPauseBtn.setAttribute("aria-label", "Pause");
       playPauseBtn.classList.add("playing");
-      document.querySelectorAll(".wave-line").forEach(line => line.classList.add("playing"));
+      updateWaveVisualizer(true);
       localStorage.setItem("isPlaying", isPlaying);
       if (errorTimeout) {
         clearTimeout(errorTimeout);
@@ -2007,7 +2036,7 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.textContent = "▶";
       playPauseBtn.setAttribute("aria-label", "Play");
       playPauseBtn.classList.remove("playing");
-      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+      updateWaveVisualizer(false);
       localStorage.setItem("isPlaying", isPlaying);
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
@@ -2019,7 +2048,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     audio.addEventListener("error", () => {
-      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+      updateWaveVisualizer(false);
       playPauseBtn.classList.remove("playing");
       stopMetadataStreaming();
       const currentTrackElement = document.getElementById("currentTrack");
@@ -2059,7 +2088,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.addEventListener("offline", () => {
       showToast("Network connection lost", "error");
-      document.querySelectorAll(".wave-line").forEach(line => line.classList.remove("playing"));
+      updateWaveVisualizer(false);
       playPauseBtn.classList.remove("playing");
       errorCount = 0;
       stopMetadataStreaming();

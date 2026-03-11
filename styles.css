@@ -18,20 +18,107 @@
   --best-color: #00E676;
 }
 
-/* Теми залишаються без змін */
-[data-theme="shadow-pulse"] { --body-bg: #000000; --container-bg: #000000; --accent: #00E676; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #00B248, #00E676); --shadow: rgba(0, 230, 118, 0.3); }
-[data-theme="dark-abyss"] { --body-bg: #000000; --container-bg: #000000; --accent: #AA00FF; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #6A1B9A, #AA00FF); --shadow: rgba(170, 0, 255, 0.3); }
-[data-theme="emerald-glow"] { --body-bg: #000000; --container-bg: #000000; --accent: #2EC4B6; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #1B998B, #2EC4B6); --shadow: rgba(46, 196, 182, 0.3); }
-[data-theme="retro-wave"] { --body-bg: #000000; --container-bg: #000000; --accent: #FF69B4; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #C71585, #FF69B4); --shadow: rgba(255, 105, 180, 0.3); }
-[data-theme="neon-pulse"] { --body-bg: #000000; --container-bg: #000000; --accent: #00F0FF; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #0077B6, #00F0FF); --shadow: rgba(0, 240, 255, 0.3); }
-[data-theme="lime-surge"] { --body-bg: #000000; --container-bg: #000000; --accent: #B2FF59; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #00B248, #B2FF59); --shadow: rgba(178, 255, 89, 0.3); }
-[data-theme="flamingo-flash"] { --body-bg: #000000; --container-bg: #000000; --accent: #FF4081; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #C71585, #FF4081); --shadow: rgba(255, 64, 129, 0.3); }
-[data-theme="aqua-glow"] { --body-bg: #000000; --container-bg: #000000; --accent: #26C6DA; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #0077B6, #26C6DA); --shadow: rgba(38, 198, 218, 0.3); }
-[data-theme="aurora-haze"] { --body-bg: #000000; --container-bg: #000000; --accent: #64FFDA; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #1B998B, #64FFDA); --shadow: rgba(100, 255, 218, 0.3); }
-[data-theme="starlit-amethyst"] { --body-bg: #000000; --container-bg: #000000; --accent: #B388FF; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #6A1B9A, #B388FF); --shadow: rgba(179, 136, 255, 0.3); }
-[data-theme="lunar-frost"] { --body-bg: #000000; --container-bg: #000000; --accent: #40C4FF; --text: #FFFFFF; --accent-gradient: linear-gradient(45deg, #0077B6, #40C4FF); --shadow: rgba(64, 196, 255, 0.3); }
+/* Теми */
+[data-theme="shadow-pulse"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #00E676; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #00B248, #00E676); 
+  --shadow: rgba(0, 230, 118, 0.3); 
+}
 
-/* Анімація завантаження */
+[data-theme="dark-abyss"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #AA00FF; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #6A1B9A, #AA00FF); 
+  --shadow: rgba(170, 0, 255, 0.3); 
+}
+
+[data-theme="emerald-glow"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #2EC4B6; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #1B998B, #2EC4B6); 
+  --shadow: rgba(46, 196, 182, 0.3); 
+}
+
+[data-theme="retro-wave"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #FF69B4; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #C71585, #FF69B4); 
+  --shadow: rgba(255, 105, 180, 0.3); 
+}
+
+[data-theme="neon-pulse"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #00F0FF; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #0077B6, #00F0FF); 
+  --shadow: rgba(0, 240, 255, 0.3); 
+}
+
+[data-theme="lime-surge"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #B2FF59; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #00B248, #B2FF59); 
+  --shadow: rgba(178, 255, 89, 0.3); 
+}
+
+[data-theme="flamingo-flash"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #FF4081; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #C71585, #FF4081); 
+  --shadow: rgba(255, 64, 129, 0.3); 
+}
+
+[data-theme="aqua-glow"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #26C6DA; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #0077B6, #26C6DA); 
+  --shadow: rgba(38, 198, 218, 0.3); 
+}
+
+[data-theme="aurora-haze"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #64FFDA; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #1B998B, #64FFDA); 
+  --shadow: rgba(100, 255, 218, 0.3); 
+}
+
+[data-theme="starlit-amethyst"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #B388FF; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #6A1B9A, #B388FF); 
+  --shadow: rgba(179, 136, 255, 0.3); 
+}
+
+[data-theme="lunar-frost"] { 
+  --body-bg: #000000; 
+  --container-bg: #000000; 
+  --accent: #40C4FF; 
+  --text: #FFFFFF; 
+  --accent-gradient: linear-gradient(45deg, #0077B6, #40C4FF); 
+  --shadow: rgba(64, 196, 255, 0.3); 
+}
+
+/* Анімації */
 @keyframes spin {
   0% { transform: translate(-50%, -50%) rotate(0deg); }
   100% { transform: translate(-50%, -50%) rotate(360deg); }
@@ -60,9 +147,26 @@
 }
 
 @keyframes waveFlow {
-  0% { transform: scaleY(0.2); opacity: 0.5; }
-  50% { transform: scaleY(1); opacity: 1; }
-  100% { transform: scaleY(0.2); opacity: 0.5; }
+  0% { 
+    d: path("M10,30 Q20,10 30,30 T50,30 T70,30 T90,30");
+    opacity: 0.8;
+  }
+  25% { 
+    d: path("M10,30 Q20,45 30,30 T50,30 T70,30 T90,30");
+    opacity: 1;
+  }
+  50% { 
+    d: path("M10,30 Q20,50 30,30 T50,30 T70,30 T90,30");
+    opacity: 0.9;
+  }
+  75% { 
+    d: path("M10,30 Q20,15 30,30 T50,30 T70,30 T90,30");
+    opacity: 0.8;
+  }
+  100% { 
+    d: path("M10,30 Q20,10 30,30 T50,30 T70,30 T90,30");
+    opacity: 0.8;
+  }
 }
 
 /* Loading Indicator */
@@ -188,7 +292,7 @@
   cursor: grabbing;
 }
 
-/* Station List з віртуалізацією */
+/* Station List */
 .station-list {
   max-height: 55vh;
   overflow-y: auto;
@@ -228,7 +332,7 @@
   border-radius: 2px;
 }
 
-/* Station Item з градієнтом та анімацією */
+/* Station Item */
 .station-item {
   padding: 10px;
   cursor: pointer;
@@ -248,6 +352,8 @@
   animation-delay: calc(var(--item-index) * 0.05s);
   opacity: 0;
   transform: translateY(20px);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .station-item::before {
@@ -692,15 +798,36 @@ h1 {
   height: 100%;
 }
 
-.wave-visualizer path {
-  fill: var(--accent);
-  opacity: 0.5;
+.wave-visualizer svg path {
+  transition: all 0.3s ease;
+  stroke: var(--accent);
+  fill: none;
+  stroke-width: 2;
+}
+
+.wave-visualizer.playing svg path {
   animation: waveFlow 2s ease-in-out infinite;
 }
 
-.wave-visualizer .playing path {
+.wave-visualizer:not(.playing) svg path {
+  animation: none;
+  opacity: 0.2;
+  stroke-dasharray: 5 5;
+}
+
+.wave-visualizer.playing svg path:nth-child(1) {
+  animation-delay: 0s;
   opacity: 1;
-  animation-duration: 1.5s;
+}
+
+.wave-visualizer.playing svg path:nth-child(2) {
+  animation-delay: 0.2s;
+  opacity: 0.8;
+}
+
+.wave-visualizer.playing svg path:nth-child(3) {
+  animation-delay: 0.4s;
+  opacity: 0.6;
 }
 
 /* Кнопки управління */
