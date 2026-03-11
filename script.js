@@ -17,6 +17,7 @@ let lastSuccessfulPlayTime = 0;
 let streamAbortController = null;
 let errorTimeout = null;
 let autoPlayRequestId = 0;
+let metadataCheckInterval = null;
 let currentTrack = "";
 let dragEnabled = false;
 let dragStartIndex = null;
@@ -27,8 +28,16 @@ let isPulling = false;
 let viewTransitionSupported = document.startViewTransition ? true : false;
 let searchDebounceTimer = null;
 let lazyLoadObserver = null;
-let metadataCheckInterval = null;
-let currentStationUrlForMetadata = null;
+let metadataReaderController = null;
+let metadataRetryTimeout = null;
+
+// Список станцій, які не підтримують метадані
+const noMetadataStations = [
+  'online.hitfm.ua',
+  'online.radiorecord.com.ua',
+  'cast.brg.ua',
+  'icecast.luxnet.ua'
+];
 
 customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab === "string" && tab.trim()) : [];
 
@@ -73,27 +82,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setupPullToRefresh();
     setupLazyLoading();
     
-    // Слухаємо повідомлення від Service Worker
-    if (navigator.serviceWorker) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        console.log('Received message from SW:', event.data);
-        if (event.data && event.data.type === 'METADATA_UPDATE') {
-          const currentStationUrl = stationItems?.[currentIndex]?.dataset?.value;
-          // Перевіряємо, чи метадані для поточної станції
-          if (currentStationUrl && event.data.stationUrl && 
-              normalizeUrl(currentStationUrl) === normalizeUrl(event.data.stationUrl)) {
-            console.log('Updating track display with:', event.data.track);
-            updateTrackDisplay(event.data.track);
-          }
-        } else if (event.data && event.data.type === 'CACHE_UPDATED') {
-          console.log('Cache updated to version:', event.data.cacheVersion);
-        } else if (event.data && event.data.type === 'NETWORK_STATUS') {
-          console.log('Network status:', event.data.online ? 'online' : 'offline');
-        }
-      });
-    }
-    
+    // Завантажуємо станції одразу
     loadStations().then(() => {
+      // Після завантаження перемикаємося на поточний таб
       switchTab(currentTab);
     });
 
@@ -135,6 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
       provideHapticFeedback();
     });
 
+    // Debounced search
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
       const country = normalizeCountry(searchCountry.value.trim());
@@ -254,6 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const img = entry.target;
             const src = img.dataset.src;
             if (src) {
+              // Перевіряємо протокол для HTTPS
               const secureSrc = src.replace('http://', 'https://');
               img.src = secureSrc;
               img.classList.add('loaded');
@@ -485,24 +478,39 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Функція для отримання метаданих треку
+    // Функція для перевірки, чи підтримує станція метадані
+    function supportsMetadata(stationUrl) {
+      try {
+        const url = new URL(stationUrl);
+        return !noMetadataStations.some(domain => url.hostname.includes(domain));
+      } catch {
+        return true;
+      }
+    }
+
+    // --- ПОКРАЩЕНА ФУНКЦІЯ ДЛЯ ОТРИМАННЯ МЕТАДАНИХ ТРЕКУ ---
     async function fetchTrackMetadata(stationUrl, stationName) {
+      // Зупиняємо попереднє читання потоку
+      stopMetadataStreaming();
+      
       if (!stationUrl || !isPlaying) {
         updateTrackDisplay("unknown");
         return;
       }
 
       updateTrackDisplay("loading...");
-      
-      // Зберігаємо URL для перевірки
-      currentStationUrlForMetadata = stationUrl;
-      
-      // Спочатку пробуємо отримати через API (як запасний варіант)
+
+      // Перевіряємо, чи підтримує станція метадані
+      if (!supportsMetadata(stationUrl)) {
+        console.log("Station doesn't support metadata, showing station name as track");
+        updateTrackDisplay(stationName);
+        return;
+      }
+
+      // Спочатку пробуємо отримати метадані через API радіобраузера за URL
       try {
         const encodedUrl = encodeURIComponent(stationUrl);
         const searchUrl = `https://de1.api.radio-browser.info/json/stations/byurl/${encodedUrl}?limit=1&hidebroken=true`;
-        
-        console.log('Fetching metadata from API:', searchUrl);
         
         const response = await fetch(searchUrl, {
           signal: AbortSignal.timeout(3000),
@@ -512,7 +520,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (response.ok) {
           const stations = await response.json();
           if (stations.length > 0 && stations[0].current_track) {
-            console.log('Found track via API:', stations[0].current_track);
             updateTrackDisplay(stations[0].current_track);
             
             // Запускаємо періодичну перевірку через API
@@ -523,18 +530,61 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (error) {
         console.log("API by URL failed:", error.message);
       }
-      
-      console.log('Waiting for metadata from Service Worker...');
+
+      // Якщо не вдалося за URL, пробуємо знайти станцію за назвою
+      try {
+        const searchParams = new URLSearchParams({
+          name: stationName,
+          limit: 10,
+          order: "clickcount",
+          reverse: "true",
+          hidebroken: "true"
+        });
+        
+        const searchUrl = `https://de1.api.radio-browser.info/json/stations/search?${searchParams.toString()}`;
+        const response = await fetch(searchUrl, {
+          signal: AbortSignal.timeout(3000),
+          headers: { 'User-Agent': 'RadioMusicSO/1.0' }
+        });
+
+        if (response.ok) {
+          const stations = await response.json();
+          
+          // Шукаємо станцію з найближчим URL
+          for (const station of stations) {
+            if (station.url_resolved && normalizeUrl(station.url_resolved) === normalizeUrl(stationUrl)) {
+              if (station.current_track) {
+                updateTrackDisplay(station.current_track);
+                startPeriodicApiCheck(station.id);
+                return;
+              }
+              break;
+            }
+          }
+          
+          // Якщо точної не знайшли, беремо першу з високим рейтингом
+          if (stations.length > 0 && stations[0].current_track) {
+            updateTrackDisplay(stations[0].current_track);
+            startPeriodicApiCheck(stations[0].id);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log("API by name failed:", error.message);
+      }
+
+      // Якщо API не дало результату, показуємо назву станції
+      updateTrackDisplay(stationName);
     }
 
-    // Періодична перевірка через API (запасний варіант)
+    // Періодична перевірка через API
     function startPeriodicApiCheck(stationId) {
       if (metadataCheckInterval) {
         clearInterval(metadataCheckInterval);
       }
 
       metadataCheckInterval = setInterval(async () => {
-        if (!isPlaying || !currentStationUrlForMetadata) return;
+        if (!isPlaying) return;
 
         try {
           const response = await fetch(`https://de1.api.radio-browser.info/json/stations/byuuid/${stationId}`, {
@@ -547,7 +597,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (stations.length > 0 && stations[0].current_track) {
               const newTrack = stations[0].current_track;
               if (newTrack !== currentTrack) {
-                console.log('Periodic API update:', newTrack);
                 updateTrackDisplay(newTrack);
               }
             }
@@ -555,15 +604,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
           console.log("Periodic API check failed:", error.message);
         }
-      }, 15000);
-    }
-
-    function stopMetadataStreaming() {
-      if (metadataCheckInterval) {
-        clearInterval(metadataCheckInterval);
-        metadataCheckInterval = null;
-      }
-      currentStationUrlForMetadata = null;
+      }, 15000); // Кожні 15 секунд
     }
 
     function updateTrackDisplay(track) {
@@ -577,6 +618,20 @@ document.addEventListener("DOMContentLoaded", () => {
         
         // Видаляємо зайві символи
         cleanTrack = cleanTrack.replace(/[^\x20-\x7E\u0400-\u04FF]/g, '');
+        
+        // Якщо трек виявився пустим, показуємо назву станції
+        if (!cleanTrack || cleanTrack.length === 0) {
+          const stationName = stationItems?.[currentIndex]?.dataset?.name || "unknown";
+          cleanTrack = stationName;
+        }
+        
+        // Розділяємо на виконавця і трек якщо є " - "
+        if (cleanTrack.includes(' - ')) {
+          const parts = cleanTrack.split(' - ');
+          if (parts.length >= 2) {
+            cleanTrack = `${parts[0]} - ${parts[1]}`;
+          }
+        }
         
         if (cleanTrack.length > 50) {
           currentTrackElement.classList.add('marquee');
@@ -592,11 +647,26 @@ document.addEventListener("DOMContentLoaded", () => {
         currentTrackElement.classList.add("loading");
         currentTrack = "";
       } else {
-        currentTrackElement.textContent = "🎵 Track: unknown";
-        currentTrack = "";
+        // Якщо трек не визначено, показуємо назву станції
+        const stationName = stationItems?.[currentIndex]?.dataset?.name || "unknown";
+        currentTrackElement.textContent = `🎵 ${stationName}`;
+        currentTrack = stationName;
       }
     }
 
+    function stopMetadataStreaming() {
+      if (metadataCheckInterval) {
+        clearInterval(metadataCheckInterval);
+        metadataCheckInterval = null;
+      }
+      if (metadataRetryTimeout) {
+        clearTimeout(metadataRetryTimeout);
+        metadataRetryTimeout = null;
+      }
+    }
+    // --- КІНЕЦЬ ПОКРАЩЕНОЇ ФУНКЦІЇ ---
+
+    // Покращений пошук станцій
     async function searchStations(query, country, genre) {
       showLoading();
       stationList.innerHTML = "<div class='station-item empty'>Searching...</div>";
@@ -629,11 +699,13 @@ document.addEventListener("DOMContentLoaded", () => {
         
         let stations = await response.json();
         
+        // М'якша фільтрація - перевіряємо наявність URL
         stations = stations.filter(station => {
           const url = station.url || station.url_resolved;
           return url && (url.startsWith('http://') || url.startsWith('https://'));
         });
         
+        // Конвертуємо HTTP в HTTPS для безпеки
         stations = stations.map(station => {
           if (station.url && station.url.startsWith('http://')) {
             station.url = station.url.replace('http://', 'https://');
@@ -697,6 +769,7 @@ document.addEventListener("DOMContentLoaded", () => {
       stationList.appendChild(fragment);
       stationItems = document.querySelectorAll(".station-item");
       
+      // Налаштовуємо lazy loading для зображень
       stationItems.forEach(item => {
         const img = item.querySelector('img');
         if (img) {
@@ -788,9 +861,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderTabs() {
       const fixedTabs = ["best", "techno", "trance", "ukraine", "pop"];
+      const searchTab = "search";
       
       tabsContainer.innerHTML = "";
       
+      // Спочатку фіксовані таби
       fixedTabs.forEach(tab => {
         const btn = document.createElement("button");
         btn.className = `tab-btn ${currentTab === tab ? "active" : ""}`;
@@ -802,6 +877,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tabsContainer.appendChild(btn);
       });
       
+      // Потім кастомні таби
       customTabs.forEach(tab => {
         if (typeof tab !== "string" || !tab.trim()) return;
         const btn = document.createElement("button");
@@ -814,6 +890,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tabsContainer.appendChild(btn);
       });
       
+      // Search tab завжди останній
       const searchBtn = document.createElement("button");
       searchBtn.className = `tab-btn ${currentTab === "search" ? "active" : ""}`;
       searchBtn.dataset.tab = "search";
@@ -823,6 +900,7 @@ document.addEventListener("DOMContentLoaded", () => {
       searchBtn.setAttribute("aria-label", "Search tab");
       tabsContainer.appendChild(searchBtn);
       
+      // Кнопка додавання табу
       const addBtn = document.createElement("button");
       addBtn.className = "add-tab-btn";
       addBtn.textContent = "+";
@@ -1205,6 +1283,7 @@ document.addEventListener("DOMContentLoaded", () => {
           audio.src = null;
           audio.load();
           
+          // Використовуємо HTTPS замість HTTP
           const secureUrl = currentStationUrl.replace('http://', 'https://');
           audio.src = secureUrl + "?nocache=" + Date.now();
 
@@ -1292,12 +1371,14 @@ document.addEventListener("DOMContentLoaded", () => {
       renderTabs();
     }
 
+    // Drag and Drop Functions
     function enableDragMode() {
       dragEnabled = true;
       showToast("Drag mode enabled. Drag handles to reorder stations.", "info", 2000);
       
       stationItems.forEach(item => {
         item.setAttribute("draggable", "true");
+        // Забороняємо виділення тексту
         item.style.userSelect = "none";
         item.style.webkitUserSelect = "none";
       });
@@ -1536,6 +1617,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const uniqueStations = new Map();
             (userAddedStations[tab] || []).forEach(s => {
               if (!deletedStations.includes(s.name)) {
+                // Конвертуємо HTTP в HTTPS
                 if (s.value) s.value = s.value.replace('http://', 'https://');
                 if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
                 uniqueStations.set(s.name, s);
@@ -1543,6 +1625,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             newStations[tab].forEach(s => {
               if (!deletedStations.includes(s.name)) {
+                // Конвертуємо HTTP в HTTPS
                 if (s.value) s.value = s.value.replace('http://', 'https://');
                 if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
                 uniqueStations.set(s.name, s);
@@ -1555,6 +1638,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const uniqueStations = new Map();
           (userAddedStations[tab] || []).forEach(s => {
             if (!deletedStations.includes(s.name)) {
+              // Конвертуємо HTTP в HTTPS
               if (s.value) s.value = s.value.replace('http://', 'https://');
               if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
               uniqueStations.set(s.name, s);
@@ -1562,6 +1646,7 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           (stationLists[tab] || []).forEach(s => {
             if (!deletedStations.includes(s.name)) {
+              // Конвертуємо HTTP в HTTPS
               if (s.value) s.value = s.value.replace('http://', 'https://');
               if (s.favicon) s.favicon = s.favicon.replace('http://', 'https://');
               uniqueStations.set(s.name, s);
@@ -1650,6 +1735,7 @@ document.addEventListener("DOMContentLoaded", () => {
       stationList.appendChild(fragment);
       stationItems = stationList.querySelectorAll(".station-item");
 
+      // Налаштовуємо lazy loading для зображень
       stationItems.forEach(item => {
         const img = item.querySelector('img');
         if (img) {
@@ -1753,6 +1839,7 @@ document.addEventListener("DOMContentLoaded", () => {
       item.classList.add("selected");
       currentIndex = index;
       
+      // Анімація затемнення при зміні треку
       currentStationInfo.classList.add("fade-out");
       setTimeout(() => {
         updateCurrentStation(item);
@@ -1804,8 +1891,9 @@ document.addEventListener("DOMContentLoaded", () => {
         currentTrackElement.textContent = "🎵 Track: loading...";
         currentTrackElement.classList.add("loading");
       }
-
-      // Запускаємо отримання метаданих
+      
+      stopMetadataStreaming();
+      
       if (isPlaying) {
         fetchTrackMetadata(item.dataset.value, item.dataset.name);
       }
@@ -1938,7 +2026,6 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(errorTimeout);
         errorTimeout = null;
       }
-      // Запускаємо отримання метаданих при початку відтворення
       if (stationItems && stationItems[currentIndex]) {
         fetchTrackMetadata(stationItems[currentIndex].dataset.value, stationItems[currentIndex].dataset.name);
       }
@@ -1982,6 +2069,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     audio.addEventListener("volumechange", () => {
       localStorage.setItem("volume", audio.volume);
+    });
+
+    audio.addEventListener("loadedmetadata", () => {
+      // Не робимо нічого, метадані отримуємо через fetchTrackMetadata
     });
 
     window.addEventListener("online", () => {

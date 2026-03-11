@@ -1,56 +1,6 @@
-const CACHE_NAME = 'radio-cache-v105';
-
-// Список аудіо-розширень та патернів ТІЛЬКИ для аудіо
-const AUDIO_PATTERNS = [
-  '.mp3', '.aac', '.ogg', '.m3u', '.pls', '.m3u8',
-  '/stream', '/listen', '/live', '/radio',
-  'stream', 'listen', 'live', 'radio',
-  'hitfm', 'kissfm', 'lux', 'roks', 'djfm'
-];
-
-// Допоміжна функція для визначення аудіо-запитів
-function isAudioRequest(url) {
-  const urlLower = url.toLowerCase();
-  
-  // Ігноруємо статичні файли
-  if (urlLower.includes('.css') || 
-      urlLower.includes('.js') || 
-      urlLower.includes('.json') || 
-      urlLower.includes('.png') || 
-      urlLower.includes('.jpg') || 
-      urlLower.includes('.jpeg') || 
-      urlLower.includes('.gif') || 
-      urlLower.includes('.svg') || 
-      urlLower.includes('.ico') || 
-      urlLower.includes('.webp') ||
-      urlLower.includes('favicon') ||
-      urlLower.includes('manifest')) {
-    return false;
-  }
-  
-  // Перевіряємо за аудіо-патернами
-  return AUDIO_PATTERNS.some(pattern => urlLower.includes(pattern));
-}
-
-// Слухаємо повідомлення від основного потоку
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'METADATA') {
-    console.log('SW: Received METADATA message:', event.data);
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({
-          type: 'METADATA_UPDATE',
-          track: event.data.track,
-          stationUrl: event.data.stationUrl
-        });
-      });
-    });
-  }
-});
+const CACHE_NAME = 'radio-cache-v100';
 
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing version', CACHE_NAME);
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll([
@@ -61,263 +11,73 @@ self.addEventListener('install', (event) => {
         '/stations.json',
         '/manifest.json',
         '/ping.txt'
-      ]).catch(err => console.log('SW: Cache addAll error:', err));
+      ]).then(() => {
+        caches.keys().then((cacheNames) => {
+          return Promise.all(cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              return caches.delete(cacheName);
+            }
+          }));
+        });
+      });
     })
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  const url = event.request.url;
-  
-  // Пропускаємо API запити
-  if (url.includes('api.radio-browser.info')) {
+  // Handle API requests differently
+  if (event.request.url.includes('api.radio-browser.info')) {
     event.respondWith(
       fetch(event.request)
         .then(response => response)
-        .catch(() => new Response(JSON.stringify({ error: 'Network error' }), {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' }
-        }))
+        .catch(() => {
+          return new Response(JSON.stringify({ error: 'Network error' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        })
     );
     return;
   }
 
-  // Для аудіо-потоків – перехоплюємо і додаємо метадані
-  if (isAudioRequest(url)) {
-    console.log('SW: Intercepting audio request:', url);
-    event.respondWith(handleAudioRequest(event.request));
-    return;
-  }
-
-  // Для всього іншого – кеш/мережа
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (event.request.url.endsWith('stations.json')) {
-        return fetch(event.request, { cache: 'no-store' }).then((networkResponse) => {
+        return fetch(event.request, { cache: 'no-store', signal: new AbortController().signal }).then((networkResponse) => {
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, networkResponse.clone());
           });
           return networkResponse;
         }).catch(() => caches.match('/index.html'));
       }
-      return response || fetch(event.request).catch(() => caches.match('/index.html'));
+      return response || fetch(event.request).then((networkResponse) => {
+        return networkResponse;
+      }).catch(() => caches.match('/index.html'));
     })
   );
 });
 
-// Обробка аудіо-запитів з метаданими
-async function handleAudioRequest(request) {
-  try {
-    console.log('SW: Handling audio request for:', request.url);
-    
-    // Створюємо нові заголовки
-    const headers = new Headers(request.headers);
-    headers.set('Icy-MetaData', '1');
-    headers.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-    headers.set('Accept', '*/*');
-    
-    const modifiedRequest = new Request(request, {
-      headers: headers,
-      mode: 'cors',
-      credentials: 'omit',
-      cache: 'no-store'
-    });
-
-    console.log('SW: Fetching with Icy-MetaData header');
-    
-    // Додаємо таймаут для fetch
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
-    const response = await fetch(modifiedRequest, {
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      console.log('SW: Response not OK, returning original');
-      return response;
-    }
-
-    // Отримуємо інтервал метаданих з заголовків
-    const icyMetaInt = response.headers.get('icy-metaint');
-    console.log('SW: icy-metaint =', icyMetaInt);
-    
-    if (!icyMetaInt) {
-      console.log('SW: No icy-metaint, returning original response');
-      return response;
-    }
-
-    const metaInt = parseInt(icyMetaInt, 10);
-    if (isNaN(metaInt) || metaInt <= 0) {
-      console.log('SW: Invalid metaInt, returning original');
-      return response;
-    }
-
-    // Отримуємо оригінальні заголовки для відповіді
-    const responseHeaders = new Headers(response.headers);
-    responseHeaders.delete('content-length');
-    responseHeaders.set('Access-Control-Allow-Origin', '*');
-    responseHeaders.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-    responseHeaders.set('Access-Control-Allow-Headers', '*');
-    responseHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-
-    // Створюємо новий потік з метаданими
-    const { readable, writable } = new TransformStream();
-    const reader = response.body.getReader();
-    const writer = writable.getWriter();
-
-    let buffer = new Uint8Array(0);
-    let stationUrl = request.url;
-
-    // Функція для парсингу метаданих
-    function parseMetadata(metadata) {
-      console.log('SW: Raw metadata:', metadata);
-      const patterns = [
-        /StreamTitle='([^']*)'/,
-        /StreamTitle="([^"]*)"/,
-        /StreamTitle=([^;]+)/,
-        /title='([^']*)'/i,
-        /title="([^"]*)"/i,
-        /CurrentTrack='([^']*)'/i,
-        /CurrentTrack="([^"]*)"/i,
-        /NowPlaying='([^']*)'/i,
-        /NowPlaying="([^"]*)"/i
-      ];
-      
-      for (const pattern of patterns) {
-        const match = metadata.match(pattern);
-        if (match && match[1]) {
-          const track = match[1].trim();
-          if (track && track !== '' && track !== 'undefined' && track !== 'null') {
-            console.log('SW: Found track:', track);
-            self.clients.matchAll().then(clients => {
-              clients.forEach(client => {
-                client.postMessage({
-                  type: 'METADATA_UPDATE',
-                  track: track,
-                  stationUrl: stationUrl
-                });
-              });
-            });
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    // Читаємо потік
-    async function processStream() {
-      try {
-        let bytesProcessed = 0;
-        let metadataCount = 0;
-        
-        console.log('SW: Starting stream processing with metaInt:', metaInt);
-        
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            console.log('SW: Stream ended, total bytes:', bytesProcessed, 'metadata blocks:', metadataCount);
-            break;
-          }
-
-          // Додаємо нові дані до буфера
-          const newBuffer = new Uint8Array(buffer.length + value.length);
-          newBuffer.set(buffer);
-          newBuffer.set(value, buffer.length);
-          buffer = newBuffer;
-
-          // Обробляємо метадані
-          while (buffer.length >= metaInt + 1) {
-            // Записуємо аудіо-дані
-            await writer.write(buffer.slice(0, metaInt));
-            bytesProcessed += metaInt;
-            
-            // Читаємо довжину метаданих
-            const metaLen = buffer[metaInt] * 16;
-            
-            if (buffer.length >= metaInt + 1 + metaLen) {
-              if (metaLen > 0) {
-                const metadataBytes = buffer.slice(metaInt + 1, metaInt + 1 + metaLen);
-                const metadataStr = new TextDecoder().decode(metadataBytes).replace(/\0/g, '');
-                metadataCount++;
-                parseMetadata(metadataStr);
-              }
-              // Видаляємо оброблені дані
-              buffer = buffer.slice(metaInt + 1 + metaLen);
-            } else {
-              break;
-            }
-          }
-        }
-        
-        // Записуємо залишок
-        if (buffer.length > 0) {
-          await writer.write(buffer);
-        }
-        
-        await writer.close();
-        console.log('SW: Stream processing complete');
-      } catch (error) {
-        console.error('SW: Stream processing error:', error);
-        try {
-          await writer.abort(error);
-        } catch (e) {}
-      }
-    }
-
-    processStream();
-
-    return new Response(readable, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: responseHeaders
-    });
-
-  } catch (error) {
-    console.error('SW: Audio request failed:', error);
-    // Спробуємо звичайний запит
-    try {
-      return await fetch(request);
-    } catch (e) {
-      // Якщо і це не вдалося, повертаємо помилку
-      return new Response('Audio stream error', { status: 500 });
-    }
-  }
-}
-
 self.addEventListener('activate', (event) => {
-  console.log('SW: Activating version', CACHE_NAME);
   event.waitUntil(
-    Promise.all([
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
-              console.log('SW: Deleting old cache', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      }),
-      self.clients.claim()
-    ])
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
-  
   self.clients.matchAll().then((clients) => {
     clients.forEach((client) => {
-      client.postMessage({ 
-        type: 'CACHE_UPDATED', 
-        cacheVersion: CACHE_NAME 
-      });
+      client.postMessage({ type: 'CACHE_UPDATED', cacheVersion: CACHE_NAME });
     });
   });
 });
 
 // Моніторинг стану мережі
-let wasOnline = self.navigator ? self.navigator.onLine : true;
+let wasOnline = navigator.onLine;
 let checkInterval = null;
 
 function startNetworkCheck() {
@@ -332,10 +92,10 @@ function startNetworkCheck() {
                 client.postMessage({ type: "NETWORK_STATUS", online: true });
               });
             });
-            stopNetworkCheck();
+            stopNetworkCheck(); // Stop polling once online
           }
         })
-        .catch(() => {
+        .catch(error => {
           if (wasOnline) {
             wasOnline = false;
             self.clients.matchAll().then(clients => {
@@ -345,7 +105,7 @@ function startNetworkCheck() {
             });
           }
         });
-    }, 2000);
+    }, 2000); // Перевірка кожні 2 секунди
   }
 }
 
@@ -364,7 +124,7 @@ self.addEventListener('online', () => {
         client.postMessage({ type: "NETWORK_STATUS", online: true });
       });
     });
-    stopNetworkCheck();
+    stopNetworkCheck(); // Stop polling when online
   }
 });
 
@@ -376,11 +136,12 @@ self.addEventListener('offline', () => {
         client.postMessage({ type: "NETWORK_STATUS", online: false });
       });
     });
-    startNetworkCheck();
+    startNetworkCheck(); // Start polling when offline
   }
 });
 
-if (self.navigator && !self.navigator.onLine && wasOnline) {
+// Start initial check if already offline
+if (!navigator.onLine && wasOnline) {
   wasOnline = false;
   startNetworkCheck();
 }

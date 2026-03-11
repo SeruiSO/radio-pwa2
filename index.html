@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <meta name="theme-color" content="#00E676">
   <meta name="description" content="Radio Music S O - Listen to your favorite radio stations with modern UI and features">
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Radio Music S O</title>
   <link rel="stylesheet" href="styles.css">
@@ -118,48 +118,10 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        console.log('Attempting to register ServiceWorker...');
-        navigator.serviceWorker.register('sw.js').then(registration => {
-          console.log('ServiceWorker registered with scope:', registration.scope);
-          
-          // Перевіряємо, чи є активний Service Worker
-          if (navigator.serviceWorker.controller) {
-            console.log('ServiceWorker already controlling page');
-          } else {
-            console.log('Page not controlled by ServiceWorker, reloading...');
-            setTimeout(() => {
-              if (!navigator.serviceWorker.controller) {
-                window.location.reload();
-              }
-            }, 1000);
-          }
-          
-          // Обробляємо оновлення
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            console.log('ServiceWorker update found, new state:', newWorker.state);
-            
-            newWorker.addEventListener('statechange', () => {
-              console.log('ServiceWorker state changed to:', newWorker.state);
-              if (newWorker.state === 'activated') {
-                console.log('New ServiceWorker activated');
-                if (confirm('New version of Radio Music S O available. Reload to update?')) {
-                  window.location.reload();
-                }
-              }
-            });
-          });
-        }).catch(error => {
-          console.error('ServiceWorker registration failed:', error);
-        });
-        
-        // Слідкуємо за змінами контролера
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          console.log('ServiceWorker controller changed');
+        navigator.serviceWorker.register('sw.js').catch(error => {
+          console.log('ServiceWorker registration failed: ', error);
         });
       });
-    } else {
-      console.log('ServiceWorker not supported in this browser');
     }
   </script>
   
