@@ -1,6 +1,6 @@
-const CACHE_NAME = 'radio-cache-v103';
+const CACHE_NAME = 'radio-cache-v104';
 
-// Список аудіо-розширень та патернів
+// Список аудіо-розширень та патернів ТІЛЬКИ для аудіо
 const AUDIO_PATTERNS = [
   '.mp3', '.aac', '.ogg', '.m3u', '.pls', '.m3u8',
   '/stream', '/listen', '/live', '/radio',
@@ -11,7 +11,24 @@ const AUDIO_PATTERNS = [
 // Допоміжна функція для визначення аудіо-запитів
 function isAudioRequest(url) {
   const urlLower = url.toLowerCase();
-  // Перевіряємо за розширеннями та патернами
+  
+  // Ігноруємо статичні файли
+  if (urlLower.includes('.css') || 
+      urlLower.includes('.js') || 
+      urlLower.includes('.json') || 
+      urlLower.includes('.png') || 
+      urlLower.includes('.jpg') || 
+      urlLower.includes('.jpeg') || 
+      urlLower.includes('.gif') || 
+      urlLower.includes('.svg') || 
+      urlLower.includes('.ico') || 
+      urlLower.includes('.webp') ||
+      urlLower.includes('favicon') ||
+      urlLower.includes('manifest')) {
+    return false;
+  }
+  
+  // Перевіряємо за аудіо-патернами
   return AUDIO_PATTERNS.some(pattern => urlLower.includes(pattern));
 }
 
@@ -141,7 +158,6 @@ async function handleAudioRequest(request) {
     const writer = writable.getWriter();
 
     let buffer = new Uint8Array(0);
-    let metadataBuffer = '';
     let stationUrl = request.url;
 
     // Функція для парсингу метаданих
