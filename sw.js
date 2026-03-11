@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radio-cache-v104';
+const CACHE_NAME = 'radio-cache-v105';
 
 // Список аудіо-розширень та патернів ТІЛЬКИ для аудіо
 const AUDIO_PATTERNS = [
@@ -36,7 +36,6 @@ function isAudioRequest(url) {
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'METADATA') {
     console.log('SW: Received METADATA message:', event.data);
-    // Пересилаємо метадані всім відкритим вкладкам
     self.clients.matchAll().then(clients => {
       clients.forEach(client => {
         client.postMessage({
@@ -51,7 +50,7 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('install', (event) => {
   console.log('SW: Installing version', CACHE_NAME);
-  self.skipWaiting(); // Активуємо одразу
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll([
@@ -111,19 +110,30 @@ async function handleAudioRequest(request) {
   try {
     console.log('SW: Handling audio request for:', request.url);
     
-    // Додаємо заголовок для запиту метаданих
+    // Створюємо нові заголовки
     const headers = new Headers(request.headers);
     headers.set('Icy-MetaData', '1');
     headers.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+    headers.set('Accept', '*/*');
     
     const modifiedRequest = new Request(request, {
       headers: headers,
       mode: 'cors',
-      credentials: 'omit'
+      credentials: 'omit',
+      cache: 'no-store'
     });
 
     console.log('SW: Fetching with Icy-MetaData header');
-    const response = await fetch(modifiedRequest);
+    
+    // Додаємо таймаут для fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    const response = await fetch(modifiedRequest, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       console.log('SW: Response not OK, returning original');
@@ -147,10 +157,11 @@ async function handleAudioRequest(request) {
 
     // Отримуємо оригінальні заголовки для відповіді
     const responseHeaders = new Headers(response.headers);
-    // Видаляємо заголовки, які можуть заважати
     responseHeaders.delete('content-length');
     responseHeaders.set('Access-Control-Allow-Origin', '*');
-    responseHeaders.set('Cache-Control', 'no-cache');
+    responseHeaders.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    responseHeaders.set('Access-Control-Allow-Headers', '*');
+    responseHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate');
 
     // Створюємо новий потік з метаданими
     const { readable, writable } = new TransformStream();
@@ -163,7 +174,6 @@ async function handleAudioRequest(request) {
     // Функція для парсингу метаданих
     function parseMetadata(metadata) {
       console.log('SW: Raw metadata:', metadata);
-      // Шукаємо StreamTitle в різних форматах
       const patterns = [
         /StreamTitle='([^']*)'/,
         /StreamTitle="([^"]*)"/,
@@ -182,7 +192,6 @@ async function handleAudioRequest(request) {
           const track = match[1].trim();
           if (track && track !== '' && track !== 'undefined' && track !== 'null') {
             console.log('SW: Found track:', track);
-            // Відправляємо метадані в основний потік
             self.clients.matchAll().then(clients => {
               clients.forEach(client => {
                 client.postMessage({
@@ -261,7 +270,6 @@ async function handleAudioRequest(request) {
 
     processStream();
 
-    // Повертаємо новий потік
     return new Response(readable, {
       status: response.status,
       statusText: response.statusText,
@@ -270,8 +278,13 @@ async function handleAudioRequest(request) {
 
   } catch (error) {
     console.error('SW: Audio request failed:', error);
-    // У випадку помилки пробуємо звичайний запит
-    return fetch(request);
+    // Спробуємо звичайний запит
+    try {
+      return await fetch(request);
+    } catch (e) {
+      // Якщо і це не вдалося, повертаємо помилку
+      return new Response('Audio stream error', { status: 500 });
+    }
   }
 }
 
@@ -289,11 +302,10 @@ self.addEventListener('activate', (event) => {
           })
         );
       }),
-      self.clients.claim() // Починаємо контролювати клієнтів одразу
+      self.clients.claim()
     ])
   );
   
-  // Повідомляємо про оновлення кешу
   self.clients.matchAll().then((clients) => {
     clients.forEach((client) => {
       client.postMessage({ 
