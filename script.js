@@ -161,13 +161,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") searchBtn.click();
     });
 
-    // ========== НОВИЙ КОД ДЛЯ BLUETOOTH ==========
+    // ========== КОД ДЛЯ BLUETOOTH ==========
     
     // Обробка команд з Android
     window.handleAndroidCommand = function(command) {
         console.log("Android command received:", command);
-        // ВИПРАВЛЕНО: прибрано зайвий аргумент "info"
-        showToast("Bluetooth команда: " + command, "info");
+        
+        // Використовуємо setTimeout щоб уникнути помилок з DOM
+        setTimeout(() => {
+            if (typeof showToast === 'function') {
+                showToast("Bluetooth: " + command, "info");
+            }
+        }, 100);
         
         if (command === "PLAY") {
             // Якщо додаток ще не готовий, чекаємо
@@ -175,7 +180,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!isPlaying) {
                     console.log("Auto-playing from Android command");
                     // Перевіряємо чи є вибрана станція
-                    if (stationItems && stationItems.length > 0 && currentIndex < stationItems.length) {
+                    if (stationItems && stationItems.length > 0) {
+                        // Переконуємось що currentIndex в межах
+                        if (currentIndex >= stationItems.length) {
+                            currentIndex = 0;
+                        }
                         togglePlayPause();
                     } else {
                         console.log("No station selected");
@@ -209,7 +218,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (action === "BLUETOOTH_PLAY" && command === "PLAY") {
             // Чекаємо завантаження додатку
             setTimeout(() => {
-                handleAndroidCommand("PLAY");
+                if (typeof window.handleAndroidCommand === 'function') {
+                    window.handleAndroidCommand("PLAY");
+                }
             }, 3000);
         }
     }
@@ -239,8 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return "";
     };
 
-    // ========== КІНЕЦЬ НОВОГО КОДУ ==========
-}
+    // ========== КІНЕЦЬ КОДУ BLUETOOTH ==========
 
     function showToast(message, type = "info", duration = 3000) {
       if (!toastContainer) return;
