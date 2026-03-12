@@ -161,6 +161,86 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") searchBtn.click();
     });
 
+    // ========== НОВИЙ КОД ДЛЯ BLUETOOTH ==========
+    
+    // Обробка команд з Android
+    window.handleAndroidCommand = function(command) {
+        console.log("Android command received:", command);
+        showToast("Bluetooth команда: " + command, "info", 2000);
+        
+        if (command === "PLAY") {
+            // Якщо додаток ще не готовий, чекаємо
+            if (typeof togglePlayPause === 'function') {
+                if (!isPlaying) {
+                    console.log("Auto-playing from Android command");
+                    // Перевіряємо чи є вибрана станція
+                    if (stationItems && stationItems.length > 0 && currentIndex < stationItems.length) {
+                        togglePlayPause();
+                    } else {
+                        console.log("No station selected");
+                    }
+                }
+            } else {
+                console.log("Player not ready, will retry");
+                // Спробуємо ще раз через секунду
+                setTimeout(() => {
+                    if (!isPlaying && typeof togglePlayPause === 'function') {
+                        if (stationItems && stationItems.length > 0) {
+                            togglePlayPause();
+                        }
+                    }
+                }, 2000);
+            }
+        } else if (command === "PAUSE") {
+            if (isPlaying && typeof togglePlayPause === 'function') {
+                togglePlayPause();
+            }
+        }
+    };
+
+    // Перевіряємо Intent при запуску (для Android)
+    if (window.Intent && window.Intent.ACTION) {
+        const action = window.Intent.ACTION;
+        const command = window.Intent.COMMAND;
+        
+        console.log("Intent received:", action, command);
+        
+        if (action === "BLUETOOTH_PLAY" && command === "PLAY") {
+            // Чекаємо завантаження додатку
+            setTimeout(() => {
+                handleAndroidCommand("PLAY");
+            }, 3000);
+        }
+    }
+
+    // Додаємо MediaSession для кращої інтеграції з Android
+    if ("mediaSession" in navigator) {
+        // Оновлюємо стан кожні 30 секунд у фоні
+        setInterval(() => {
+            if (document.hidden) {
+                navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+            }
+        }, 30000);
+    }
+
+    // Перевірка чи додаток у фоні
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            console.log('App in background - service should keep running');
+        }
+    });
+
+    // Експортуємо функцію для Android
+    window.getCurrentStation = function() {
+        if (stationItems && stationItems[currentIndex]) {
+            return stationItems[currentIndex].dataset.name || "";
+        }
+        return "";
+    };
+
+    // ========== КІНЕЦЬ НОВОГО КОДУ ==========
+}
+
     function showToast(message, type = "info", duration = 3000) {
       if (!toastContainer) return;
       
