@@ -166,7 +166,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Обробка команд з Android
     window.handleAndroidCommand = function(command) {
         console.log("Android command received:", command);
-        showToast("Bluetooth команда: " + command, "info", 2000);
+        // ВИПРАВЛЕНО: прибрано зайвий аргумент "info"
+        showToast("Bluetooth команда: " + command, "info");
         
         if (command === "PLAY") {
             // Якщо додаток ще не готовий, чекаємо
