@@ -163,104 +163,200 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ========== ПОКРАЩЕНИЙ КОД ДЛЯ БЛОКОВАНОГО ЕКРАНУ ==========
 
-    // Обробка команд з Android через MediaSession
+    // Глобальні змінні для доступу з MediaSession
+    let mediaAudio = audio;
+    let mediaPlayPauseBtn = playPauseBtn;
+
+    // Примусове відтворення через MediaSession
     if ("mediaSession" in navigator) {
-        // Встановлюємо обробники медіа-кнопок
+        // Обробник play
         navigator.mediaSession.setActionHandler("play", () => {
-            console.log("MediaSession play command received");
-            if (!isPlaying) {
-                // Використовуємо setTimeout щоб обійти блокування
-                setTimeout(() => {
-                    togglePlayPause();
-                }, 100);
+            console.log("🎵 MediaSession PLAY received");
+            
+            // Прямий доступ до audio елемента
+            if (mediaAudio) {
+                // Перевіряємо чи є станція
+                if (stationItems && stationItems.length > 0) {
+                    // Якщо індекс некоректний, ставимо 0
+                    if (currentIndex >= stationItems.length || !stationItems[currentIndex]) {
+                        currentIndex = 0;
+                        // Змінюємо станцію без виклику функції
+                        const item = stationItems[0];
+                        if (item && item.dataset && item.dataset.value) {
+                            mediaAudio.src = item.dataset.value + "?nocache=" + Date.now();
+                            mediaAudio.load();
+                        }
+                    }
+                    
+                    // Спроба відтворення
+                    setTimeout(() => {
+                        try {
+                            if (mediaAudio.paused) {
+                                console.log("🎵 Attempting to play...");
+                                mediaAudio.play()
+                                    .then(() => {
+                                        console.log("✅ Playback started");
+                                        isPlaying = true;
+                                        intendedPlaying = true;
+                                        if (mediaPlayPauseBtn) {
+                                            mediaPlayPauseBtn.textContent = "⏸";
+                                            mediaPlayPauseBtn.classList.add("playing");
+                                        }
+                                        updateWaveVisualizer(true);
+                                        localStorage.setItem("isPlaying", "true");
+                                        localStorage.setItem("intendedPlaying", "true");
+                                    })
+                                    .catch(e => {
+                                        console.error("❌ Play failed:", e);
+                                        // Якщо не вдалося, пробуємо ще раз через секунду
+                                        setTimeout(() => {
+                                            if (mediaAudio.paused) {
+                                                mediaAudio.play().catch(e2 => console.error("❌ Second attempt failed:", e2));
+                                            }
+                                        }, 1000);
+                                    });
+                            } else {
+                                console.log("🎵 Already playing");
+                            }
+                        } catch (e) {
+                            console.error("❌ Error in play:", e);
+                        }
+                    }, 300);
+                } else {
+                    console.log("❌ No stations available");
+                }
+            } else {
+                console.log("❌ Audio element not available");
             }
         });
 
+        // Обробник pause
         navigator.mediaSession.setActionHandler("pause", () => {
-            console.log("MediaSession pause command received");
-            if (isPlaying) {
-                setTimeout(() => {
-                    togglePlayPause();
-                }, 100);
+            console.log("🎵 MediaSession PAUSE received");
+            if (mediaAudio && !mediaAudio.paused) {
+                mediaAudio.pause();
+                isPlaying = false;
+                intendedPlaying = false;
+                if (mediaPlayPauseBtn) {
+                    mediaPlayPauseBtn.textContent = "▶";
+                    mediaPlayPauseBtn.classList.remove("playing");
+                }
+                updateWaveVisualizer(false);
+                localStorage.setItem("isPlaying", "false");
+                localStorage.setItem("intendedPlaying", "false");
+                console.log("✅ Playback paused");
             }
         });
 
-        navigator.mediaSession.setActionHandler("previoustrack", () => {
-            console.log("MediaSession previous track");
-            setTimeout(() => {
-                prevStation();
-            }, 100);
+        // Обробник next
+        navigator.mediaSession.setActionHandler("nexttrack", () => {
+            console.log("🎵 MediaSession NEXT received");
+            if (stationItems && stationItems.length > 0) {
+                let newIndex = currentIndex + 1;
+                if (newIndex >= stationItems.length) newIndex = 0;
+                
+                if (stationItems[newIndex] && stationItems[newIndex].dataset) {
+                    currentIndex = newIndex;
+                    const item = stationItems[newIndex];
+                    mediaAudio.src = item.dataset.value + "?nocache=" + Date.now();
+                    mediaAudio.load();
+                    
+                    if (isPlaying) {
+                        setTimeout(() => {
+                            mediaAudio.play().catch(e => console.error("❌ Next play failed:", e));
+                        }, 500);
+                    }
+                    
+                    // Оновлюємо інформацію
+                    localStorage.setItem(`lastStation_${currentTab}`, currentIndex);
+                    if (typeof updateCurrentStation === 'function') {
+                        updateCurrentStation(item);
+                    }
+                }
+            }
         });
 
-        navigator.mediaSession.setActionHandler("nexttrack", () => {
-            console.log("MediaSession next track");
-            setTimeout(() => {
-                nextStation();
-            }, 100);
+        // Обробник previous
+        navigator.mediaSession.setActionHandler("previoustrack", () => {
+            console.log("🎵 MediaSession PREVIOUS received");
+            if (stationItems && stationItems.length > 0) {
+                let newIndex = currentIndex - 1;
+                if (newIndex < 0) newIndex = stationItems.length - 1;
+                
+                if (stationItems[newIndex] && stationItems[newIndex].dataset) {
+                    currentIndex = newIndex;
+                    const item = stationItems[newIndex];
+                    mediaAudio.src = item.dataset.value + "?nocache=" + Date.now();
+                    mediaAudio.load();
+                    
+                    if (isPlaying) {
+                        setTimeout(() => {
+                            mediaAudio.play().catch(e => console.error("❌ Previous play failed:", e));
+                        }, 500);
+                    }
+                    
+                    localStorage.setItem(`lastStation_${currentTab}`, currentIndex);
+                    if (typeof updateCurrentStation === 'function') {
+                        updateCurrentStation(item);
+                    }
+                }
+            }
         });
     }
 
-    // Спеціальний обробник для Android команд
+    // Додатковий обробник для Android команд
     window.handleAndroidCommand = function(command) {
-        console.log("Android command received:", command);
+        console.log("📱 Android command:", command);
         
-        // Показуємо сповіщення
-        setTimeout(() => {
-            if (typeof showToast === 'function') {
-                showToast("Bluetooth: " + command, "info");
+        if (command === "PLAY") {
+            // Імітуємо натискання медіа-кнопки
+            if ("mediaSession" in navigator) {
+                // Викликаємо обробник play напряму
+                navigator.mediaSession.setActionHandler("play", () => {})();
             }
-        }, 100);
-        
-        // Використовуємо MediaSession для заблокованого екрану
-        if ("mediaSession" in navigator) {
-            if (command === "PLAY") {
-                navigator.mediaSession.playbackState = "playing";
-                // Імітуємо натискання медіа-кнопки
-                if (navigator.mediaSession.dispatchAction) {
-                    navigator.mediaSession.dispatchAction("play");
-                } else {
-                    // Якщо dispatchAction не підтримується, викликаємо напряму
-                    setTimeout(() => {
-                        if (!isPlaying && typeof togglePlayPause === 'function') {
-                            if (stationItems && stationItems.length > 0) {
-                                if (currentIndex >= stationItems.length) {
-                                    currentIndex = 0;
-                                }
-                                togglePlayPause();
-                            }
-                        }
-                    }, 200);
-                }
-            } else if (command === "PAUSE") {
-                navigator.mediaSession.playbackState = "paused";
-                if (navigator.mediaSession.dispatchAction) {
-                    navigator.mediaSession.dispatchAction("pause");
-                } else {
-                    setTimeout(() => {
-                        if (isPlaying && typeof togglePlayPause === 'function') {
-                            togglePlayPause();
-                        }
-                    }, 200);
-                }
-            }
-        } else {
-            // Якщо MediaSession не підтримується
+            
+            // Прямий виклик як запасний варіант
             setTimeout(() => {
-                if (command === "PLAY") {
-                    if (!isPlaying && typeof togglePlayPause === 'function') {
-                        if (stationItems && stationItems.length > 0) {
-                            if (currentIndex >= stationItems.length) {
-                                currentIndex = 0;
+                if (mediaAudio && mediaAudio.paused) {
+                    if (stationItems && stationItems.length > 0) {
+                        if (currentIndex >= stationItems.length || !stationItems[currentIndex]) {
+                            currentIndex = 0;
+                            const item = stationItems[0];
+                            if (item && item.dataset && item.dataset.value) {
+                                mediaAudio.src = item.dataset.value + "?nocache=" + Date.now();
+                                mediaAudio.load();
                             }
-                            togglePlayPause();
                         }
-                    }
-                } else if (command === "PAUSE") {
-                    if (isPlaying && typeof togglePlayPause === 'function') {
-                        togglePlayPause();
+                        mediaAudio.play()
+                            .then(() => {
+                                console.log("✅ Direct play successful");
+                                isPlaying = true;
+                                intendedPlaying = true;
+                                if (mediaPlayPauseBtn) {
+                                    mediaPlayPauseBtn.textContent = "⏸";
+                                    mediaPlayPauseBtn.classList.add("playing");
+                                }
+                                updateWaveVisualizer(true);
+                                localStorage.setItem("isPlaying", "true");
+                                localStorage.setItem("intendedPlaying", "true");
+                            })
+                            .catch(e => console.error("❌ Direct play failed:", e));
                     }
                 }
             }, 200);
+        } else if (command === "PAUSE") {
+            if (mediaAudio && !mediaAudio.paused) {
+                mediaAudio.pause();
+                isPlaying = false;
+                intendedPlaying = false;
+                if (mediaPlayPauseBtn) {
+                    mediaPlayPauseBtn.textContent = "▶";
+                    mediaPlayPauseBtn.classList.remove("playing");
+                }
+                updateWaveVisualizer(false);
+                localStorage.setItem("isPlaying", "false");
+                localStorage.setItem("intendedPlaying", "false");
+            }
         }
     };
 
@@ -281,79 +377,40 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Функція для оновлення MediaSession
-    function updateMediaSession() {
-        if ("mediaSession" in navigator) {
+    // Оновлюємо метадані MediaSession при зміні станції
+    const originalUpdateCurrentStation = updateCurrentStation;
+    updateCurrentStation = function(item) {
+        originalUpdateCurrentStation(item);
+        
+        if ("mediaSession" in navigator && item && item.dataset) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: item.dataset.name || "Radio Station",
+                artist: item.dataset.genre || "Music",
+                album: "Radio Music S O",
+                artwork: item.dataset.favicon ? [
+                    { src: item.dataset.favicon, sizes: '96x96', type: 'image/png' }
+                ] : []
+            });
             navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
-            
-            // Оновлюємо метадані якщо є станція
-            if (stationItems && stationItems[currentIndex]) {
-                const station = stationItems[currentIndex];
-                const artwork = [];
-                
-                if (station.dataset.favicon) {
-                    artwork.push({
-                        src: station.dataset.favicon,
-                        sizes: '96x96',
-                        type: 'image/png'
-                    });
-                }
-                
-                navigator.mediaSession.metadata = new MediaMetadata({
-                    title: station.dataset.name || "Radio Station",
-                    artist: station.dataset.genre || "Music",
-                    album: "Radio Music S O",
-                    artwork: artwork
-                });
-            }
         }
-    }
-
-    // Зберігаємо оригінальні функції
-    const originalChangeStation = changeStation;
-    const originalTogglePlayPause = togglePlayPause;
-
-    // Перевизначаємо changeStation
-    changeStation = function(index) {
-        originalChangeStation(index);
-        updateMediaSession();
     };
 
-    // Перевизначаємо togglePlayPause
+    // Оновлюємо стан при зміні відтворення
+    const originalTogglePlayPause = togglePlayPause;
     togglePlayPause = function() {
         originalTogglePlayPause();
-        updateMediaSession();
+        
+        if ("mediaSession" in navigator) {
+            navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+        }
     };
 
-    // Періодичне оновлення для заблокованого екрану
+    // Періодичне оновлення для підтримки з'єднання
     setInterval(() => {
-        if (document.hidden) {
-            updateMediaSession();
-            
-            // Додаткова перевірка для Bluetooth
-            if (window.Android && window.Android.heartbeat) {
-                window.Android.heartbeat();
-            }
+        if ("mediaSession" in navigator && document.hidden) {
+            navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
         }
-    }, 10000);
-
-    // Обробник видимості сторінки
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            console.log('App in background - media session active');
-            updateMediaSession();
-        } else {
-            console.log('App in foreground');
-        }
-    });
-
-    // Експортуємо функцію для Android
-    window.getCurrentStation = function() {
-        if (stationItems && stationItems[currentIndex]) {
-            return stationItems[currentIndex].dataset.name || "";
-        }
-        return "";
-    };
+    }, 5000);
 
     // ========== КІНЕЦЬ КОДУ ДЛЯ БЛОКОВАНОГО ЕКРАНУ ==========
 
