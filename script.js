@@ -161,50 +161,106 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") searchBtn.click();
     });
 
-    // ========== КОД ДЛЯ BLUETOOTH ==========
-    
-    // Обробка команд з Android
+    // ========== ПОКРАЩЕНИЙ КОД ДЛЯ БЛОКОВАНОГО ЕКРАНУ ==========
+
+    // Обробка команд з Android через MediaSession
+    if ("mediaSession" in navigator) {
+        // Встановлюємо обробники медіа-кнопок
+        navigator.mediaSession.setActionHandler("play", () => {
+            console.log("MediaSession play command received");
+            if (!isPlaying) {
+                // Використовуємо setTimeout щоб обійти блокування
+                setTimeout(() => {
+                    togglePlayPause();
+                }, 100);
+            }
+        });
+
+        navigator.mediaSession.setActionHandler("pause", () => {
+            console.log("MediaSession pause command received");
+            if (isPlaying) {
+                setTimeout(() => {
+                    togglePlayPause();
+                }, 100);
+            }
+        });
+
+        navigator.mediaSession.setActionHandler("previoustrack", () => {
+            console.log("MediaSession previous track");
+            setTimeout(() => {
+                prevStation();
+            }, 100);
+        });
+
+        navigator.mediaSession.setActionHandler("nexttrack", () => {
+            console.log("MediaSession next track");
+            setTimeout(() => {
+                nextStation();
+            }, 100);
+        });
+    }
+
+    // Спеціальний обробник для Android команд
     window.handleAndroidCommand = function(command) {
         console.log("Android command received:", command);
         
-        // Використовуємо setTimeout щоб уникнути помилок з DOM
+        // Показуємо сповіщення
         setTimeout(() => {
             if (typeof showToast === 'function') {
                 showToast("Bluetooth: " + command, "info");
             }
         }, 100);
         
-        if (command === "PLAY") {
-            // Якщо додаток ще не готовий, чекаємо
-            if (typeof togglePlayPause === 'function') {
-                if (!isPlaying) {
-                    console.log("Auto-playing from Android command");
-                    // Перевіряємо чи є вибрана станція
-                    if (stationItems && stationItems.length > 0) {
-                        // Переконуємось що currentIndex в межах
-                        if (currentIndex >= stationItems.length) {
-                            currentIndex = 0;
+        // Використовуємо MediaSession для заблокованого екрану
+        if ("mediaSession" in navigator) {
+            if (command === "PLAY") {
+                navigator.mediaSession.playbackState = "playing";
+                // Імітуємо натискання медіа-кнопки
+                if (navigator.mediaSession.dispatchAction) {
+                    navigator.mediaSession.dispatchAction("play");
+                } else {
+                    // Якщо dispatchAction не підтримується, викликаємо напряму
+                    setTimeout(() => {
+                        if (!isPlaying && typeof togglePlayPause === 'function') {
+                            if (stationItems && stationItems.length > 0) {
+                                if (currentIndex >= stationItems.length) {
+                                    currentIndex = 0;
+                                }
+                                togglePlayPause();
+                            }
                         }
-                        togglePlayPause();
-                    } else {
-                        console.log("No station selected");
-                    }
+                    }, 200);
                 }
-            } else {
-                console.log("Player not ready, will retry");
-                // Спробуємо ще раз через секунду
-                setTimeout(() => {
+            } else if (command === "PAUSE") {
+                navigator.mediaSession.playbackState = "paused";
+                if (navigator.mediaSession.dispatchAction) {
+                    navigator.mediaSession.dispatchAction("pause");
+                } else {
+                    setTimeout(() => {
+                        if (isPlaying && typeof togglePlayPause === 'function') {
+                            togglePlayPause();
+                        }
+                    }, 200);
+                }
+            }
+        } else {
+            // Якщо MediaSession не підтримується
+            setTimeout(() => {
+                if (command === "PLAY") {
                     if (!isPlaying && typeof togglePlayPause === 'function') {
                         if (stationItems && stationItems.length > 0) {
+                            if (currentIndex >= stationItems.length) {
+                                currentIndex = 0;
+                            }
                             togglePlayPause();
                         }
                     }
-                }, 2000);
-            }
-        } else if (command === "PAUSE") {
-            if (isPlaying && typeof togglePlayPause === 'function') {
-                togglePlayPause();
-            }
+                } else if (command === "PAUSE") {
+                    if (isPlaying && typeof togglePlayPause === 'function') {
+                        togglePlayPause();
+                    }
+                }
+            }, 200);
         }
     };
 
@@ -225,20 +281,69 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Додаємо MediaSession для кращої інтеграції з Android
-    if ("mediaSession" in navigator) {
-        // Оновлюємо стан кожні 30 секунд у фоні
-        setInterval(() => {
-            if (document.hidden) {
-                navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+    // Функція для оновлення MediaSession
+    function updateMediaSession() {
+        if ("mediaSession" in navigator) {
+            navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+            
+            // Оновлюємо метадані якщо є станція
+            if (stationItems && stationItems[currentIndex]) {
+                const station = stationItems[currentIndex];
+                const artwork = [];
+                
+                if (station.dataset.favicon) {
+                    artwork.push({
+                        src: station.dataset.favicon,
+                        sizes: '96x96',
+                        type: 'image/png'
+                    });
+                }
+                
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: station.dataset.name || "Radio Station",
+                    artist: station.dataset.genre || "Music",
+                    album: "Radio Music S O",
+                    artwork: artwork
+                });
             }
-        }, 30000);
+        }
     }
 
-    // Перевірка чи додаток у фоні
+    // Зберігаємо оригінальні функції
+    const originalChangeStation = changeStation;
+    const originalTogglePlayPause = togglePlayPause;
+
+    // Перевизначаємо changeStation
+    changeStation = function(index) {
+        originalChangeStation(index);
+        updateMediaSession();
+    };
+
+    // Перевизначаємо togglePlayPause
+    togglePlayPause = function() {
+        originalTogglePlayPause();
+        updateMediaSession();
+    };
+
+    // Періодичне оновлення для заблокованого екрану
+    setInterval(() => {
+        if (document.hidden) {
+            updateMediaSession();
+            
+            // Додаткова перевірка для Bluetooth
+            if (window.Android && window.Android.heartbeat) {
+                window.Android.heartbeat();
+            }
+        }
+    }, 10000);
+
+    // Обробник видимості сторінки
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
-            console.log('App in background - service should keep running');
+            console.log('App in background - media session active');
+            updateMediaSession();
+        } else {
+            console.log('App in foreground');
         }
     });
 
@@ -250,7 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return "";
     };
 
-    // ========== КІНЕЦЬ КОДУ BLUETOOTH ==========
+    // ========== КІНЕЦЬ КОДУ ДЛЯ БЛОКОВАНОГО ЕКРАНУ ==========
 
     function showToast(message, type = "info", duration = 3000) {
       if (!toastContainer) return;
