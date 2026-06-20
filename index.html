@@ -1,12 +1,19 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <meta name="theme-color" content="#00D2FF">
+  <meta name="theme-color" content="#00E676">
   <meta name="description" content="Radio Music S O - Слухайте улюблені радіостанції з сучасним інтерфейсом та функціями">
+  
+  <!-- PWA підтримка -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  
+  <!-- Для Bluetooth та інших функцій -->
+  <meta name="bluetooth" content="true">
+  
   <title>Radio Music S O</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
@@ -14,15 +21,12 @@
   <link rel="preconnect" href="https://de1.api.radio-browser.info">
 </head>
 <body>
-  <!-- Фонові бульбашки -->
-  <div class="bubble-background" id="bubbleBackground"></div>
-  
   <div class="container">
     <!-- Кнопки управління -->
-    <button class="theme-toggle" aria-label="Змінити тему">💧</button>
-    <button class="share-button" aria-label="Поділитися поточною станцією">🌊</button>
-    <button class="export-button" aria-label="Експортувати налаштування">💧</button>
-    <button class="import-button" aria-label="Імпортувати налаштування">🫧</button>
+    <button class="theme-toggle" aria-label="Змінити тему">🌙</button>
+    <button class="share-button" aria-label="Поділитися поточною станцією">📢</button>
+    <button class="export-button" aria-label="Експортувати налаштування">📤</button>
+    <button class="import-button" aria-label="Імпортувати налаштування">📥</button>
     <input type="file" id="importFileInput" accept="application/json" aria-label="Файл для імпорту налаштувань">
     
     <h1>🎧 Radio Music S O</h1>
@@ -36,18 +40,18 @@
 
     <!-- Pull to Refresh Indicator -->
     <div class="pull-indicator" id="pullIndicator" style="display: none;">
-      <i>💧</i>
+      <i>↓</i>
     </div>
 
     <!-- Current Station Info -->
     <div id="currentStationInfo" role="region" aria-label="Інформація про поточну станцію">
       <div class="station-info-content">
-        <div class="station-icon" role="img" aria-label="Іконка станції">💧</div>
+        <div class="station-icon" role="img" aria-label="Іконка станції">🎵</div>
         <div class="station-text">
           <div class="station-name" aria-label="Назва станції">Виберіть станцію</div>
           <div class="station-genre" aria-label="Жанр">жанр: -</div>
           <div class="station-country" aria-label="Країна">країна: -</div>
-          <div class="current-track" id="currentTrack" aria-label="Поточний трек">💧 Трек: невідомо</div>
+          <div class="current-track" id="currentTrack" aria-label="Поточний трек">🎵 Трек: невідомо</div>
         </div>
         <!-- Сучасний хвильовий візуалізатор -->
         <div class="wave-visualizer" aria-hidden="true">
@@ -78,14 +82,14 @@
       <datalist id="suggestedCountries"></datalist>
       <input id="searchGenre" list="suggestedGenres" placeholder="Введіть жанр" aria-label="Пошук за жанром">
       <datalist id="suggestedGenres"></datalist>
-      <button class="search-btn" aria-label="Виконати пошук">💧 Пошук</button>
+      <button class="search-btn" aria-label="Виконати пошук">🔍 Пошук</button>
     </div>
 
     <!-- Controls -->
     <div class="controls-container">
       <div class="controls">
         <button class="control-btn" aria-label="Попередня станція">⏮</button>
-        <button class="control-btn" aria-label="Грати/Пауза">💧</button>
+        <button class="control-btn" aria-label="Грати/Пауза">▶</button>
         <button class="control-btn" aria-label="Наступна станція">⏭</button>
       </div>
     </div>
@@ -121,10 +125,36 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(error => {
-          console.log('ServiceWorker registration failed: ', error);
-        });
+        navigator.serviceWorker.register('sw.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful');
+            // Перевіряємо оновлення
+            registration.update();
+          })
+          .catch(error => {
+            console.log('ServiceWorker registration failed: ', error);
+          });
       });
+
+      // Обробка повідомлень від Service Worker
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data.type === 'CACHE_UPDATED') {
+            console.log('Cache updated:', event.data.cacheVersion);
+          }
+          if (event.data.type === 'NETWORK_STATUS') {
+            console.log('Network status:', event.data.online);
+          }
+          if (event.data.type === 'NOTIFICATION_ACTION') {
+            // Обробка дій зі сповіщень
+            console.log('Notification action:', event.data.action);
+          }
+          if (event.data.type === 'ALARM_TRIGGER') {
+            // Обробка будильника
+            console.log('Alarm triggered:', event.data.station);
+          }
+        });
+      }
     }
   </script>
   

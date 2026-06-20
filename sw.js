@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'radio-cache-v122';
+const CACHE_NAME = 'radio-cache-v12314';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -22,6 +22,7 @@ self.addEventListener('install', (event) => {
       });
     })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -74,6 +75,7 @@ self.addEventListener('activate', (event) => {
       client.postMessage({ type: 'CACHE_UPDATED', cacheVersion: CACHE_NAME });
     });
   });
+  self.clients.claim();
 });
 
 // Моніторинг стану мережі
@@ -92,7 +94,7 @@ function startNetworkCheck() {
                 client.postMessage({ type: "NETWORK_STATUS", online: true });
               });
             });
-            stopNetworkCheck(); // Stop polling once online
+            stopNetworkCheck();
           }
         })
         .catch(error => {
@@ -105,7 +107,7 @@ function startNetworkCheck() {
             });
           }
         });
-    }, 2000); // Перевірка кожні 2 секунди
+    }, 2000);
   }
 }
 
@@ -124,7 +126,7 @@ self.addEventListener('online', () => {
         client.postMessage({ type: "NETWORK_STATUS", online: true });
       });
     });
-    stopNetworkCheck(); // Stop polling when online
+    stopNetworkCheck();
   }
 });
 
@@ -136,12 +138,89 @@ self.addEventListener('offline', () => {
         client.postMessage({ type: "NETWORK_STATUS", online: false });
       });
     });
-    startNetworkCheck(); // Start polling when offline
+    startNetworkCheck();
   }
 });
 
-// Start initial check if already offline
 if (!navigator.onLine && wasOnline) {
   wasOnline = false;
   startNetworkCheck();
 }
+
+// ===== ПОКРАЩЕННЯ ДЛЯ BLUETOOTH ТА MEDIA SESSION =====
+
+// Обробка сповіщень та дій
+self.addEventListener('message', (event) => {
+  if (event.data.type === 'NOTIFICATION_ACTION') {
+    // Пересилаємо дію на клієнт
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'NOTIFICATION_ACTION',
+          action: event.data.action
+        });
+      });
+    });
+  }
+  
+  if (event.data.type === 'SET_ALARM') {
+    // Зберігаємо будильник
+    const { time, station } = event.data;
+    setTimeout(() => {
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'ALARM_TRIGGER',
+            station: station
+          });
+        });
+      });
+    }, time);
+  }
+});
+
+// Обробка push-повідомлень
+self.addEventListener('push', (event) => {
+  const data = event.data.json();
+  const options = {
+    body: data.body || '🎵 Грає ваша улюблена станція!',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: [200, 100, 200],
+    data: {
+      url: data.url || '/',
+      station: data.station || ''
+    },
+    actions: [
+      { action: 'play', title: '⏸ Пауза' },
+      { action: 'next', title: '⏭ Далі' }
+    ]
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Radio S O', options)
+  );
+});
+
+// Обробка кліку по сповіщенню
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  const urlToOpen = event.notification.data?.url || '/';
+  const station = event.notification.data?.station || '';
+  
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then(windowClients => {
+      // Перевіряємо, чи вже є відкрите вікно
+      for (let client of windowClients) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Якщо немає - відкриваємо нове
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(urlToOpen + '?station=' + encodeURIComponent(station));
+      }
+    })
+  );
+});

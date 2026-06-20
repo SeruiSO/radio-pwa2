@@ -1,4 +1,4 @@
-﻿let currentTab = localStorage.getItem("currentTab") || "techno";
+let currentTab = localStorage.getItem("currentTab") || "techno";
 let currentIndex = 0;
 let favoriteStations = JSON.parse(localStorage.getItem("favoriteStations")) || [];
 let isPlaying = localStorage.getItem("isPlaying") === "true" || false;
@@ -30,6 +30,15 @@ let searchDebounceTimer = null;
 let lazyLoadObserver = null;
 let metadataReaderController = null;
 let metadataRetryTimeout = null;
+let audioContext = null;
+let gainNode = null;
+let filterNodes = [];
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
+let reconnectTimeout = null;
+let heartbeatInterval = null;
+let lastDataTime = 0;
+let bluetoothDeviceId = localStorage.getItem('bluetoothDeviceId') || null;
 
 // Список станцій, які не підтримують метадані
 const noMetadataStations = [
@@ -40,97 +49,6 @@ const noMetadataStations = [
 ];
 
 customTabs = Array.isArray(customTabs) ? customTabs.filter(tab => typeof tab === "string" && tab.trim()) : [];
-
-// ========== ВОДЯНІ ЕФЕКТИ ==========
-
-// Функція для створення фонових бульбашок
-function createBubbles() {
-  const bubbleContainer = document.getElementById('bubbleBackground');
-  if (!bubbleContainer) return;
-  
-  bubbleContainer.innerHTML = '';
-  
-  const bubbleCount = Math.floor(window.innerWidth / 40) + 10;
-  
-  for (let i = 0; i < bubbleCount; i++) {
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    
-    const size = Math.random() * 40 + 15;
-    const left = Math.random() * 100;
-    const duration = Math.random() * 15 + 8;
-    const delay = Math.random() * 20;
-    const opacity = Math.random() * 0.4 + 0.1;
-    
-    bubble.style.width = `${size}px`;
-    bubble.style.height = `${size}px`;
-    bubble.style.left = `${left}%`;
-    bubble.style.animationDuration = `${duration}s`;
-    bubble.style.animationDelay = `${delay}s`;
-    bubble.style.opacity = opacity;
-    bubble.style.setProperty('--bubble-opacity', opacity);
-    
-    bubbleContainer.appendChild(bubble);
-  }
-}
-
-// Функція для створення ripple ефекту на кнопках
-function addRippleEffect(button) {
-  if (!button) return;
-  
-  button.addEventListener('click', function(e) {
-    const rect = button.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    const ripple = document.createElement('span');
-    ripple.className = 'ripple';
-    ripple.style.left = `${x}px`;
-    ripple.style.top = `${y}px`;
-    
-    button.style.position = 'relative';
-    button.style.overflow = 'hidden';
-    
-    button.appendChild(ripple);
-    
-    setTimeout(() => {
-      ripple.remove();
-    }, 600);
-  });
-}
-
-// Функція для анімації пульсації поточної станції
-function animateWaterGlow() {
-  const currentInfo = document.getElementById('currentStationInfo');
-  if (!currentInfo) return;
-  
-  if (isPlaying) {
-    currentInfo.classList.add('playing');
-  } else {
-    currentInfo.classList.remove('playing');
-  }
-}
-
-// Функція для оновлення іконки кнопки Play
-function updatePlayButtonIcon(isPlayingState) {
-  const playPauseBtn = document.querySelector(".controls .control-btn:nth-child(2)");
-  if (!playPauseBtn) return;
-  
-  if (isPlayingState) {
-    playPauseBtn.innerHTML = "💧";
-  } else {
-    playPauseBtn.innerHTML = "💧";
-  }
-  addRippleEffect(playPauseBtn);
-}
-
-// Додаємо ripple ефекти до всіх кнопок
-function addRippleToAllButtons() {
-  const buttons = document.querySelectorAll('.control-btn, .tab-btn, .add-tab-btn, .search-btn, .modal-tab-btn, .modal-cancel-btn');
-  buttons.forEach(btn => addRippleEffect(btn));
-}
-
-// ========== КІНЕЦЬ ВОДЯНИХ ЕФЕКТІВ ==========
 
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("audioPlayer");
@@ -172,28 +90,17 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTabs();
     setupPullToRefresh();
     setupLazyLoading();
+    setupBluetoothConnection();
+    setupMediaSession();
+    setupIntentHandling();
+    setupPriorityPlayback();
     
-    // Створюємо бульбашки
-    createBubbles();
-    
-    // Додаємо ripple ефекти
-    addRippleToAllButtons();
-    
-    // Спостерігаємо за змінами в DOM для додавання ripple ефектів до нових кнопок
-    const observer = new MutationObserver(() => {
-      addRippleToAllButtons();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    
-    // Оновлюємо бульбашки при зміні розміру вікна
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(createBubbles, 500);
-    });
-    
+    // Завантажуємо станції одразу
     loadStations().then(() => {
+      // Після завантаження перемикаємося на поточний таб
       switchTab(currentTab);
+      // Відновлюємо стан
+      restoreFullState();
     });
 
     shareButton.addEventListener("click", () => {
@@ -234,6 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
       provideHapticFeedback();
     });
 
+    // Debounced search
     searchBtn.addEventListener("click", () => {
       const query = searchQuery.value.trim();
       const country = normalizeCountry(searchCountry.value.trim());
@@ -576,12 +484,355 @@ document.addEventListener("DOMContentLoaded", () => {
       if (stationGenreElement) stationGenreElement.textContent = "жанр: -";
       if (stationCountryElement) stationCountryElement.textContent = "країна: -";
       if (stationIconElement) {
-        stationIconElement.innerHTML = "💧";
+        stationIconElement.innerHTML = "🎵";
         stationIconElement.style.backgroundImage = "none";
       }
       if (currentTrackElement) {
-        currentTrackElement.textContent = "💧 Трек: невідомо";
+        currentTrackElement.textContent = "🎵 Трек: невідомо";
       }
+    }
+
+    // ===== ПОКРАЩЕННЯ 6: КЕШУВАННЯ СТАНУ =====
+    function saveFullState() {
+      try {
+        const state = {
+          stationUrl: localStorage.getItem('lastStationUrl') || '',
+          stationName: localStorage.getItem('lastStationName') || '',
+          currentTab: currentTab,
+          index: currentIndex,
+          volume: audio.volume,
+          timestamp: Date.now(),
+          isPlaying: isPlaying,
+          intendedPlaying: intendedPlaying
+        };
+        localStorage.setItem('radioFullState', JSON.stringify(state));
+      } catch (e) {
+        console.log('Failed to save state:', e);
+      }
+    }
+
+    function restoreFullState() {
+      try {
+        const state = JSON.parse(localStorage.getItem('radioFullState'));
+        if (!state) return false;
+        
+        // Перевіряємо, чи стан не застарілий (макс 24 години)
+        if (Date.now() - state.timestamp > 86400000) {
+          localStorage.removeItem('radioFullState');
+          return false;
+        }
+        
+        // Відновлюємо гучність
+        if (state.volume) {
+          audio.volume = state.volume;
+        }
+        
+        // Якщо було відтворення - запускаємо
+        if (state.intendedPlaying && state.stationUrl) {
+          setTimeout(() => {
+            const items = document.querySelectorAll('.station-item');
+            for (let i = 0; i < items.length; i++) {
+              if (items[i].dataset.value === state.stationUrl) {
+                currentIndex = i;
+                changeStation(currentIndex);
+                setTimeout(() => {
+                  if (audio.paused) {
+                    intendedPlaying = true;
+                    isPlaying = true;
+                    localStorage.setItem('intendedPlaying', 'true');
+                    localStorage.setItem('isPlaying', 'true');
+                    debouncedTryAutoPlay();
+                  }
+                }, 500);
+                return true;
+              }
+            }
+            // Якщо станцію не знайдено - пробуємо за URL
+            if (state.stationUrl) {
+              audio.src = state.stationUrl;
+              audio.play().catch(() => {});
+            }
+          }, 1000);
+          return true;
+        }
+        return false;
+      } catch (e) {
+        console.log('Failed to restore state:', e);
+        return false;
+      }
+    }
+
+    // ===== ПОКРАЩЕННЯ 2: INTENT FILTER =====
+    function setupIntentHandling() {
+      // Обробка launch-запитів
+      if (window.launchQueue) {
+        window.launchQueue.setConsumer(launchParams => {
+          if (!launchParams || !launchParams.targetURL) return;
+          
+          const url = new URL(launchParams.targetURL);
+          const params = new URLSearchParams(url.search);
+          const station = params.get('station');
+          
+          if (station) {
+            showToast(`Запуск станції: ${station}`, 'info');
+            findAndPlayStation(decodeURIComponent(station));
+          }
+        });
+      }
+
+      // Обробка URL через protocol handler
+      if (window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        const station = params.get('station');
+        if (station) {
+          setTimeout(() => {
+            findAndPlayStation(decodeURIComponent(station));
+          }, 1000);
+        }
+      }
+
+      // Реєстрація protocol handler
+      if ('registerProtocolHandler' in navigator) {
+        try {
+          navigator.registerProtocolHandler(
+            'radio',
+            window.location.origin + window.location.pathname + '?station=%s',
+            'Radio S O'
+          );
+        } catch (e) {
+          console.log('Protocol handler registration failed');
+        }
+      }
+    }
+
+    function findAndPlayStation(stationName) {
+      // Шукаємо станцію в усіх списках
+      const allStations = [];
+      Object.values(stationLists).forEach(list => {
+        list.forEach(s => allStations.push(s));
+      });
+      
+      // Шукаємо точний збіг
+      let found = allStations.find(s => 
+        s.name.toLowerCase() === stationName.toLowerCase() ||
+        s.name.toLowerCase().includes(stationName.toLowerCase())
+      );
+      
+      if (found) {
+        // Шукаємо в поточному списку
+        const items = document.querySelectorAll('.station-item');
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].dataset.name === found.name) {
+            currentIndex = i;
+            changeStation(currentIndex);
+            setTimeout(() => {
+              if (audio.paused) {
+                intendedPlaying = true;
+                isPlaying = true;
+                debouncedTryAutoPlay();
+              }
+            }, 500);
+            showToast(`Грає: ${found.name}`, 'success');
+            return;
+          }
+        }
+        // Якщо не знайшли в поточному списку - перемикаємо вкладку
+        const tab = Object.keys(stationLists).find(key => 
+          stationLists[key].some(s => s.name === found.name)
+        );
+        if (tab) {
+          switchTab(tab);
+          setTimeout(() => {
+            const items = document.querySelectorAll('.station-item');
+            for (let i = 0; i < items.length; i++) {
+              if (items[i].dataset.name === found.name) {
+                currentIndex = i;
+                changeStation(currentIndex);
+                setTimeout(() => {
+                  if (audio.paused) {
+                    intendedPlaying = true;
+                    isPlaying = true;
+                    debouncedTryAutoPlay();
+                  }
+                }, 500);
+                showToast(`Грає: ${found.name}`, 'success');
+                return;
+              }
+            }
+          }, 500);
+        }
+      } else {
+        showToast(`Станцію "${stationName}" не знайдено`, 'error');
+      }
+    }
+
+    // ===== ПОКРАЩЕННЯ 7: ПРІОРИТЕТНЕ ВІДТВОРЕННЯ =====
+    function setupPriorityPlayback() {
+      // Запит аудіо-фокусу через audioSession API
+      if ('audioSession' in navigator) {
+        navigator.audioSession.type = 'playback';
+        navigator.audioSession.category = 'playback';
+      }
+
+      // Використання Web Audio API для контролю контексту
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        gainNode = audioContext.createGain();
+        gainNode.gain.value = 1;
+        gainNode.connect(audioContext.destination);
+        
+        // Відновлюємо контекст після взаємодії
+        document.addEventListener('click', () => {
+          if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+          }
+        }, { once: true });
+        
+        // При відтворенні - активуємо контекст
+        audio.addEventListener('play', () => {
+          if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+          }
+        });
+      } catch (e) {
+        console.log('Web Audio API not available');
+      }
+    }
+
+    // ===== ПОКРАЩЕННЯ 9: BLUETOOTH =====
+    function setupBluetoothConnection() {
+      // Автоматичне підключення до збереженого пристрою
+      if (bluetoothDeviceId) {
+        setTimeout(() => {
+          connectBluetoothDevice(bluetoothDeviceId);
+        }, 3000);
+      }
+    }
+
+    async function connectBluetoothDevice(deviceId = null) {
+      if (!navigator.bluetooth) {
+        console.log('Bluetooth not supported');
+        return;
+      }
+
+      try {
+        let device;
+        if (deviceId) {
+          // Спроба підключитися до збереженого пристрою
+          const devices = await navigator.bluetooth.getDevices();
+          device = devices.find(d => d.id === deviceId);
+          if (!device) {
+            // Якщо пристрій не знайдено - шукаємо новий
+            device = await navigator.bluetooth.requestDevice({
+              filters: [{ services: ['audio_sink'] }],
+              optionalServices: ['audio_sink']
+            });
+          }
+        } else {
+          // Запит на підключення нового пристрою
+          device = await navigator.bluetooth.requestDevice({
+            filters: [{ services: ['audio_sink'] }],
+            optionalServices: ['audio_sink']
+          });
+        }
+
+        if (device) {
+          // Зберігаємо ID пристрою
+          bluetoothDeviceId = device.id;
+          localStorage.setItem('bluetoothDeviceId', bluetoothDeviceId);
+          
+          // Підключаємося до пристрою
+          const server = await device.gatt.connect();
+          showToast(`Підключено до ${device.name || 'Bluetooth-пристрою'}`, 'success');
+          
+          // Зберігаємо інформацію про підключення
+          localStorage.setItem('lastBluetoothDevice', JSON.stringify({
+            id: device.id,
+            name: device.name,
+            timestamp: Date.now()
+          }));
+        }
+      } catch (error) {
+        console.log('Bluetooth connection failed:', error);
+        if (error.message.includes('choosing a device')) {
+          showToast('Bluetooth-пристрій не вибрано', 'error');
+        } else {
+          showToast('Помилка підключення Bluetooth', 'error');
+        }
+      }
+    }
+
+    // ===== ПОКРАЩЕННЯ 10: MEDIA SESSION =====
+    function setupMediaSession() {
+      if (!('mediaSession' in navigator)) return;
+      
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        prevStation();
+        provideHapticFeedback();
+      });
+      
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        nextStation();
+        provideHapticFeedback();
+      });
+      
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        const seekOffset = details.seekOffset || 10;
+        audio.currentTime = Math.max(0, audio.currentTime - seekOffset);
+        showToast(`Назад ${seekOffset}с`, 'info');
+      });
+      
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        const seekOffset = details.seekOffset || 10;
+        audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + seekOffset);
+        showToast(`Вперед ${seekOffset}с`, 'info');
+      });
+      
+      navigator.mediaSession.setActionHandler('play', () => {
+        if (!intendedPlaying) togglePlayPause();
+      });
+      
+      navigator.mediaSession.setActionHandler('pause', () => {
+        if (isPlaying) togglePlayPause();
+      });
+
+      // Оновлення позиції для плеєра
+      setInterval(() => {
+        if (isPlaying && audio.duration) {
+          try {
+            navigator.mediaSession.setPositionState({
+              duration: audio.duration,
+              playbackRate: audio.playbackRate,
+              position: audio.currentTime
+            });
+          } catch (e) {
+            // Ігноруємо помилки позиції
+          }
+        }
+      }, 1000);
+    }
+
+    function updateMediaMetadata(station) {
+      if (!('mediaSession' in navigator)) return;
+      
+      const artwork = [];
+      if (station.dataset.favicon && isValidUrl(station.dataset.favicon)) {
+        artwork.push(
+          { src: station.dataset.favicon, sizes: '96x96', type: 'image/png' },
+          { src: station.dataset.favicon, sizes: '128x128', type: 'image/png' },
+          { src: station.dataset.favicon, sizes: '192x192', type: 'image/png' },
+          { src: station.dataset.favicon, sizes: '256x256', type: 'image/png' },
+          { src: station.dataset.favicon, sizes: '384x384', type: 'image/png' },
+          { src: station.dataset.favicon, sizes: '512x512', type: 'image/png' }
+        );
+      }
+      
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: station.dataset.name || 'Radio S O',
+        artist: `${station.dataset.genre || ''} | ${station.dataset.country || ''}`,
+        album: 'Radio Music S O',
+        artwork: artwork
+      });
     }
 
     function supportsMetadata(stationUrl) {
@@ -591,6 +842,57 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch {
         return true;
       }
+    }
+
+    // ===== ПОКРАЩЕННЯ 4: ПЕРЕПІДКЛЮЧЕННЯ ПОТОКУ =====
+    function setupStreamReconnection() {
+      // Heartbeat - перевірка потоку кожні 30 секунд
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+      }
+      
+      let lastDataTime = Date.now();
+      
+      audio.addEventListener('progress', () => {
+        lastDataTime = Date.now();
+      });
+      
+      audio.addEventListener('timeupdate', () => {
+        lastDataTime = Date.now();
+      });
+
+      heartbeatInterval = setInterval(() => {
+        if (!isPlaying || !intendedPlaying) {
+          // Якщо не грає - не перевіряємо
+          return;
+        }
+        
+        // Якщо потік не оновлювався більше 60 секунд
+        if (Date.now() - lastDataTime > 60000) {
+          console.log('Stream seems stuck, reloading...');
+          reloadCurrentStream();
+        }
+      }, 30000);
+    }
+
+    function reloadCurrentStream() {
+      if (!audio.src) return;
+      
+      const currentUrl = audio.src;
+      audio.pause();
+      audio.src = '';
+      audio.load();
+      
+      setTimeout(() => {
+        audio.src = currentUrl;
+        audio.play().catch(() => {
+          // Якщо не вдалося - пробуємо через debouncedTryAutoPlay
+          if (intendedPlaying) {
+            debouncedTryAutoPlay();
+          }
+        });
+        showToast('Потік перезапущено', 'info');
+      }, 1000);
     }
 
     async function fetchTrackMetadata(stationUrl, stationName) {
@@ -709,7 +1011,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (track && track !== "unknown" && track !== "loading..." && track !== 'null' && track !== 'undefined') {
         let cleanTrack = track.replace(/^StreamTitle='|';$|'$/g, '').trim();
-        
         cleanTrack = cleanTrack.replace(/[^\x20-\x7E\u0400-\u04FF]/g, '');
         
         if (!cleanTrack || cleanTrack.length === 0) {
@@ -726,20 +1027,25 @@ document.addEventListener("DOMContentLoaded", () => {
         
         if (cleanTrack.length > 50) {
           currentTrackElement.classList.add('marquee');
-          currentTrackElement.textContent = `💧 ${cleanTrack}`;
+          currentTrackElement.textContent = `🎵 ${cleanTrack}`;
         } else {
-          currentTrackElement.textContent = `💧 ${cleanTrack}`;
+          currentTrackElement.textContent = `🎵 ${cleanTrack}`;
         }
         
         currentTrackElement.title = cleanTrack;
         currentTrack = cleanTrack;
+        
+        // Оновлюємо MediaSession
+        if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
+          navigator.mediaSession.metadata.title = cleanTrack;
+        }
       } else if (track === "loading...") {
-        currentTrackElement.textContent = "💧 Завантаження треку...";
+        currentTrackElement.textContent = "🎵 Завантаження треку...";
         currentTrackElement.classList.add("loading");
         currentTrack = "";
       } else {
         const stationName = stationItems?.[currentIndex]?.dataset?.name || "unknown";
-        currentTrackElement.textContent = `💧 ${stationName}`;
+        currentTrackElement.textContent = `🎵 ${stationName}`;
         currentTrack = stationName;
       }
     }
@@ -838,8 +1144,8 @@ document.addEventListener("DOMContentLoaded", () => {
         item.style.setProperty('--item-index', index);
         
         const iconHtml = item.dataset.favicon 
-          ? `<img data-src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='💧 '">` 
-          : "💧 ";
+          ? `<img data-src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 '">` 
+          : "🎵 ";
         
         item.innerHTML = `
           ${iconHtml}
@@ -1151,25 +1457,25 @@ document.addEventListener("DOMContentLoaded", () => {
       "shadow-pulse": {
         bodyBg: "#000000",
         containerBg: "#000000",
-        accent: "#00D2FF",
+        accent: "#00E676",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #00D2FF, #0099CC)",
-        shadow: "rgba(0, 210, 255, 0.3)"
+        accentGradient: "linear-gradient(45deg, #00B248, #00E676)",
+        shadow: "rgba(0, 230, 118, 0.3)"
       },
       "dark-abyss": {
         bodyBg: "#000000",
         containerBg: "#000000",
-        accent: "#4488FF",
+        accent: "#AA00FF",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #4488FF, #2266CC)",
-        shadow: "rgba(68, 136, 255, 0.3)"
+        accentGradient: "linear-gradient(45deg, #6A1B9A, #AA00FF)",
+        shadow: "rgba(170, 0, 255, 0.3)"
       },
       "emerald-glow": {
         bodyBg: "#000000",
         containerBg: "#000000",
         accent: "#2EC4B6",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #1B998B, #2EC4B6)",
+        accentGradient: "linear-gradient(45deg, #1B998B, #2EC4B6)",
         shadow: "rgba(46, 196, 182, 0.3)"
       },
       "retro-wave": {
@@ -1177,7 +1483,7 @@ document.addEventListener("DOMContentLoaded", () => {
         containerBg: "#000000",
         accent: "#FF69B4",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #C71585, #FF69B4)",
+        accentGradient: "linear-gradient(45deg, #C71585, #FF69B4)",
         shadow: "rgba(255, 105, 180, 0.3)"
       },
       "neon-pulse": {
@@ -1185,7 +1491,7 @@ document.addEventListener("DOMContentLoaded", () => {
         containerBg: "#000000",
         accent: "#00F0FF",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #0077B6, #00F0FF)",
+        accentGradient: "linear-gradient(45deg, #0077B6, #00F0FF)",
         shadow: "rgba(0, 240, 255, 0.3)"
       },
       "lime-surge": {
@@ -1193,7 +1499,7 @@ document.addEventListener("DOMContentLoaded", () => {
         containerBg: "#000000",
         accent: "#B2FF59",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #00B248, #B2FF59)",
+        accentGradient: "linear-gradient(45deg, #00B248, #B2FF59)",
         shadow: "rgba(178, 255, 89, 0.3)"
       },
       "flamingo-flash": {
@@ -1201,7 +1507,7 @@ document.addEventListener("DOMContentLoaded", () => {
         containerBg: "#000000",
         accent: "#FF4081",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #C71585, #FF4081)",
+        accentGradient: "linear-gradient(45deg, #C71585, #FF4081)",
         shadow: "rgba(255, 64, 129, 0.3)"
       },
       "aqua-glow": {
@@ -1209,7 +1515,7 @@ document.addEventListener("DOMContentLoaded", () => {
         containerBg: "#000000",
         accent: "#26C6DA",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #0077B6, #26C6DA)",
+        accentGradient: "linear-gradient(45deg, #0077B6, #26C6DA)",
         shadow: "rgba(38, 198, 218, 0.3)"
       },
       "aurora-haze": {
@@ -1217,7 +1523,7 @@ document.addEventListener("DOMContentLoaded", () => {
         containerBg: "#000000",
         accent: "#64FFDA",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #1B998B, #64FFDA)",
+        accentGradient: "linear-gradient(45deg, #1B998B, #64FFDA)",
         shadow: "rgba(100, 255, 218, 0.3)"
       },
       "starlit-amethyst": {
@@ -1225,7 +1531,7 @@ document.addEventListener("DOMContentLoaded", () => {
         containerBg: "#000000",
         accent: "#B388FF",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #6A1B9A, #B388FF)",
+        accentGradient: "linear-gradient(45deg, #6A1B9A, #B388FF)",
         shadow: "rgba(179, 136, 255, 0.3)"
       },
       "lunar-frost": {
@@ -1233,7 +1539,7 @@ document.addEventListener("DOMContentLoaded", () => {
         containerBg: "#000000",
         accent: "#40C4FF",
         text: "#FFFFFF",
-        accentGradient: "linear-gradient(135deg, #0077B6, #40C4FF)",
+        accentGradient: "linear-gradient(45deg, #0077B6, #40C4FF)",
         shadow: "rgba(64, 196, 255, 0.3)"
       }
     };
@@ -1312,6 +1618,29 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.data.type === "NETWORK_STATUS" && event.data.online && intendedPlaying && stationItems?.length && currentIndex < stationItems.length) {
           debouncedTryAutoPlay();
         }
+        if (event.data.type === "NOTIFICATION_ACTION") {
+          if (event.data.action === 'play') {
+            togglePlayPause();
+          } else if (event.data.action === 'next') {
+            nextStation();
+          }
+        }
+        if (event.data.type === "ALARM_TRIGGER") {
+          const stationName = event.data.station;
+          if (stationName) {
+            findAndPlayStation(stationName);
+          } else if (stationItems && stationItems[currentIndex]) {
+            changeStation(currentIndex);
+            setTimeout(() => {
+              if (audio.paused) {
+                intendedPlaying = true;
+                isPlaying = true;
+                debouncedTryAutoPlay();
+              }
+            }, 500);
+          }
+          showToast("⏰ Будильник! Радіо ввімкнено!", "success");
+        }
       });
     }
 
@@ -1373,13 +1702,15 @@ document.addEventListener("DOMContentLoaded", () => {
             isPlaying = true;
             lastSuccessfulPlayTime = Date.now();
             updateWaveVisualizer(true);
-            updatePlayButtonIcon(true);
-            animateWaterGlow();
             playPauseBtn.classList.add("playing");
             localStorage.setItem("isPlaying", isPlaying);
             if (stationItems[currentIndex]) {
               updateCurrentStation(stationItems[currentIndex]);
+              updateMediaMetadata(stationItems[currentIndex]);
             }
+            saveFullState();
+            // Запускаємо heartbeat
+            setupStreamReconnection();
           } catch (error) {
             if (error.name === 'AbortError') return;
             updateWaveVisualizer(false);
@@ -1451,8 +1782,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (tab === "search") populateSearchSuggestions();
       updateStationList();
       renderTabs();
+      saveFullState();
     }
 
+    // Drag and Drop Functions
     function enableDragMode() {
       dragEnabled = true;
       showToast("Режим перетягування увімкнено. Перетягуйте за ручку для зміни порядку.", "info", 2000);
@@ -1785,8 +2118,8 @@ document.addEventListener("DOMContentLoaded", () => {
         item.style.setProperty('--item-index', index);
         
         const iconHtml = item.dataset.favicon 
-          ? `<img data-src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='💧 ';">` 
-          : "💧 ";
+          ? `<img data-src="${item.dataset.favicon}" alt="${station.name} icon" style="width: 32px; height: 32px; object-fit: contain; margin-right: 10px;" onerror="this.outerHTML='🎵 ';">` 
+          : "🎵 ";
         
         const deleteButton = ["techno", "trance", "ukraine", "pop", ...customTabs].includes(currentTab)
           ? `<button class="delete-btn" aria-label="Видалити станцію">🗑</button>`
@@ -1876,6 +2209,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("favoriteStations", JSON.stringify(favoriteStations));
       if (currentTab === "best") switchTab("best");
       else updateStationList();
+      saveFullState();
     }
 
     function deleteStation(stationName) {
@@ -1904,6 +2238,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         switchTab(currentTab);
         showToast(`Станцію видалено`, "info");
+        saveFullState();
       }
     }
 
@@ -1914,6 +2249,14 @@ document.addEventListener("DOMContentLoaded", () => {
       item.classList.add("selected");
       currentIndex = index;
       
+      // Зберігаємо останню станцію
+      localStorage.setItem('lastStationUrl', item.dataset.value || '');
+      localStorage.setItem('lastStationName', item.dataset.name || '');
+      localStorage.setItem('lastStationGenre', item.dataset.genre || '');
+      localStorage.setItem('lastStationCountry', item.dataset.country || '');
+      localStorage.setItem('lastStationFavicon', item.dataset.favicon || '');
+      localStorage.setItem('lastStationIndex', index);
+      
       currentStationInfo.classList.add("fade-out");
       setTimeout(() => {
         updateCurrentStation(item);
@@ -1923,6 +2266,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 150);
       
       localStorage.setItem(`lastStation_${currentTab}`, index);
+      saveFullState();
+      
       if (intendedPlaying) {
         const normalizedCurrentUrl = normalizeUrl(item.dataset.value);
         const normalizedAudioSrc = normalizeUrl(audio.src);
@@ -1956,13 +2301,13 @@ document.addEventListener("DOMContentLoaded", () => {
           stationIconElement.style.backgroundRepeat = "no-repeat";
           stationIconElement.style.backgroundPosition = "center";
         } else {
-          stationIconElement.innerHTML = "💧";
+          stationIconElement.innerHTML = "🎵";
           stationIconElement.style.backgroundImage = "none";
         }
       }
 
       if (currentTrackElement) {
-        currentTrackElement.textContent = "💧 Трек: завантаження...";
+        currentTrackElement.textContent = "🎵 Трек: завантаження...";
         currentTrackElement.classList.add("loading");
       }
       
@@ -1972,21 +2317,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchTrackMetadata(item.dataset.value, item.dataset.name);
       }
 
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: item.dataset.name || "Unknown Station",
-          artist: `${item.dataset.genre || ""} | ${item.dataset.country || ""}`,
-          album: "Radio Music S O",
-          artwork: item.dataset.favicon && isValidUrl(item.dataset.favicon) ? [
-            { src: item.dataset.favicon, sizes: "96x96", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "128x128", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "192x192", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "256x256", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "384x384", type: "image/png" },
-            { src: item.dataset.favicon, sizes: "512x512", type: "image/png" }
-          ] : []
-        });
-      }
+      updateMediaMetadata(item);
     }
 
     function prevStation() {
@@ -2012,29 +2343,35 @@ document.addEventListener("DOMContentLoaded", () => {
         isPlaying = true;
         intendedPlaying = true;
         debouncedTryAutoPlay();
-        playPauseBtn.innerHTML = "💧";
+        playPauseBtn.textContent = "⏸";
         playPauseBtn.setAttribute("aria-label", "Пауза");
         playPauseBtn.classList.add("playing");
         updateWaveVisualizer(true);
-        animateWaterGlow();
       } else {
         audio.pause();
         isPlaying = false;
         intendedPlaying = false;
-        playPauseBtn.innerHTML = "💧";
+        playPauseBtn.textContent = "▶";
         playPauseBtn.setAttribute("aria-label", "Грати");
         playPauseBtn.classList.remove("playing");
         updateWaveVisualizer(false);
-        animateWaterGlow();
         stopMetadataStreaming();
+        if (heartbeatInterval) {
+          clearInterval(heartbeatInterval);
+          heartbeatInterval = null;
+        }
         const currentTrackElement = document.getElementById("currentTrack");
         if (currentTrackElement) {
-          currentTrackElement.textContent = "💧 Трек: невідомо";
+          currentTrackElement.textContent = "🎵 Трек: невідомо";
           currentTrackElement.classList.remove("loading", "marquee");
+        }
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = null;
         }
       }
       localStorage.setItem("isPlaying", isPlaying);
       localStorage.setItem("intendedPlaying", intendedPlaying);
+      saveFullState();
     }
 
     const eventListeners = {
@@ -2093,11 +2430,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     audio.addEventListener("playing", () => {
       isPlaying = true;
-      playPauseBtn.innerHTML = "💧";
+      playPauseBtn.textContent = "⏸";
       playPauseBtn.setAttribute("aria-label", "Пауза");
       playPauseBtn.classList.add("playing");
       updateWaveVisualizer(true);
-      animateWaterGlow();
       localStorage.setItem("isPlaying", isPlaying);
       if (errorTimeout) {
         clearTimeout(errorTimeout);
@@ -2105,33 +2441,43 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (stationItems && stationItems[currentIndex]) {
         fetchTrackMetadata(stationItems[currentIndex].dataset.value, stationItems[currentIndex].dataset.name);
+        updateMediaMetadata(stationItems[currentIndex]);
       }
+      saveFullState();
     });
 
     audio.addEventListener("pause", () => {
       isPlaying = false;
-      playPauseBtn.innerHTML = "💧";
+      playPauseBtn.textContent = "▶";
       playPauseBtn.setAttribute("aria-label", "Грати");
       playPauseBtn.classList.remove("playing");
       updateWaveVisualizer(false);
-      animateWaterGlow();
       localStorage.setItem("isPlaying", isPlaying);
       stopMetadataStreaming();
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
       const currentTrackElement = document.getElementById("currentTrack");
       if (currentTrackElement) {
-        currentTrackElement.textContent = "💧 Трек: невідомо";
+        currentTrackElement.textContent = "🎵 Трек: невідомо";
         currentTrackElement.classList.remove("loading", "marquee");
       }
       if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
+      saveFullState();
     });
 
     audio.addEventListener("error", () => {
       updateWaveVisualizer(false);
       playPauseBtn.classList.remove("playing");
       stopMetadataStreaming();
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
       const currentTrackElement = document.getElementById("currentTrack");
       if (currentTrackElement) {
-        currentTrackElement.textContent = "💧 Трек: помилка";
+        currentTrackElement.textContent = "🎵 Трек: помилка";
         currentTrackElement.classList.remove("loading", "marquee");
       }
       if (intendedPlaying && errorCount < ERROR_LIMIT && !errorTimeout) {
@@ -2147,6 +2493,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     audio.addEventListener("volumechange", () => {
       localStorage.setItem("volume", audio.volume);
+      saveFullState();
+    });
+
+    audio.addEventListener("loadedmetadata", () => {
+      // Не робимо нічого, метадані отримуємо через fetchTrackMetadata
     });
 
     window.addEventListener("online", () => {
@@ -2163,6 +2514,10 @@ document.addEventListener("DOMContentLoaded", () => {
       playPauseBtn.classList.remove("playing");
       errorCount = 0;
       stopMetadataStreaming();
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
     });
 
     addEventListeners();
@@ -2170,6 +2525,11 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("beforeunload", () => {
       removeEventListeners();
       stopMetadataStreaming();
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
+      saveFullState();
     });
 
     if ("mediaSession" in navigator) {
@@ -2184,5 +2544,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     applyTheme(currentTheme);
+    
+    // Автоматичне відтворення останньої станції
+    setTimeout(() => {
+      const lastUrl = localStorage.getItem('lastStationUrl');
+      if (lastUrl && !intendedPlaying) {
+        // Якщо не було відтворення, але є остання станція - показуємо її
+        const items = document.querySelectorAll('.station-item');
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].dataset.value === lastUrl) {
+            currentIndex = i;
+            changeStation(currentIndex);
+            break;
+          }
+        }
+      }
+    }, 2000);
   }
 });
